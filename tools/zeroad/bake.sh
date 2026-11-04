@@ -5,5 +5,7 @@ cd "$(dirname "$0")/../.."
 out=${1:-web/projects/diorama/public/art}
 mkdir -p "$out"
 docker build -q -t ovian-zeroad -f docker/zeroad.Dockerfile tools/zeroad >/dev/null
+# a new cache volume belongs to root: hand it to the user who bakes
+docker run --rm -v ovian-0ad:/cache ovian-zeroad chown "$(id -u):$(id -g)" /cache
 docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -v ovian-0ad:/cache -v "$PWD:/w" -w /w/tools/zeroad ovian-zeroad sh -c \
   "./fetch.sh /cache/repo diorama.yaml art && python bake.py --zeroad /cache/repo --config diorama.yaml --content /w/content --out /w/$out"
