@@ -80,13 +80,18 @@ jobs:
           MCP: ${{ vars.OVIAN_MCP_URL }}
           LEDGER: ${{ vars.OVIAN_LEDGER_URL }}
           DIORAMA: ${{ vars.OVIAN_DIORAMA_URL }}
-        run: ./scripts/netlify_site.sh "web/dist/$APP/browser"
+        run: |
+          if [ -z "$API" ]; then
+            echo "::warning::variable OVIAN_API_ORIGIN not set: built $APP but will not deploy it"; exit 0
+          fi
+          ./scripts/netlify_site.sh "web/dist/$APP/browser"
       - name: Deploy to Netlify
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           SITE: ${{ matrix.app == 'web' && secrets.NETLIFY_SITE_LEDGER || secrets.NETLIFY_SITE_DIORAMA }}
           MESSAGE: ${{ github.event.head_commit.message || 'manual deploy' }}
         run: |
+          if [ ! -f "web/dist/${{ matrix.app }}/browser/_redirects" ]; then exit 0; fi
           if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$SITE" ]; then
             echo "::warning::Netlify secrets not set: built ${{ matrix.app }} but did not deploy it"; exit 0
           fi
