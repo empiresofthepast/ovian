@@ -1,16 +1,16 @@
-# Builds the two Angular front ends (ledger and diorama) with the engine in WebAssembly and the
-# baked 0 A.D. art, and deploys each to its own Netlify site. See docs/deploy-netlify.md.
+# Builds the two Angular front ends with the engine in WebAssembly and the baked 0 A.D. art, and deploys
+# them as one Netlify site: the 3D diorama at /, the ledger at /ledger/ (same origin, so one login).
+# See docs/deploy-netlify.md.
 #
-# Secrets:   NETLIFY_AUTH_TOKEN, NETLIFY_SITE_LEDGER, NETLIFY_SITE_DIORAMA (site ids)
+# Secrets:   NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
 # Variables: OVIAN_API_ORIGIN    where Netlify forwards /api/* (e.g. https://api.empires.ofthepast.org)
 #            OVIAN_MQTT_URL      the broker for live updates, wss://... (a browser on https cannot use ws://)
 #            OVIAN_MCP_URL       optional, the MCP server shown in Settings
-#            OVIAN_LEDGER_URL, OVIAN_DIORAMA_URL   optional, links between the two clients
 name: deploy-web
 on:
   push:
     branches: [main]
-    paths: [web/**, engine/**, content/**, tools/zeroad/**, .github/workflows/deploy-web.yml]
+    paths: [web/**, engine/**, content/**, tools/zeroad/**, scripts/netlify_site.sh, .github/workflows/deploy-web.yml]
   workflow_dispatch:
 
 concurrency: { group: deploy-web, cancel-in-progress: true }
@@ -56,7 +56,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [web, diorama]
+        include:
+          - { app: diorama, base: / }
+          - { app: web, base: /ledger/ }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -70,30 +72,44 @@ jobs:
         run: tar -xf art.tar -C web/projects/diorama/public && rm art.tar
       - run: npm ci --no-audit --no-fund
         working-directory: web
-      - run: npx ng build ${{ matrix.app }} --configuration production
+      - run: npx ng build ${{ matrix.app }} --configuration production --base-href ${{ matrix.base }}
         working-directory: web
+      - run: tar -cf ${{ matrix.app }}.tar -C web/dist/${{ matrix.app }}/browser .
+      - uses: actions/upload-artifact@v4
+        with: { name: 'site-${{ matrix.app }}', path: '${{ matrix.app }}.tar', retention-days: 3 }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { pattern: site-*, merge-multiple: true }
+      - run: |
+          mkdir -p site/ledger
+          tar -xf diorama.tar -C site
+          tar -xf web.tar -C site/ledger
       - name: Netlify settings (runtime config, API proxy, headers)
         env:
-          APP: ${{ matrix.app }}
           API: ${{ vars.OVIAN_API_ORIGIN }}
           MQTT: ${{ vars.OVIAN_MQTT_URL }}
           MCP: ${{ vars.OVIAN_MCP_URL }}
-          LEDGER: ${{ vars.OVIAN_LEDGER_URL }}
-          DIORAMA: ${{ vars.OVIAN_DIORAMA_URL }}
+          LEDGER: /ledger/
+          DIORAMA: /
         run: |
           if [ -z "$API" ]; then
-            echo "::warning::variable OVIAN_API_ORIGIN not set: built $APP but will not deploy it"; exit 0
+            echo "::warning::variable OVIAN_API_ORIGIN not set: built the site but will not deploy it"; exit 0
           fi
-          ./scripts/netlify_site.sh "web/dist/$APP/browser"
+          ./scripts/netlify_site.sh site
       - name: Deploy to Netlify
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          SITE: ${{ matrix.app == 'web' && secrets.NETLIFY_SITE_LEDGER || secrets.NETLIFY_SITE_DIORAMA }}
+          SITE: ${{ secrets.NETLIFY_SITE_ID }}
           MESSAGE: ${{ github.event.head_commit.message || 'manual deploy' }}
         run: |
-          if [ ! -f "web/dist/${{ matrix.app }}/browser/_redirects" ]; then exit 0; fi
+          if [ ! -f site/_redirects ]; then exit 0; fi
           if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$SITE" ]; then
-            echo "::warning::Netlify secrets not set: built ${{ matrix.app }} but did not deploy it"; exit 0
+            echo "::warning::secrets NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID not set: built the site but did not deploy it"; exit 0
           fi
-          npx --yes netlify-cli@17 deploy --prod --dir "web/dist/${{ matrix.app }}/browser" --site "$SITE" \
+          npx --yes netlify-cli@17 deploy --prod --dir site --site "$SITE" \
             --message "${GITHUB_SHA::7} $(printf '%s' "$MESSAGE" | head -1)"

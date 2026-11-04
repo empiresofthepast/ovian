@@ -1,0 +1,16 @@
+# Asks empiresofthepast.github.io to rebuild its /docs/ when the documentation changes here.
+# Needs a secret PAGES_DISPATCH_TOKEN (a fine-grained token with Contents: read and write on that repository);
+# without it the site still rebuilds every night.
+name: docs
+on:
+  push:
+    branches: [main]
+    paths: [README.md, docs/**]
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - env: { GH_TOKEN: '${{ secrets.PAGES_DISPATCH_TOKEN }}' }
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::notice::PAGES_DISPATCH_TOKEN not set: the docs site picks this up tonight"; exit 0; fi
+          gh api repos/empiresofthepast/empiresofthepast.github.io/dispatches -f event_type=docs
