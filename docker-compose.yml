@@ -1,0 +1,108 @@
+# Full stack: docker compose up --build
+# Web client http://localhost:47173 (also proxies /api and /mqtt) · API http://localhost:47080/docs · MQTT/WebSocket ws://localhost:47001
+name: ovian
+x-secrets: &secrets
+  OVIAN_JWT_SECRET: ${OVIAN_JWT_SECRET:-dev-jwt-secret-change-me-please-0123456789}
+  OVIAN_INTERNAL_KEY: ${OVIAN_INTERNAL_KEY:-dev-internal-key-change-me}
+  OVIAN_MQTT_SERVICE_PASSWORD: ${OVIAN_MQTT_SERVICE_PASSWORD:-dev-service-password-change-me}
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: ovian, POSTGRES_PASSWORD: ovian, POSTGRES_DB: ovian }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U ovian"], interval: 3s, timeout: 3s, retries: 30 }
+    restart: unless-stopped
+
+  server:
+    build: { context: ., dockerfile: docker/server.Dockerfile, target: runtime }
+    environment:
+      <<: *secrets
+      OVIAN_DATABASE_URL: postgresql://ovian:ovian@db:5432/${OVIAN_DATABASE_NAME:-ovian}
+      OVIAN_CONTENT_DIR: /app/content/${OVIAN_PACK:-classic}
+      OVIAN_WORLD_ID: ${OVIAN_WORLD_ID:-w1}
+      OVIAN_WORLD_SPEED: ${OVIAN_WORLD_SPEED:-1}
+      OVIAN_MQTT_URL: mqtt://broker:1883
+      OVIAN_MQTT_PUBLIC_URL: ${OVIAN_MQTT_PUBLIC_URL:-ws://localhost:47001}
+      OVIAN_CORS_ORIGINS: ${OVIAN_CORS_ORIGINS:-*}
+      OVIAN_ADMIN_USERS: ${OVIAN_ADMIN_USERS:-}
+      OVIAN_BOT_USERS: ${OVIAN_BOT_USERS:-}
+      OVIAN_RENAME_DAYS: ${OVIAN_RENAME_DAYS:-7}
+    depends_on: { db: { condition: service_healthy } }
+    ports: ["${OVIAN_API_PORT:-47080}:8000"]
+    restart: unless-stopped
+
+  broker:
+    build: { context: broker }
+    environment:
+      OVIAN_INTERNAL_KEY: ${OVIAN_INTERNAL_KEY:-dev-internal-key-change-me}
+      OVIAN_AUTH_HOST: server
+      OVIAN_AUTH_PORT: 8000
+    ports: ["${OVIAN_MQTT_WS_PORT:-47001}:9001"]
+    restart: unless-stopped
+
+  web:
+    build: { context: ., dockerfile: docker/web.Dockerfile }
+    environment:
+      OVIAN_DEFAULT_SKIN: ${OVIAN_DEFAULT_SKIN:-parchment}
+      OVIAN_DIORAMA_URL: ${OVIAN_DIORAMA_PUBLIC_URL:-}
+      OVIAN_MCP_URL: ${OVIAN_MCP_PUBLIC_URL:-}
+    depends_on: [server, broker]
+    ports: ["${OVIAN_WEB_PORT:-47173}:80"]
+    restart: unless-stopped
+
+  # The 3D front end with 0 A.D. art. Bake the art first: tools/zeroad/bake.sh
+  diorama:
+    build: { context: ., dockerfile: docker/web.Dockerfile, args: { APP: diorama } }
+    environment:
+      OVIAN_LEDGER_URL: ${OVIAN_LEDGER_PUBLIC_URL:-}
+      OVIAN_MCP_URL: ${OVIAN_MCP_PUBLIC_URL:-}
+    depends_on: [server, broker]
+    ports: ["${OVIAN_DIORAMA_PORT:-47174}:80"]
+    restart: unless-stopped
+
+  # AI rulers: friendly NPC kingdoms that play through the public API, with a tiny local LLM for chat.
+  # Opt in with COMPOSE_PROFILES=bots and OVIAN_BOT_PASSWORD in .env. See docs/bots.md.
+  bots:
+    profiles: [bots]
+    build: { context: bots }
+    environment:
+      OVIAN_API_URL: http://server:8000
+      OVIAN_BOTS: ${OVIAN_BOTS:-}
+      OVIAN_BOT_PASSWORD: ${OVIAN_BOT_PASSWORD:-}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-hf.co/prism-ml/Bonsai-1.7B-gguf:Q1_0}
+      TICK_SECONDS: ${BOTS_TICK_SECONDS:-60}
+      CHAT_EVERY_MINUTES: ${BOTS_CHAT_EVERY_MINUTES:-45}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on: [server]
+    restart: unless-stopped
+
+  # MCP server: AI assistants run a player's cities with the player's access token. See docs/mcp.md.
+  mcp:
+    build: { context: mcp }
+    environment:
+      OVIAN_API_URL: http://server:8000
+      OVIAN_MCP_HOSTS: ${OVIAN_MCP_HOSTS:-}
+    ports: ["${OVIAN_MCP_PORT:-47002}:8000"]
+    depends_on: [server]
+    restart: unless-stopped
+
+  # Angular dev server with live reload: docker compose --profile dev up web-dev
+  web-dev:
+    profiles: [dev]
+    image: node:22-bookworm-slim
+    working_dir: /web
+    command: sh -c "npm ci --no-audit --no-fund && npx ng serve --host 0.0.0.0 --proxy-config proxy.conf.json"
+    volumes: ["./web:/web", "web-node-modules:/web/node_modules"]
+    depends_on: [server, broker]
+    ports: ["${OVIAN_WEB_DEV_PORT:-47200}:4200"]
+
+volumes:
+  pgdata:
+  web-node-modules:
+
+networks:
+  default:
+    # Explicit subnet: shared hosts can run out of Docker's default pools.
+    ipam: { config: [{ subnet: "${OVIAN_SUBNET:-10.247.10.0/24}" }] }

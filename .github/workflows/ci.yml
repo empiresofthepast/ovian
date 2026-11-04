@@ -1,0 +1,60 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: engine }
+      - run: cargo test -p ovian-engine
+        working-directory: engine
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f docker-compose.test.yml run --build --rm server-tests
+        env: { DOCKER_BUILDKIT: "1" }
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f docker/web.Dockerfile -t ovian-web .
+        env: { DOCKER_BUILDKIT: "1" }
+      # the diorama compiles without the 0 A.D. art; only its image needs tools/zeroad/bake.sh
+      - run: |
+          docker run --rm -v "$PWD/web:/web" -w /web node:22-bookworm-slim \
+            sh -c "npm ci --no-audit --no-fund && mkdir -p public/engine && npx ng build diorama"
+
+  # content/antiquity is generated from 0 A.D. data: regenerating it must not change it
+  antiquity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./tools/zeroad/convert.sh && git diff --exit-code content/antiquity
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [server, web]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build --wait db server broker web
+        env: { DOCKER_BUILDKIT: "1", OVIAN_WORLD_SPEED: "50" }
+      - run: |
+          docker run --rm --network ovian_default -v "$PWD/scripts:/s:ro" python:3.12-slim \
+            sh -c "pip -q install paho-mqtt httpx && python /s/smoke_realtime.py"
+      - run: |
+          docker run --rm --network ovian_default -v "$PWD/scripts:/s:ro" -v "$PWD/shots:/shots" \
+            mcr.microsoft.com/playwright/python:v1.49.0-noble \
+            sh -c "pip -q install --break-system-packages playwright==1.49.0 && python /s/e2e_ui.py"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: screenshots, path: shots }
+      - if: failure()
+        run: docker compose logs

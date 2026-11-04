@@ -1,0 +1,13 @@
+[package]
+name = "ovian-engine"
+description = "Pure rules of the Ovian strategy game: content packs, economy, construction, training, combat, movement and map generation. No I/O."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+serde_yaml = "0.9"

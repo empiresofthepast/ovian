@@ -1,0 +1,103 @@
+# Ovian "isles" content pack: an archipelago ruleset in the spirit of Ikariam
+# and Grepolis. Same engine, different data. Names and numbers are original.
+id: isles
+name: Wine-Dark Isles
+version: 0.1.0
+description: Island poleis trading in timber, marble, crystal and wine.
+
+world:
+  speed: 1
+  width: 80
+  height: 80
+  seed: 7
+  generator: islands
+
+resources:
+  - { id: wood,    name: Timber }
+  - { id: marble,  name: Marble }
+  - { id: crystal, name: Crystal }
+  - { id: wine,    name: Wine, upkeep: true }
+
+village:
+  base_production: { wood: 5, marble: 2, crystal: 1, wine: 4 }
+  base_storage: 1000
+  field_slots: [sawmill, sawmill, quarry, crystal_mine, vineyard, vineyard]
+  center_slots: 12
+  build_queue: 1
+  growth:
+    building: agora
+    phases:
+      - { id: village, name: Village, level: 1,  center_slots: 6 }
+      - { id: town,    name: Town,    level: 5,  center_slots: 9 }
+      - { id: city,    name: City,    level: 10, center_slots: 12 }
+      - { id: metropolis, name: Metropolis, level: 20, center_slots: 12, build_queue: 2 }
+  start:
+    resources: { wood: 600, marble: 300, crystal: 100, wine: 400 }
+    buildings:
+      - { building: agora, level: 1 }
+
+buildings:
+  - { id: sawmill, name: Sawmill, slot: field, max_level: 12, population: 2,
+      cost: { base: { wood: 60, marble: 20 }, factor: 1.6 }, time: { base: 300, factor: 1.55 },
+      effects: { production: { resource: wood, curve: { base: 14, factor: 1.3, round: 1 } } } }
+  - { id: quarry, name: Quarry, slot: field, max_level: 12, population: 3,
+      cost: { base: { wood: 90, marble: 10 }, factor: 1.6 }, time: { base: 420, factor: 1.55 },
+      effects: { production: { resource: marble, curve: { base: 10, factor: 1.3, round: 1 } } } }
+  - { id: crystal_mine, name: Crystal Mine, slot: field, max_level: 12, population: 3,
+      cost: { base: { wood: 110, marble: 60 }, factor: 1.6 }, time: { base: 600, factor: 1.55 },
+      effects: { production: { resource: crystal, curve: { base: 6, factor: 1.3, round: 1 } } } }
+  - { id: vineyard, name: Vineyard, slot: field, max_level: 12, population: 0,
+      cost: { base: { wood: 70, marble: 30 }, factor: 1.6 }, time: { base: 240, factor: 1.55 },
+      effects: { production: { resource: wine, curve: { base: 12, factor: 1.3, round: 1 } } } }
+
+  - { id: agora, name: Agora, slot: center, max_level: 24, population: 2,
+      description: Heart of the polis. Each level speeds up construction.,
+      cost: { base: { wood: 120, marble: 40 }, factor: 1.27 }, time: { base: 700, factor: 1.33 },
+      effects: { build_speed: { base: 1.0, factor: 0.96 } } }
+  - { id: storehouse, name: Storehouse, slot: center, unique: false, max_level: 24, requires: { agora: 1 },
+      cost: { base: { wood: 160, marble: 60 }, factor: 1.27 }, time: { base: 500, factor: 1.3 },
+      effects: { storage: { resources: [wood, marble, crystal, wine], curve: { base: 1600, factor: 1.25, round: 100 } } } }
+  - { id: hideout, name: Hideout, slot: center, unique: false, max_level: 10, population: 0,
+      cost: { base: { wood: 80, marble: 20 }, factor: 1.27 }, time: { base: 300, factor: 1.3 },
+      effects: { hide: { base: 250, factor: 1.25, round: 10 } } }
+  - { id: barracks, name: Barracks, slot: center, unique: false, max_level: 20, population: 3, requires: { agora: 2 },
+      cost: { base: { wood: 220, marble: 80 }, factor: 1.27 }, time: { base: 900, factor: 1.3 },
+      effects: { train_speed: { base: 1.0, factor: 0.95 } } }
+  - { id: stables, name: Stables, slot: center, unique: false, max_level: 15, population: 4, requires: { barracks: 4, agora: 5 },
+      cost: { base: { wood: 300, marble: 150, crystal: 40 }, factor: 1.27 }, time: { base: 1200, factor: 1.3 },
+      effects: { train_speed: { base: 1.0, factor: 0.95 } } }
+  - { id: city_wall, name: City Wall, slot: center, max_level: 20, population: 0, requires: { agora: 3 },
+      cost: { base: { wood: 150, marble: 220 }, factor: 1.27 }, time: { base: 800, factor: 1.3 },
+      effects: { defense: { base: 0.05, factor: 1.12 } } }
+
+tribes:
+  - { id: polis, name: Polis, description: Citizens of the isles. }
+
+units:
+  - { id: hoplite, name: Hoplite, tribe: polis, building: barracks, class: infantry,
+      cost: { wood: 80, marble: 40, wine: 20 }, upkeep: 1, time: 700,
+      attack: 30, defense: { infantry: 60, cavalry: 45 }, speed: 5, carry: 30 }
+  - { id: slinger, name: Slinger, tribe: polis, building: barracks, class: infantry,
+      cost: { wood: 50, marble: 10, wine: 10 }, upkeep: 1, time: 400,
+      attack: 25, defense: { infantry: 15, cavalry: 10 }, speed: 6, carry: 40 }
+  - { id: peltast, name: Peltast, tribe: polis, building: barracks, class: infantry, requires: { barracks: 3 },
+      cost: { wood: 90, marble: 30, crystal: 20, wine: 25 }, upkeep: 1, time: 900,
+      attack: 50, defense: { infantry: 25, cavalry: 30 }, speed: 7, carry: 45 }
+  - { id: horseman, name: Horseman, tribe: polis, building: stables, class: cavalry,
+      cost: { wood: 200, marble: 120, crystal: 60, wine: 60 }, upkeep: 2, time: 1800,
+      attack: 85, defense: { infantry: 30, cavalry: 40 }, speed: 14, carry: 90 }
+
+combat:
+  base_defense: 15
+  loss_exponent: 1.5
+
+extensions:
+  beginner_protection_hours: 48
+  # After `wins` battles won in a row, a city submits to the winner and pays `tribute` of its production.
+  # The overlord sets taxes between `taxes.min` and `taxes.max`; above the usual tribute they anger the city,
+  # `per_point` per percentage point, times 1 + distance / `taxes.distance`, so remote cities grow restless first.
+  # A city may also swear fealty of its own will: it pays `voluntary.tribute` and may renounce it at any time.
+  submission: { wins: 5, tribute: 0.1, kinds: [attack, raid], voluntary: { tribute: 0.05 }, taxes: { min: 0, max: 0.3, per_point: 1, distance: 15 } }
+  # Every `every` levels of the city centre earn one ver sacrum: migrants found a colony you manage,
+  # at most level x `range_per_level` tiles away, which pays `tribute` to its mother city.
+  ver_sacrum: { every: 10, range_per_level: 0.5, speed: 6, tribute: 0.1, cost: { wood: 6000, marble: 4000, crystal: 2000, wine: 4000 } }

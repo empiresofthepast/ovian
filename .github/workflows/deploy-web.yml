@@ -1,0 +1,94 @@
+# Builds the two Angular front ends (ledger and diorama) with the engine in WebAssembly and the
+# baked 0 A.D. art, and deploys each to its own Netlify site. See docs/deploy-netlify.md.
+#
+# Secrets:   NETLIFY_AUTH_TOKEN, NETLIFY_SITE_LEDGER, NETLIFY_SITE_DIORAMA (site ids)
+# Variables: OVIAN_API_ORIGIN    where Netlify forwards /api/* (e.g. https://api.empires.ofthepast.org)
+#            OVIAN_MQTT_URL      the broker for live updates, wss://... (a browser on https cannot use ws://)
+#            OVIAN_MCP_URL       optional, the MCP server shown in Settings
+#            OVIAN_LEDGER_URL, OVIAN_DIORAMA_URL   optional, links between the two clients
+name: deploy-web
+on:
+  push:
+    branches: [main]
+    paths: [web/**, engine/**, content/**, tools/zeroad/**, .github/workflows/deploy-web.yml]
+  workflow_dispatch:
+
+concurrency: { group: deploy-web, cancel-in-progress: true }
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: wasm32-unknown-unknown }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: engine }
+      # must equal the wasm-bindgen version pinned in engine/crates/ovian-wasm/Cargo.toml
+      - run: cargo install wasm-bindgen-cli --version 0.2.95 --locked
+      - run: |
+          cd engine && cargo build -p ovian-wasm --release --target wasm32-unknown-unknown
+          wasm-bindgen --target web --out-dir ../out/engine --out-name ovian_engine target/wasm32-unknown-unknown/release/ovian_wasm.wasm
+      - uses: actions/upload-artifact@v4
+        with: { name: engine, path: out/engine }
+
+  # 0 A.D. art for the diorama: a sparse checkout of 0 A.D., converted by tools/zeroad/bake.py. Cached until the
+  # mapping, the converter or the content packs change.
+  art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: cache
+        uses: actions/cache@v4
+        with:
+          path: web/projects/diorama/public/art
+          key: art-${{ hashFiles('tools/zeroad/diorama.yaml', 'tools/zeroad/bake.py', 'tools/zeroad/zeroad.py', 'tools/zeroad/fetch.sh', 'content/**/pack.yaml') }}
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: ./tools/zeroad/bake.sh
+      # pre-gzipped meshes are for nginx; Netlify compresses on its own
+      - run: tar --exclude='*.gz' -cf art.tar -C web/projects/diorama/public art
+      - uses: actions/upload-artifact@v4
+        with: { name: art, path: art.tar, retention-days: 3 }
+
+  build:
+    needs: [wasm, art]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, diorama]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - uses: actions/download-artifact@v4
+        with: { name: engine, path: web/public/engine }
+      - if: matrix.app == 'diorama'
+        uses: actions/download-artifact@v4
+        with: { name: art, path: . }
+      - if: matrix.app == 'diorama'
+        run: tar -xf art.tar -C web/projects/diorama/public && rm art.tar
+      - run: npm ci --no-audit --no-fund
+        working-directory: web
+      - run: npx ng build ${{ matrix.app }} --configuration production
+        working-directory: web
+      - name: Netlify settings (runtime config, API proxy, headers)
+        env:
+          APP: ${{ matrix.app }}
+          API: ${{ vars.OVIAN_API_ORIGIN }}
+          MQTT: ${{ vars.OVIAN_MQTT_URL }}
+          MCP: ${{ vars.OVIAN_MCP_URL }}
+          LEDGER: ${{ vars.OVIAN_LEDGER_URL }}
+          DIORAMA: ${{ vars.OVIAN_DIORAMA_URL }}
+        run: ./scripts/netlify_site.sh "web/dist/$APP/browser"
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          SITE: ${{ matrix.app == 'web' && secrets.NETLIFY_SITE_LEDGER || secrets.NETLIFY_SITE_DIORAMA }}
+          MESSAGE: ${{ github.event.head_commit.message || 'manual deploy' }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$SITE" ]; then
+            echo "::warning::Netlify secrets not set: built ${{ matrix.app }} but did not deploy it"; exit 0
+          fi
+          npx --yes netlify-cli@17 deploy --prod --dir "web/dist/${{ matrix.app }}/browser" --site "$SITE" \
+            --message "${GITHUB_SHA::7} $(printf '%s' "$MESSAGE" | head -1)"

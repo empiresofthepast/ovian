@@ -1,0 +1,16 @@
+[package]
+name = "ovian-py"
+description = "Python bindings (PyO3) for the Ovian engine."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ovian_engine"
+crate-type = ["cdylib"]
+
+[dependencies]
+ovian-engine = { path = "../ovian-engine" }
+serde.workspace = true
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py311"] }
+pythonize = "0.22"

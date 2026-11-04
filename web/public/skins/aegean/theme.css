@@ -1,0 +1,26 @@
+:root {
+  --bg: #e7eef5;
+  --bg-pattern: linear-gradient(180deg, #dbe7f2 0, #eef3f8 18rem);
+  --surface: #ffffff;
+  --surface-2: #f2f6fa;
+  --border: #cbd8e4;
+  --text: #13263a;
+  --muted: #5d7187;
+  --accent: #1d5c96;
+  --accent-ink: #ffffff;
+  --accent-soft: #dce9f6;
+  --good: #2f8a5b;
+  --bad: #b23a48;
+  --warn: #c98a12;
+  --slot: #f5f9fc;
+  --slot-hover: #e6f0f9;
+  --radius: 14px;
+  --radius-small: 8px;
+  --shadow: 0 4px 16px rgba(19, 38, 58, 0.08);
+  --font-display: "Didot", "Bodoni MT", "Hoefler Text", Georgia, serif;
+  --topbar-bg: #ffffff;
+}
+.brand { color: var(--accent); }
+.slot__level { background: #e3a72f; color: #13263a; }
+.sw--own { background: #e3a72f; }
+.sw--other { background: #b23a48; }

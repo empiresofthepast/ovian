@@ -1,0 +1,61 @@
+# What the diorama front end needs from 0 A.D. art, and how Ovian packs map onto it.
+# tools/zeroad/bake.sh turns this into web/projects/diorama/public/art/.
+
+source:
+  repo: https://gitea.wildfiregames.com/0ad/0ad.git
+  commit: cedd5e89a0ebdaec42ea938a51ef7c89d6ad7645
+
+max_texture: 1024           # longest side of a baked texture, in pixels
+
+# 0 A.D. structures baked for every civilization that appears below.
+structures: [civil_centre, storehouse, farmstead, house, barracks, stable, fortress, wall_tower, field, temple, library, gymnasium, market, wonder, theater, royal_stoa, persian_stoa, amphitheater_pompeii, embassy, prytaneion, palace, tavern, mercenary_camp, forge, arsenal]
+
+# Packs without a zeroad extension: which civ dresses which tribe, which 0 A.D.
+# structure stands in for which building, and which resource is which.
+packs:
+  classic:
+    tribes: { legion: rome, clans: gaul, riders: achae }
+    buildings: { town_hall: civil_centre, warehouse: storehouse, granary: farmstead, cranny: house,
+                 barracks: barracks, stable: stable, wall: wall_tower, temple: temple, university: [library, gymnasium, market],
+                 embassy: [embassy, prytaneion, palace, tavern, mercenary_camp, temple], exchange: market,
+                 ruin: [embassy, prytaneion, palace, tavern, mercenary_camp, temple],
+                 cultural_exchange: [library, gymnasium, theater, temple], garrison: barracks }
+    resources: { wood: wood, clay: stone, iron: metal, grain: food }
+  isles:
+    tribes: { polis: athen }
+    buildings: { agora: civil_centre, storehouse: storehouse, hideout: house, barracks: barracks,
+                 stables: stable, city_wall: wall_tower }
+    resources: { wood: wood, marble: stone, crystal: metal, wine: food }
+  antiquity:
+    resources: { food: food, wood: wood, stone: stone, metal: metal }
+    # tribes and buildings come from the pack's extensions.zeroad block
+
+# Resource fields are drawn with gaia art, chosen by the kind of resource produced.
+fields:
+  wood:  [flora/trees/european_beech.xml, flora/trees/oak_new.xml, flora/trees/pine.xml, flora/trees/poplar.xml, flora/trees/fir_tree.xml]
+  stone: [geology/stonemine_temperate_quarry.xml, geology/stonemine_temperate_small.xml, geology/stone_granite_med.xml]
+  metal: [geology/metalmine_temperate_slabs.xml, geology/metal_temperate_round.xml, geology/metal_temperate_small.xml]
+  food:  [props/flora/farming_barley_harvest_a.xml, props/flora/farming_barley_harvest_b.xml]
+  decor: [flora/trees/european_beech.xml, flora/trees/oak_new.xml, flora/trees/poplar_lombardy.xml]
+
+common:
+  plot: structures/plot.xml
+  rally_flag: props/special/common/{civ}_waypoint_flag.xml
+
+terrain:
+  grass: [temperate/grass_02.png, temperate/grass_04.png, temperate/grass_dirt_01.png]
+  dirt: temperate/mud_01.png
+  paving: temperate/paving_002.png
+  forest: temperate/forestfloor_003.png
+  farmland: temperate/farmland_01.png
+
+# Small UI textures for the HUD (paths under art/textures/ui/).
+ui:
+  - session/icons/resources/food.png
+  - session/icons/resources/wood.png
+  - session/icons/resources/stone.png
+  - session/icons/resources/metal.png
+  - session/icons/resources/population.png
+  - session/icons/resources/time_small.png
+  - session/ribbon_bg.png
+  - session/hud_panels.png

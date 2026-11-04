@@ -1,0 +1,18 @@
+# Runs the server test-suite against a throwaway Postgres:
+#   docker compose -f docker-compose.test.yml run --rm server-tests
+name: ovian-test
+services:
+  db:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: ovian, POSTGRES_PASSWORD: ovian, POSTGRES_DB: ovian_test }
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U ovian"], interval: 2s, timeout: 2s, retries: 30 }
+  server-tests:
+    build: { context: ., dockerfile: docker/server.Dockerfile, target: test }
+    environment:
+      OVIAN_TEST_DATABASE_URL: postgresql://ovian:ovian@db:5432/ovian_test
+    depends_on: { db: { condition: service_healthy } }
+networks:
+  default:
+    # Explicit subnet: shared hosts can run out of Docker's default pools.
+    ipam: { config: [{ subnet: "${OVIAN_TEST_SUBNET:-10.247.11.0/24}" }] }

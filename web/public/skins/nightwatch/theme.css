@@ -1,0 +1,30 @@
+:root {
+  --bg: #12161c;
+  --bg-pattern: none;
+  --surface: #1b222b;
+  --surface-2: #232c37;
+  --border: #2f3a47;
+  --text: #d7dde5;
+  --muted: #8994a3;
+  --accent: #e0a43a;
+  --accent-ink: #1a1306;
+  --accent-soft: rgba(224, 164, 58, 0.16);
+  --good: #5fb878;
+  --bad: #e2604a;
+  --warn: #e0a43a;
+  --focus: #7cb7ff;
+  --slot: #202833;
+  --slot-hover: #28323f;
+  --radius: 4px;
+  --radius-small: 3px;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --font-display: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  --topbar-bg: #0e1217;
+  --nav-bg: #161b22;
+  color-scheme: dark;
+}
+.page-title, .panel__title, .brand { text-transform: uppercase; letter-spacing: 0.08em; }
+.panel__title { font-size: 0.85rem; color: var(--muted); }
+.slot .ov-icon { color: var(--accent); }
+.sw--own { background: #e0a43a; }
+.sw--other { background: #c4543e; }

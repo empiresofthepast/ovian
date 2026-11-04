@@ -1,0 +1,40 @@
+# Rendered by entrypoint.sh from environment variables at container start.
+per_listener_settings false
+allow_anonymous false
+persistence false
+log_dest stdout
+log_type error
+log_type warning
+log_type notice
+connection_messages true
+max_packet_size 65536
+
+# Server (and other trusted backends) - keep this port private.
+listener 1883
+protocol mqtt
+
+# Browsers.
+listener 9001
+protocol websockets
+
+auth_plugin /mosquitto/go-auth.so
+auth_opt_log_level info
+auth_opt_backends http
+auth_opt_hasher bcrypt
+auth_opt_http_host ${OVIAN_AUTH_HOST}
+auth_opt_http_port ${OVIAN_AUTH_PORT}
+auth_opt_http_getuser_uri /internal/mqtt/user?key=${OVIAN_INTERNAL_KEY}
+auth_opt_http_superuser_uri /internal/mqtt/superuser?key=${OVIAN_INTERNAL_KEY}
+auth_opt_http_aclcheck_uri /internal/mqtt/acl?key=${OVIAN_INTERNAL_KEY}
+auth_opt_http_params_mode json
+auth_opt_http_response_mode status
+auth_opt_http_timeout 5
+
+# Cache decisions briefly so the API is not called for every message.
+auth_opt_cache true
+auth_opt_cache_type go-cache
+auth_opt_cache_reset true
+auth_opt_auth_cache_seconds 60
+auth_opt_acl_cache_seconds 60
+auth_opt_auth_jitter_seconds 5
+auth_opt_acl_jitter_seconds 5

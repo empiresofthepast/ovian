@@ -1,0 +1,6 @@
+{
+  "apiUrl": "",
+  "mqttUrl": "",
+  "skin": "parchment",
+  "skins": ["parchment", "nightwatch", "aegean"]
+}

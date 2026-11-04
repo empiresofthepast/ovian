@@ -1,0 +1,454 @@
+# Ovian "classic" content pack: a continental, Travian-like ruleset.
+# All names and numbers are original. Every key is documented in docs/content-packs.md.
+id: classic
+name: Classic Realms
+version: 0.1.0
+description: Four resources, eighteen fields, three tribes on a continental map.
+
+world:
+  speed: 1          # the server can override this with OVIAN_WORLD_SPEED
+  width: 101
+  height: 101
+  seed: 42
+  generator: grid
+
+resources:
+  - { id: wood,  name: Wood }
+  - { id: clay,  name: Clay }
+  - { id: iron,  name: Iron }
+  - { id: grain, name: Grain, upkeep: true }
+
+village:
+  base_production: { wood: 6, clay: 6, iron: 6, grain: 12 }
+  base_storage: 800
+  field_slots: [woodcutter, woodcutter, woodcutter, woodcutter,
+                clay_pit, clay_pit, clay_pit, clay_pit,
+                iron_mine, iron_mine, iron_mine, iron_mine,
+                farm, farm, farm, farm, farm, farm]
+  center_slots: 47
+  build_queue: 2
+  # Sites open as the town hall grows; later phases allow more parallel construction jobs.
+  # Architecture (University) adds one more.
+  growth:
+    building: town_hall
+    phases:
+      - { id: village,    name: Village,    level: 1,  center_slots: 8 }
+      - { id: town,       name: Town,       level: 5,  center_slots: 14 }
+      - { id: city,       name: City,       level: 10, center_slots: 20, build_queue: 3 }
+      - { id: metropolis, name: Metropolis, level: 20, center_slots: 20, build_queue: 4 }
+      - { id: capital,    name: Capital,    level: 40, center_slots: 20, build_queue: 5 }
+      - { id: imperial,   name: Imperial,   level: 60, center_slots: 20, build_queue: 6 }
+    # From level 20, every 5 levels open 3 more sites: 23 at 20, 26 at 25 ... 47 at 60.
+    extra_sites: { from: 20, every: 5, sites: 3 }
+    # Every 10 levels of the town hall open one more field of each kind (after the center sites).
+    extra_fields: { every: 10, fields: [woodcutter, clay_pit, iron_mine, farm] }
+  start:
+    resources: { wood: 750, clay: 750, iron: 750, grain: 750 }
+    buildings:
+      - { building: town_hall, level: 1 }
+      - { building: rally_point, level: 1 }
+
+buildings:
+  # --- fields -------------------------------------------------------------
+  - id: woodcutter
+    name: Woodcutter
+    description: Fells timber from the nearby forest.
+    slot: field
+    max_level: 10
+    cost: { base: { wood: 40, clay: 100, iron: 50, grain: 60 }, factor: 1.67 }
+    time: { base: 260, factor: 1.6 }
+    population: 2
+    effects: { production: { resource: wood, curve: { base: 8, factor: 1.35, round: 1 } } }
+  - id: clay_pit
+    name: Clay Pit
+    slot: field
+    max_level: 10
+    cost: { base: { wood: 80, clay: 40, iron: 80, grain: 50 }, factor: 1.67 }
+    time: { base: 220, factor: 1.6 }
+    population: 2
+    effects: { production: { resource: clay, curve: { base: 8, factor: 1.35, round: 1 } } }
+  - id: iron_mine
+    name: Iron Mine
+    slot: field
+    max_level: 10
+    cost: { base: { wood: 100, clay: 80, iron: 30, grain: 60 }, factor: 1.67 }
+    time: { base: 450, factor: 1.6 }
+    population: 3
+    effects: { production: { resource: iron, curve: { base: 8, factor: 1.35, round: 1 } } }
+  - id: farm
+    name: Farm
+    slot: field
+    max_level: 10
+    cost: { base: { wood: 70, clay: 90, iron: 70, grain: 20 }, factor: 1.67 }
+    time: { base: 150, factor: 1.6 }
+    population: 0
+    effects: { production: { resource: grain, curve: { base: 8, factor: 1.35, round: 1 } } }
+
+  # --- center -------------------------------------------------------------
+  - id: town_hall
+    name: Town Hall
+    description: Seat of the village. Each level speeds up construction. Levels 5 and 10 open building sites; levels 10, 20, 40 and 60 add construction jobs.
+    slot: center
+    max_level: 60
+    cost: { base: { wood: 70, clay: 40, iron: 60, grain: 20 }, factor: 1.15 }
+    time: { base: 600, factor: 1.2 }
+    population: 2
+    effects: { build_speed: { base: 1.0, factor: 0.965 } }
+  - id: warehouse
+    name: Warehouse
+    description: Stores wood, clay and iron.
+    slot: center
+    max_level: 20
+    unique: false
+    requires: { town_hall: 1 }
+    cost: { base: { wood: 130, clay: 160, iron: 90, grain: 40 }, factor: 1.28 }
+    time: { base: 500, factor: 1.3 }
+    effects: { storage: { resources: [wood, clay, iron], curve: { base: 1200, factor: 1.28, round: 100 } } }
+  - id: granary
+    name: Granary
+    description: Stores grain.
+    slot: center
+    max_level: 20
+    unique: false
+    requires: { town_hall: 1 }
+    cost: { base: { wood: 80, clay: 100, iron: 70, grain: 20 }, factor: 1.28 }
+    time: { base: 450, factor: 1.3 }
+    effects: { storage: { resources: [grain], curve: { base: 1200, factor: 1.28, round: 100 } } }
+  - id: cranny
+    name: Cranny
+    description: Hides part of every resource from raiders.
+    slot: center
+    max_level: 10
+    unique: false
+    cost: { base: { wood: 40, clay: 50, iron: 30, grain: 10 }, factor: 1.28 }
+    time: { base: 260, factor: 1.3 }
+    population: 0
+    effects: { hide: { base: 200, factor: 1.23, round: 10 } }
+  - id: rally_point
+    name: Rally Point
+    description: Where troops gather before marching out.
+    slot: center
+    max_level: 20
+    cost: { base: { wood: 110, clay: 160, iron: 90, grain: 70 }, factor: 1.28 }
+    time: { base: 400, factor: 1.3 }
+  - id: barracks
+    name: Barracks
+    description: Trains infantry. Higher levels train faster.
+    slot: center
+    max_level: 20
+    unique: false
+    requires: { town_hall: 3, rally_point: 1 }
+    cost: { base: { wood: 210, clay: 140, iron: 260, grain: 120 }, factor: 1.28 }
+    time: { base: 900, factor: 1.3 }
+    population: 4
+    effects: { train_speed: { base: 1.0, factor: 0.94 } }
+  - id: stable
+    name: Stable
+    description: Trains cavalry.
+    slot: center
+    max_level: 20
+    unique: false
+    requires: { barracks: 3, town_hall: 5 }
+    cost: { base: { wood: 260, clay: 140, iron: 220, grain: 100 }, factor: 1.28 }
+    time: { base: 1100, factor: 1.3 }
+    population: 5
+    effects: { train_speed: { base: 1.0, factor: 0.94 } }
+  - id: temple
+    name: Temple
+    description: House of the gods. Its culture radiates to nearby villages.
+    slot: center
+    max_level: 20
+    requires: { town_hall: 3 }
+    cost: { base: { wood: 220, clay: 300, iron: 180, grain: 200 }, factor: 1.28 }
+    time: { base: 1500, factor: 1.3 }
+    population: 2
+    effects: { culture: { base: 10, factor: 1.18, round: 1 } }
+  - id: embassy
+    name: Embassy
+    description: The overlord's envoys, paid from the overlord's treasury. When the village breaks free, the embassy is left in ruins.
+    slot: center
+    foreign: true
+    max_level: 10
+    cost: { base: { wood: 300, clay: 300, iron: 150, grain: 150 }, factor: 1.3 }
+    time: { base: 1800, factor: 1.3 }
+    population: 1
+    effects: { culture: { base: 4, factor: 1.15, round: 1 } }
+  - id: exchange
+    name: Foreign Exchange
+    description: Money-changers of the overlord's merchants. Each level lowers the tribute this village pays.
+    slot: center
+    foreign: true
+    unique: false
+    max_level: 10
+    cost: { base: { wood: 250, clay: 200, iron: 150, grain: 100 }, factor: 1.3 }
+    time: { base: 1500, factor: 1.3 }
+    population: 1
+    effects: {}
+  - id: cultural_exchange
+    name: Cultural Exchange
+    description: Teachers and priests of the overlord. Each level sends 5% of this village's culture to its overlord's village.
+    slot: center
+    foreign: true
+    max_level: 10
+    cost: { base: { wood: 300, clay: 350, iron: 200, grain: 200 }, factor: 1.3 }
+    time: { base: 2400, factor: 1.3 }
+    population: 1
+    effects: { culture_share: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50] }
+  - id: garrison
+    name: Garrison
+    description: Barracks for the overlord's soldiers. Up to 100 of its stationed troops per level can set out from here.
+    slot: center
+    foreign: true
+    max_level: 10
+    cost: { base: { wood: 350, clay: 300, iron: 300, grain: 250 }, factor: 1.3 }
+    time: { base: 2400, factor: 1.3 }
+    population: 2
+    effects: { garrison: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] }
+  - id: ruin
+    name: Ruins
+    description: What is left of a former overlord's building. Pull it down to free the site.
+    slot: center
+    foreign: true
+    unique: false
+    max_level: 1
+    cost: { base: { clay: 20 }, factor: 1 }
+    time: { base: 60, factor: 1 }
+    population: 0
+    effects: {}
+  - id: university
+    name: University
+    description: Scholars and engineers. Spreads culture and researches the arts of war.
+    slot: center
+    max_level: 20
+    requires: { town_hall: 5 }
+    cost: { base: { wood: 300, clay: 380, iron: 260, grain: 160 }, factor: 1.28 }
+    time: { base: 1800, factor: 1.3 }
+    population: 3
+    effects: { culture: { base: 8, factor: 1.2, round: 1 } }
+  - id: market
+    name: Market
+    description: Merchants carry goods to other cities. Each level adds a merchant.
+    slot: center
+    max_level: 20
+    requires: { town_hall: 3 }
+    cost: { base: { wood: 180, clay: 140, iron: 100, grain: 80 }, factor: 1.28 }
+    time: { base: 900, factor: 1.3 }
+    population: 1
+    effects: {}
+  - id: great_theatre
+    name: Great Theatre
+    description: A great building. Any player may contribute resources to raise it; its culture is felt far and wide.
+    slot: center
+    max_level: 30
+    requires: { town_hall: 10, temple: 5 }
+    cost: { base: { wood: 1200, clay: 1500, iron: 700, grain: 600 }, factor: 1.22 }
+    time: { base: 3600, factor: 1.25 }
+    population: 2
+    effects: { culture: { base: 30, factor: 1.12, round: 1 } }
+  - id: wonder
+    name: Wonder of the World
+    description: The first player to finish its last level wins the world.
+    slot: center
+    max_level: 25
+    requires: { town_hall: 20, temple: 10, university: 10 }
+    cost: { base: { wood: 5000, clay: 6000, iron: 5000, grain: 4000 }, factor: 1.15 }
+    time: { base: 7200, factor: 1.12 }
+    population: 5
+    effects: { culture: { base: 50, factor: 1.1, round: 1 } }
+  - id: wall
+    name: Wall
+    description: Raises the defense of every troop in the village.
+    slot: center
+    max_level: 20
+    requires: { town_hall: 2 }
+    cost: { base: { wood: 120, clay: 200, iron: 0, grain: 80 }, factor: 1.28 }
+    time: { base: 700, factor: 1.3 }
+    population: 0
+    effects:
+      defense: [0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24, 0.27, 0.30,
+                0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.57, 0.60]
+
+tribes:
+  - id: legion
+    name: Legion
+    description: Disciplined and balanced, strong builders and steady defenders.
+  - id: clans
+    name: Clans
+    description: Cheap, numerous fighters who live off raiding.
+  - id: riders
+    name: Riders
+    description: Fast horsemen of the steppe, hard to catch and hard to pin down.
+
+units:
+  # --- legion ---
+  - { id: legionary,   name: Legionary,   tribe: legion, building: barracks, class: infantry,
+      cost: { wood: 120, clay: 100, iron: 150, grain: 30 }, upkeep: 1, time: 900,
+      attack: 40, defense: { infantry: 35, cavalry: 50 }, speed: 6, carry: 50 }
+  - { id: guardian,    name: Guardian,    tribe: legion, building: barracks, class: infantry,
+      techs: [metallurgy],
+      requires: { barracks: 3 },
+      cost: { wood: 100, clay: 130, iron: 160, grain: 70 }, upkeep: 1, time: 1100,
+      attack: 30, defense: { infantry: 65, cavalry: 35 }, speed: 5, carry: 20 }
+  - { id: lancer,      name: Lancer,      tribe: legion, building: stable, class: cavalry,
+      cost: { wood: 340, clay: 270, iron: 290, grain: 75 }, upkeep: 2, time: 1800,
+      attack: 80, defense: { infantry: 40, cavalry: 30 }, speed: 16, carry: 80 }
+  - { id: equite,      name: Equite,      tribe: legion, building: stable, class: cavalry,
+      techs: [horse_breeding],
+      requires: { stable: 3 },
+      cost: { wood: 550, clay: 640, iron: 800, grain: 180 }, upkeep: 3, time: 2400,
+      attack: 120, defense: { infantry: 65, cavalry: 50 }, speed: 14, carry: 100 }
+  # --- clans ---
+  - { id: clubman,     name: Clubman,     tribe: clans, building: barracks, class: infantry,
+      cost: { wood: 95, clay: 75, iron: 40, grain: 40 }, upkeep: 1, time: 600,
+      attack: 40, defense: { infantry: 20, cavalry: 5 }, speed: 7, carry: 60 }
+  - { id: spearbearer, name: Spearbearer, tribe: clans, building: barracks, class: infantry,
+      cost: { wood: 145, clay: 70, iron: 85, grain: 40 }, upkeep: 1, time: 900,
+      attack: 10, defense: { infantry: 35, cavalry: 60 }, speed: 7, carry: 40 }
+  - { id: axeman,      name: Axeman,      tribe: clans, building: barracks, class: infantry,
+      techs: [metallurgy],
+      requires: { barracks: 3 },
+      cost: { wood: 130, clay: 120, iron: 170, grain: 70 }, upkeep: 1, time: 1100,
+      attack: 60, defense: { infantry: 30, cavalry: 30 }, speed: 6, carry: 50 }
+  - { id: raider,      name: Raider,      tribe: clans, building: stable, class: cavalry,
+      cost: { wood: 370, clay: 270, iron: 290, grain: 75 }, upkeep: 2, time: 1700,
+      attack: 60, defense: { infantry: 20, cavalry: 30 }, speed: 15, carry: 110 }
+  # --- riders ---
+  - { id: skirmisher,  name: Skirmisher,  tribe: riders, building: barracks, class: infantry,
+      cost: { wood: 100, clay: 130, iron: 55, grain: 30 }, upkeep: 1, time: 800,
+      attack: 15, defense: { infantry: 40, cavalry: 50 }, speed: 7, carry: 35 }
+  - { id: swordsman,   name: Swordsman,   tribe: riders, building: barracks, class: infantry,
+      techs: [metallurgy],
+      requires: { barracks: 3 },
+      cost: { wood: 140, clay: 150, iron: 185, grain: 60 }, upkeep: 1, time: 1100,
+      attack: 65, defense: { infantry: 35, cavalry: 20 }, speed: 6, carry: 45 }
+  - { id: outrider,    name: Outrider,    tribe: riders, building: stable, class: cavalry,
+      cost: { wood: 350, clay: 450, iron: 230, grain: 60 }, upkeep: 2, time: 1600,
+      attack: 90, defense: { infantry: 25, cavalry: 40 }, speed: 19, carry: 75 }
+  - { id: cataphract,  name: Cataphract,  tribe: riders, building: stable, class: cavalry,
+      techs: [horse_breeding],
+      requires: { stable: 5 },
+      cost: { wood: 720, clay: 650, iron: 830, grain: 170 }, upkeep: 3, time: 2800,
+      attack: 140, defense: { infantry: 115, cavalry: 55 }, speed: 10, carry: 65 }
+
+combat:
+  base_defense: 10
+  loss_exponent: 1.5
+# Temples and universities radiate culture; the dominant side in a battle gains prestige.
+culture: { radius: 12, prestige_max: 0.25, prestige_scale: 0.12 }
+# Researched once per village; advanced units need them.
+techs:
+  - { id: philosophy, name: Philosophy, description: Schools of thought that every later science builds on.,
+      building: university, level: 1, cost: { wood: 300, clay: 400, iron: 200, grain: 300 }, time: 3600 }
+  - { id: architecture, name: Architecture, description: Master builders and cranes. One more construction job at a time.,
+      building: university, level: 5, after: [philosophy], build_queue: 1, cost: { wood: 1500, clay: 1500, iron: 500, grain: 800 }, time: 10800 }
+  - { id: rites, name: Sacred Rites, description: Festivals and sacrifices bind the village to its gods.,
+      building: temple, level: 1, cost: { wood: 200, clay: 300, iron: 100, grain: 400 }, time: 3000 }
+  - { id: metallurgy, name: Metallurgy, description: Better forging. Unlocks the advanced infantry.,
+      building: university, level: 3, after: [philosophy], cost: { wood: 600, clay: 300, iron: 900, grain: 500 }, time: 7200 }
+  - { id: horse_breeding, name: Horse Breeding, description: Stronger mounts. Unlocks the advanced cavalry.,
+      building: university, level: 5, after: [philosophy, rites], requires: { stable: 1 },
+      cost: { wood: 500, clay: 300, iron: 600, grain: 1200 }, time: 9000 }
+
+# Free-form data for server-side Python mods (see docs/modding.md). The engine ignores it.
+extensions:
+  beginner_protection_hours: 72
+  # Pulling a building down frees its site and gives back `refund` of what all its levels cost.
+  # The city centre, great buildings and the wonder always stay; `keep` lists more.
+  demolish: { refund: 0.5, keep: [] }
+  # Each new overlord opens a foreign quarter: an embassy site it builds and pays for, and `exchange_slots` sites for
+  # foreign exchanges, each level of which cuts the tribute by `exchange_relief`. A lost overlord's embassy becomes `ruin`.
+  embassies: { building: embassy, ruin: ruin, exchange: exchange, exchange_slots: 1, exchange_relief: 0.03,
+               overlord: [cultural_exchange, garrison], overlord_slots: 2 }
+  # Overlords levy auxiliaries (the vassal's own troops) in a vassal with a garrison; see the antiquity pack.
+  auxiliaries: { cost: 1.25, mood_per_100: -3, mood_max: -15, mood_hours: 24 }
+  # Digging empty sites and ruins uncovers what stood there before; finds shown in temples add culture.
+  archaeology:
+    cost: { wood: 300, clay: 300, iron: 100, grain: 400 }
+    hours: 2
+    ancient_chance: 0.4
+    display: { building: temple, per_level: 1 }
+    grades:
+      common: { chance: 0.65, culture: 1 }
+      fine: { chance: 0.28, culture: 3 }
+      exceptional: { chance: 0.07, culture: 8 }
+    ancient:
+      - { id: neolithic, name: Neolithic village, age: c. 5000 BC, finds: [flint sickle, clay figurine, polished stone axe, obsidian blade] }
+      - { id: bronze, name: Bronze Age settlement, age: c. 1600 BC, finds: [bronze dagger, clay tablet, gold ring, faience beads] }
+    finds:
+      embassy: [envoy's seal, inscribed treaty stele, gift amphora]
+      ruin: [envoy's seal, broken statue of a foreign king, gift amphora]
+      temple: [votive statuette, altar fragment, offering bowl]
+      barracks: [helmet, spearheads, bronze greave]
+      default: [potsherds, roof tiles, oil lamp, bronze pin]
+  # Governors rule one city each, own or a vassal's; two traits each. See the antiquity pack.
+  governors:
+    hire: { wood: 1500, clay: 1500, iron: 2000, grain: 1500 }
+    candidates: 3
+    refresh_hours: 24
+    speed: 8
+    prefect: -3
+    traits:
+      just: { name: Just, text: "Fair judgements: the people trust the governor.", contentment: 4 }
+      harsh: { name: Harsh, text: "Order by the rod. Unrest grows slowly; nobody smiles.", unrest: 0.6, contentment: -3 }
+      beloved: { name: Beloved, text: "Every feast in person. Anger fades quickly.", calm: 1.5, contentment: 2 }
+      orator: { name: Orator, text: "Agitators find no ears; crowds stay calm.", agitators: 0.5, size: 0.7 }
+      steward: { name: Able steward, text: "Granaries counted, roads mended.", production: 0.06 }
+      corrupt: { name: Corrupt, text: "Skims a little off everything.", production: -0.04, contentment: -2 }
+      soldier: { name: Old soldier, text: "Walls manned, watches kept.", defense: 0.12 }
+      lax: { name: Lax, text: "Lets things slide. Popular, until it is not.", unrest: 1.3, contentment: 3 }
+      diplomat: { name: Diplomat, text: "Makes the tribute easier to bear.", tribute: 0.6 }
+    names:
+      default: [Aulus, Brennos, Dareios, Gaius, Kallias, Lucius, Orgetorix, Tiberius, Vercassivellaunos, Xanthippos]
+  # With the upkeep resource at zero and still falling short, troops starve: every `tick_hours` (game hours)
+  # the cheapest die first, until their upkeep covers `share` of the deficit, until the city feeds itself again.
+  starvation: { tick_hours: 1, share: 0.25 }
+  # After `wins` battles won in a row, a city submits to the winner and pays `tribute` of its production.
+  # The overlord sets taxes between `taxes.min` and `taxes.max`; above the usual tribute they anger the city,
+  # `per_point` per percentage point, times 1 + distance / `taxes.distance`, so remote cities grow restless first.
+  # A city may also swear fealty of its own will: it pays `voluntary.tribute` and may renounce it at any time.
+  submission: { wins: 5, tribute: 0.1, kinds: [attack, raid], benefits: { production: 0.05, defense: 0.15, contentment: 5, trade_speed: 0.5 }, voluntary: { tribute: 0.05 }, taxes: { min: 0, max: 0.3, per_point: 1, distance: 15 } }
+  # Every `every` levels of the city centre earn one ver sacrum: migrants found a colony you manage,
+  # at most level x `range_per_level` tiles away, which pays `tribute` to its mother city.
+  ver_sacrum: { every: 10, range_per_level: 0.5, speed: 6, tribute: 0.1, cost: { wood: 6000, clay: 6000, iron: 4000, grain: 8000 } }
+  market: { building: market, carry: 1000, speed: 12 }
+  scouting:
+    stealth: 10
+    missions:
+      sabotage: { difficulty: 2 }
+      steal: { difficulty: 3 }
+      incite: { difficulty: 2, unrest: 40 }
+  # Omens, medals, roads, trade routes and the chronicle. Contentment, governments and
+  # seasons are left out of this pack; see the antiquity pack for them.
+  omens: { every_hours: 6, chance: 0.35, expire_hours: 12 }
+  medals: { period_hours: 168, places: 3 }
+  roads: { cost_per_tile: { wood: 150, clay: 150, iron: 50 }, seconds_per_tile: 900, speed: 1.5, base: 1, per_levels: 10, max_length: 30 }
+  trade_routes: { max_per_city: 5, min_hours: 1 }
+  chronicle: { battle_units: 150 }
+  heroes: { xp_base: 100, attack_per_point: 0.03, defense_per_point: 0.03, production_per_point: 0.02, revive: 14400, speed: 10 }
+  camps: { count: 12, min_distance: 4, max_distance: 16, max_level: 5, troops_per_level: 12, regen: 3600, loot_per_level: 1500 }
+  wonder: { building: wonder }
+  gods:
+    building: temple
+    favor_per_level: 2
+    max_favor: 500
+    powers:
+      blessing: { name: Blessing of the harvest, cost: 120, boost: 0.25, hours: 2, description: "+25% production in this city for 2 hours." }
+      shield: { name: Divine shield, cost: 150, defense: 0.3, hours: 2, description: "+30% defense in this city for 2 hours." }
+      fury: { name: Battle fury, cost: 100, attack: 0.2, description: "+20% attack for the next army sent from this city." }
+      wrath: { name: Wrath of the gods, cost: 200, destroy: 0.15, target: true, description: "A foreign city within 20 tiles loses 15% of its stores." }
+  great_buildings: { buildings: [great_theatre], reward: 0.5 }
+  vacation: { min_hours: 12, max_days: 14 }
+  quests:
+    - { id: woodcutter, title: Timber, text: Raise a woodcutter to level 2., goal: { building: woodcutter, level: 2 }, reward: { wood: 200, clay: 200, iron: 100, grain: 200 }, hint: "Select a woodcutter on the edge of your village and upgrade it.", focus: { building: woodcutter } }
+    - { id: town_hall_3, title: Village elders, text: Raise the town hall to level 3., goal: { building: town_hall, level: 3 }, reward: { wood: 400, clay: 400, iron: 300, grain: 300 }, hint: "Select the town hall and upgrade it; a bigger hall opens more building sites.", focus: { building: town_hall } }
+    - { id: barracks, title: A place to train, text: Build barracks., goal: { building: barracks, level: 1 }, reward: { wood: 300, clay: 300, iron: 400, grain: 300 }, hint: "Pick an empty building site and build barracks.", focus: { site: true, building: barracks } }
+    - { id: army, title: The first company, text: Have 20 troops at home., goal: { units: 20 }, reward: { wood: 500, clay: 500, iron: 500, grain: 800 }, hint: "Select the barracks and train troops.", focus: { building: barracks } }
+    - { id: camp, title: Clear the woods, text: Beat a barbarian camp., goal: { stat: camps_beaten, value: 1 }, reward: { wood: 800, clay: 800, iron: 800, grain: 800 }, hint: "Find a barbarian camp on the map and raid it from the rally point.", focus: { screen: map } }
+    - { id: market, title: Merchants, text: Build a market., goal: { building: market, level: 1 }, reward: { wood: 600, clay: 600, iron: 400, grain: 600 }, hint: "Build a market on a free site.", focus: { site: true, building: market } }
+    - { id: temple, title: The gods, text: Build a temple., goal: { building: temple, level: 1 }, reward: { wood: 700, clay: 700, iron: 500, grain: 700 }, hint: "Build a temple for culture and favor.", focus: { site: true, building: temple } }
+    - { id: hero, title: A hero rises, text: Bring your hero to level 2., goal: { hero_level: 2 }, reward: { wood: 1000, clay: 1000, iron: 1000, grain: 1000 }, hint: "Open Hero, choose a hero and send them with a raid.", focus: { screen: hero } }
+    - { id: alliance, title: Sworn friends, text: Join or found an alliance., goal: { alliance: true }, reward: { wood: 1000, clay: 1000, iron: 1000, grain: 1000 } }
+    - { id: town, title: A town, text: Raise the town hall to level 5., goal: { building: town_hall, level: 5 }, reward: { wood: 1500, clay: 1500, iron: 1200, grain: 1500 } }
+    - { id: culture, title: Culture, text: Reach 100 culture., goal: { culture: 100 }, reward: { wood: 2000, clay: 2000, iron: 2000, grain: 2000 } }
+    - { id: city, title: A city, text: Raise the town hall to level 10., goal: { building: town_hall, level: 10 }, reward: { wood: 4000, clay: 4000, iron: 3000, grain: 4000 } }
+    - { id: colony, title: Ver sacrum, text: Found a colony., goal: { villages: 2 }, reward: { wood: 5000, clay: 5000, iron: 5000, grain: 5000 } }

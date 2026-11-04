@@ -1,0 +1,15 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "ovian-engine"
+description = "Python bindings for the Ovian game engine (Rust)."
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dynamic = ["version"]
+classifiers = ["Programming Language :: Rust", "Programming Language :: Python :: Implementation :: CPython"]
+
+[tool.maturin]
+module-name = "ovian_engine"
+features = ["pyo3/extension-module"]

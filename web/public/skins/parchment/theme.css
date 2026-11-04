@@ -1,0 +1,4 @@
+/* Parchment: the defaults in styles.css already describe this skin. */
+:root {
+  --bg-pattern: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.5), transparent 45%);
+}

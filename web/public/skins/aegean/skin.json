@@ -1,0 +1,35 @@
+{
+  "name": "Aegean",
+  "extends": "parchment",
+  "author": "Ovian contributors",
+  "description": "Whitewash and deep sea blue. Made for the isles pack.",
+  "stylesheet": "theme.css",
+  "swatches": ["#f4f7fa", "#ffffff", "#1d5c96", "#e3a72f"],
+  "layout": { "nav": "top" },
+  "icons": {
+    "app.logo": "⛵",
+    "nav.village": "🏛️", "nav.map": "🧭", "nav.rally": "⚓", "nav.reports": "📜", "nav.rankings": "🏅", "nav.settings": "⚙️", "nav.chat": "💬",
+    "resource.wood": "🌲", "resource.marble": "🪨", "resource.crystal": "💎", "resource.wine": "🍷",
+    "resource.clay": "🏺", "resource.iron": "⛓️", "resource.grain": "🌾",
+    "building.sawmill": "🪚", "building.quarry": "⛰️", "building.crystal_mine": "💎", "building.vineyard": "🍇",
+    "building.agora": "🏛️", "building.storehouse": "📦", "building.hideout": "🕳️", "building.barracks": "🛡️",
+    "building.stables": "🐎", "building.city_wall": "🏰", "slot.empty": "＋",
+    "unit.hoplite": "🛡️", "unit.slinger": "🪨", "unit.peltast": "🏹", "unit.horseman": "🐎",
+    "tribe.polis": "🏛️",
+    "stat.population": "👥", "stat.attack": "⚔️", "stat.defense": "🛡️", "stat.speed": "⛵", "stat.carry": "🏺", "stat.time": "⏳"
+  },
+  "labels": {
+    "app.title": "Ovian Isles",
+    "nav.village": "Polis",
+    "nav.rally": "Harbour",
+    "section.fields": "Island works",
+    "section.center": "Polis",
+    "section.troops": "Garrison",
+    "terrain.water": "Open sea",
+    "terrain.beach": "Shore"
+  },
+  "map": {
+    "terrain": { "plain": "#cfe0a6", "forest": "#87b06c", "hills": "#d8c48c", "mountain": "#a49c8e", "water": "#2f6fa5", "beach": "#f2e2b1" },
+    "own": "#e3a72f", "other": "#b23a48", "selected": "#ffffff", "grid": "rgba(255,255,255,0.08)", "label": "rgba(255,255,255,0.75)"
+  }
+}

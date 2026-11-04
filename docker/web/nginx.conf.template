@@ -1,0 +1,43 @@
+# Rendered by the nginx image from environment variables at start.
+map $http_upgrade $connection_upgrade { default upgrade; '' close; }
+
+server {
+  listen 80;
+  root /usr/share/nginx/html;
+  index index.html;
+  gzip on;
+  gzip_types application/json application/javascript text/css image/svg+xml model/vnd.collada+xml;
+
+  location /api/      { proxy_pass ${OVIAN_API_UPSTREAM}; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+  location = /health  { proxy_pass ${OVIAN_API_UPSTREAM}; }
+  location = /docs    { proxy_pass ${OVIAN_API_UPSTREAM}; }
+  location = /openapi.json { proxy_pass ${OVIAN_API_UPSTREAM}; }
+  # Never expose the broker callbacks.
+  location /internal/ { return 404; }
+
+  location /mqtt {
+    proxy_pass ${OVIAN_MQTT_UPSTREAM};
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_read_timeout 1h;
+  }
+
+  # Files whose names do not change between releases are revalidated on every load (cheap: ETag, 304).
+  location ~* \.wasm$ { types { application/wasm wasm; } add_header Cache-Control "no-cache"; }
+  location /engine/ { add_header Cache-Control "no-cache"; }
+  location = /index.html { add_header Cache-Control "no-cache"; }
+  location = /config.json { add_header Cache-Control "no-store"; }
+  location /skins/ { add_header Cache-Control "public, max-age=600"; }
+  # Baked 0 A.D. art (diorama): meshes are stored pre-gzipped next to the originals.
+  # The manifest maps buildings to models: it changes with the content packs.
+  location = /art/manifest.json { add_header Cache-Control "no-cache"; }
+  location /art/ {
+    gzip_static on;
+    types { model/vnd.collada+xml dae; image/webp webp; application/json json; text/plain txt; }
+    add_header Cache-Control "public, max-age=86400";
+  }
+  location / { try_files $uri $uri/ /index.html; add_header Cache-Control "no-cache"; }
+  # Angular bundles carry a content hash in their names: keep them.
+  location ~* "-[A-Za-z0-9_]{8}\.(js|css)$" { add_header Cache-Control "public, max-age=31536000, immutable"; }
+}

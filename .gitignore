@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.pnpm-store/
+*.tsbuildinfo
+shots/
+engine/target/
+__pycache__/
+*.pyc

@@ -1,0 +1,5 @@
+{
+  "/api": { "target": "http://server:8000", "changeOrigin": true },
+  "/health": { "target": "http://server:8000", "changeOrigin": true },
+  "/mqtt": { "target": "http://broker:9001", "ws": true, "changeOrigin": true }
+}

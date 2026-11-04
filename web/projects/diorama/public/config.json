@@ -1,0 +1,7 @@
+{
+  "apiUrl": "",
+  "mqttUrl": "",
+  "skin": "diorama",
+  "skins": ["diorama"],
+  "ledgerUrl": ""
+}
