@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Api } from '@core/api.service';
 import { EngineService } from '@core/engine.service';
 import { GameStore } from '@core/game.store';
+import { Badge } from '@core/hub';
 import { GreatBuilding, MapVillage, Road, Tile } from '@core/models';
 import { ArtService } from '../art/art.service';
 import { UI } from '../ui';
@@ -57,7 +58,7 @@ const label = (v: MapVillage) => (v.alliance_tag ? `[${v.alliance_tag}] ` : '') 
                 @if (v.npc) {
                   <div class="small">Barbarian camp, level {{ v.camp_level }}. Raid it for loot; heroes earn double experience here. It recovers an hour after each battle.</div>
                 } @else {
-                  <div class="small">{{ v.player_name }}@if (v.bot) { 🤖 <span class="muted">(an AI ruler)</span>} · {{ tribeName(v.tribe) }}</div>
+                  <div class="small">{{ v.player_name }}@if (ownerBadges(); as ob) {&nbsp;<dio-badges [badges]="ob.badges" [founderNo]="ob.founder_no" />}@if (v.bot) { 🤖 <span class="muted">(an AI ruler)</span>} · {{ tribeName(v.tribe) }}</div>
                 }
                 <div class="small muted">Population {{ v.population }}@if (v.culture) { · culture {{ v.culture | n }}}@if (distance() !== null) { · {{ distance()!.toFixed(1) }} tiles}</div>
                 @if (v.overlord_id) {<div class="small bad">⛓ Vassal of {{ v.overlord_name }} ({{ v.overlord_player_name }}), {{ tribeName(v.overlord_tribe!) }} in culture</div>}
@@ -247,8 +248,25 @@ export class MapComponent implements AfterViewInit {
     return t && v ? Math.hypot(t.x - v.x, t.y - v.y) : null;
   });
 
+  /** Hub badges of the players whose cities were selected, by player id. */
+  private readonly badgeCache = signal(new Map<number, { badges: Badge[]; founder_no: number | null }>());
+  protected readonly ownerBadges = computed(() => {
+    const v = this.selectedVillage();
+    const b = v && !v.npc ? this.badgeCache().get(v.player_id) : undefined;
+    return b?.badges.length ? b : null;
+  });
+
+  private loadBadges(v: MapVillage | undefined): void {
+    if (!v || v.npc || v.bot || !v.player_id || this.badgeCache().has(v.player_id)) return;
+    const id = v.player_id;
+    this.api.player(id).then((p) => {
+      this.badgeCache.update((m) => new Map(m).set(id, { badges: Array.isArray(p?.badges) ? p.badges : [], founder_no: p?.founder_no ?? null }));
+    }).catch(() => undefined);
+  }
+
   constructor() {
     effect(() => void this.loadGreat(this.selectedVillage()));
+    effect(() => this.loadBadges(this.selectedVillage()));
     const v = this.game.village();
     if (v) this.center.set({ x: v.x, y: v.y });
     effect(() => {

@@ -50,8 +50,10 @@ export class GameStore {
   /** A superuser is looking at someone else's city (read-only). */
   readonly inspecting = computed(() => {
     const v = this.village();
-    return !!v && !!this.me() && v.player_id !== this.me()!.id;
+    return !!v && !!this.me() && v.player_id !== this.me()!.id && !v.steward;
   });
+  /** The player manages a vassal city's construction as its steward (not their own city). */
+  readonly stewarding = computed(() => !!this.village()?.steward);
 
   constructor() {
     setInterval(() => this.now.set(Date.now() + this.offset), 1000);

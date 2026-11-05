@@ -3415,6 +3415,22 @@ techs:
     stone: 1000
     metal: 3000
   time: 14400
+- id: civil_servants
+  name: Civil Servants
+  description: Every citizen is enrolled and drilled. When the city is attacked, each citizen fights as one of your
+    people's spearmen; they return to their trades after the battle.
+  building: fortress
+  level: 10
+  requires:
+    civic_centre: 15
+  after:
+  - veterans
+  cost:
+    food: 40000
+    wood: 30000
+    stone: 30000
+    metal: 40000
+  time: 86400
 extensions:
   beginner_protection_hours: 72
   demolish:
@@ -3433,6 +3449,7 @@ extensions:
     - cultural_exchange
     - garrison
     overlord_slots: 2
+    steward_level: 6
   submission:
     wins: 5
     tribute: 0.1
@@ -3849,6 +3866,9 @@ extensions:
   ranks:
     drill: 0.1
     veterans: 0.1
+  militia:
+    techs:
+      civil_servants: 1.0
   vacation:
     min_hours: 12
     max_days: 14
@@ -8299,3 +8319,4 @@ extensions:
       industry: technologies/wheelbarrow_empty.png
       drill: technologies/armor_leather.png
       veterans: technologies/armor_corinthian.png
+      civil_servants: technologies/patriotism.png

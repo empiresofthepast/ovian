@@ -527,6 +527,16 @@ techs:
     cost: { food: 3000, wood: 2000, stone: 1000, metal: 3000 }
     time: 14400
     icon: armor_corinthian.png
+  - id: civil_servants
+    name: Civil Servants
+    description: Every citizen is enrolled and drilled. When the city is attacked, each citizen fights as one of your people's spearmen; they return to their trades after the battle.
+    building: fortress
+    level: 10
+    after: [veterans]
+    requires: { civic_centre: 15 }
+    cost: { food: 40000, wood: 30000, stone: 30000, metal: 40000 }
+    time: 86400
+    icon: patriotism.png
 
 extensions:
   beginner_protection_hours: 72
@@ -543,7 +553,9 @@ extensions:
   # Buildings show the architecture of the power that ruled when they were founded; the embassy of a lost overlord becomes `ruin`.
   # The overlord also gets `overlord_slots` sites for the `overlord` buildings (cultural exchange, garrison), which it builds and pays for.
   embassies: { building: embassy, ruin: ruin, exchange: exchange, exchange_slots: 1, exchange_relief: 0.03,
-               overlord: [cultural_exchange, garrison], overlord_slots: 2 }
+               overlord: [cultural_exchange, garrison], overlord_slots: 2,
+               # with no governor in the city, an embassy this high lets the overlord build there as in their own city
+               steward_level: 6 }
   # The overlord sets taxes between `taxes.min` and `taxes.max`; above the usual tribute they anger the city,
   # `per_point` per percentage point, times 1 + distance / `taxes.distance`, so remote cities grow restless first.
   # A city may also swear fealty of its own will: it pays `voluntary.tribute` and may renounce it at any time.
@@ -660,6 +672,8 @@ extensions:
   great_buildings: { buildings: [great_theatre, great_forge], reward: 0.5 }
   # Techs that make this city's troops better soldiers (fraction added to attack and defense).
   ranks: { drill: 0.1, veterans: 0.1 }
+  # Techs that make a city's citizens fight when it is attacked (soldiers per citizen), as the people's spearmen.
+  militia: { techs: { civil_servants: 1.0 } }
   vacation: { min_hours: 12, max_days: 14 }
   quests:
     - { id: woodline, title: Timber, text: Raise a woodline to level 2., goal: { building: woodline, level: 2 }, reward: { food: 200, wood: 200, stone: 150, metal: 100 }, hint: "Tap a woodline on the edge of your city and upgrade it. Woodlines, quarries, mines and fields make your resources.", focus: { building: woodline } }

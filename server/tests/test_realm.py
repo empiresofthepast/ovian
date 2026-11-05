@@ -80,6 +80,36 @@ async def test_unhappy_vassal_rises_up(game: Game, client, register):
         assert "rose up" in entry["title"]
 
 
+async def test_content_cities_defend_themselves(game: Game, client, register):
+    alice, bob, target = await neighbours(game, register)
+    await patch_state(game, alice.village_id, lambda s: s.__setitem__("units", {"clubman": 10}))
+
+    async def attack() -> dict[str, Any]:
+        v = (await alice.post(f"/villages/{alice.village_id}/send", {"kind": "attack", "x": target["x"], "y": target["y"], "units": {"clubman": 1}})).json()
+        await arrive(game, v)
+        return (await last_report(bob))["data"]
+
+    with extensions(game, contentment={}):
+        c = (await bob.village())["contentment"]
+        assert c["score"] < 50 and c["defense"] == 0 and c["defense_from"] == 50
+        plain = (await attack())["defense_bonus"]
+        c = (await bob.village())["contentment"]  # the lost battle costs some points
+        # a festival of sorts: 30 points over the line, 0.4% each
+        async with game.tx() as tx:
+            v = await get_village(tx.conn, bob.village_id, lock=True)
+            contentment.add_effect(game, v.meta, "contentment", "Games", 80 - c["score"], 100)
+            await tx.conn.execute("UPDATE villages SET meta = $2 WHERE id = $1", v.id, v.meta)
+        c = (await bob.village())["contentment"]
+        assert c["score"] == 80 and c["defense"] == 0.12
+        assert (await attack())["defense_bonus"] == plain + 0.12
+        # capped at +20%
+        async with game.tx() as tx:
+            v = await get_village(tx.conn, bob.village_id, lock=True)
+            contentment.add_effect(game, v.meta, "contentment", "Triumph", 100, 100)
+            await tx.conn.execute("UPDATE villages SET meta = $2 WHERE id = $1", v.id, v.meta)
+        assert (await bob.village())["contentment"]["defense"] == 0.2
+
+
 async def test_government_anarchy_then_effects(game: Game, client, register):
     alice = await register("alice", "clans")
     with extensions(game, governments=GOVERNMENTS):

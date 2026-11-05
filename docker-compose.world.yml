@@ -1,0 +1,45 @@
+# A further world next to the main stack: its own server and broker, sharing the main database server, the hub
+# and the web front ends. One env file per world (see worlds/example.env and docs/worlds.md):
+#   docker compose -p ovian-w3 --env-file worlds/w3.env -f docker-compose.world.yml up -d --build
+# then list it in the main .env: OVIAN_WORLDS="w3=http://server-w3:8000|http://broker-w3:9001" and restart web/diorama.
+# The world's database must exist: docker compose exec db createdb -U ovian ovian_w3
+name: ovian-${OVIAN_WORLD_ID:?set OVIAN_WORLD_ID}
+
+x-secrets: &secrets
+  OVIAN_JWT_SECRET: ${OVIAN_JWT_SECRET:?}
+  OVIAN_INTERNAL_KEY: ${OVIAN_INTERNAL_KEY:?}
+  OVIAN_MQTT_SERVICE_PASSWORD: ${OVIAN_MQTT_SERVICE_PASSWORD:?}
+
+services:
+  server:
+    build: { context: ., dockerfile: docker/server.Dockerfile, target: runtime }
+    hostname: server-${OVIAN_WORLD_ID}
+    environment:
+      <<: *secrets
+      OVIAN_DATABASE_URL: postgresql://ovian:ovian@db:5432/${OVIAN_DATABASE_NAME:?}
+      OVIAN_CONTENT_DIR: /app/content/${OVIAN_PACK:-classic}
+      OVIAN_WORLD_ID: ${OVIAN_WORLD_ID}
+      OVIAN_WORLD_SPEED: ${OVIAN_WORLD_SPEED:-1}
+      OVIAN_MQTT_URL: mqtt://broker-${OVIAN_WORLD_ID}:1883
+      OVIAN_MQTT_PUBLIC_URL: ${OVIAN_MQTT_PUBLIC_URL:?the broker as browsers see it, e.g. wss://example.org/w/w3/mqtt}
+      OVIAN_CORS_ORIGINS: ${OVIAN_CORS_ORIGINS:-*}
+      OVIAN_ADMIN_USERS: ${OVIAN_ADMIN_USERS:-}
+      OVIAN_HUB_SECRET: ${OVIAN_HUB_WORLD_SECRET:-}
+      OVIAN_HUB_URL: ${OVIAN_HUB_INTERNAL_URL:-http://hub:8000}
+      OVIAN_LOCAL_REGISTRATION: ${OVIAN_LOCAL_REGISTRATION:-false}
+    networks: { main: { aliases: ["server-${OVIAN_WORLD_ID}"] } }
+    restart: unless-stopped
+
+  broker:
+    build: { context: broker }
+    environment:
+      OVIAN_INTERNAL_KEY: ${OVIAN_INTERNAL_KEY}
+      OVIAN_AUTH_HOST: server-${OVIAN_WORLD_ID}
+      OVIAN_AUTH_PORT: 8000
+    networks: { main: { aliases: ["broker-${OVIAN_WORLD_ID}"] } }
+    restart: unless-stopped
+
+networks:
+  main:
+    external: true
+    name: ${OVIAN_MAIN_NETWORK:-ovian_default}

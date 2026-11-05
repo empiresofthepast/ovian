@@ -194,9 +194,23 @@ import { embassyRules } from '../../core/embassy';
                   @if (v.taxes!.default !== null) {<button class="btn btn--ghost btn--small" (click)="setRealmTax(null)">usual</button>}
                 </div>
               }
+              @if ((v.vassals?.length ?? 0) > 1) {
+                <div class="row small muted"><span class="grow">{{ v.vassals!.length }} cities bound to you</span>
+                  <button class="btn btn--ghost btn--small" (click)="openAll(v.vassals!)">Open all</button>
+                  <button class="btn btn--ghost btn--small" (click)="expanded.set(emptyIds)">Close all</button>
+                </div>
+              }
+              <div class="vassal-list">
               @for (x of v.vassals ?? []; track x.village.id) {
+                <div class="vassal-item" [class.vassal-item--open]="isOpen(x.village.id)">
                 <div class="row row--wrap small">
-                  <span class="grow">⛓ {{ x.village.name }} <span class="muted">({{ x.village.x }}|{{ x.village.y }}, {{ x.player_name }})</span></span>
+                  <button class="fold" (click)="toggle(x.village.id)" [attr.aria-expanded]="isOpen(x.village.id)" [title]="(isOpen(x.village.id) ? 'Fold ' : 'Unfold ') + x.village.name">{{ isOpen(x.village.id) ? '▾' : '▸' }}</button>
+                  <span class="grow">{{ x.village.name }} <span class="muted">({{ x.village.x }}|{{ x.village.y }}, {{ x.player_name }})</span></span>
+                  @if (x.steward) {<button class="btn btn--ghost btn--small" (click)="openCity(x.village.id)" title="No governor rules it and your embassy is high: build there as in your own city, from its stores">🏛 Manage</button>}
+                  @if (x.colony) {<span class="muted small">colony</span>}
+                </div>
+                @if (isOpen(x.village.id)) {
+                <div class="row row--wrap small">
                   <ov-cost [cost]="x.flow" /><span class="muted">/h</span>
                   @if (x.tax; as t) {
                     <button class="btn btn--ghost btn--small" [disabled]="taxStep(t.rate, -1) === null" (click)="setTax(x.village.id, taxStep(t.rate, -1))" title="Lower taxes">−</button>
@@ -205,7 +219,7 @@ import { embassyRules } from '../../core/embassy';
                     @if (t.source === 'city') {<button class="btn btn--ghost btn--small" (click)="setTax(x.village.id, null)" title="Follow the realm rate">realm</button>}
                     @if (t.mood) {<span class="small" [class.bad]="t.mood < 0" [class.good]="t.mood > 0" title="Contentment from taxes">{{ t.mood > 0 ? '+' : '' }}{{ t.mood }}</span>}
                   }
-                  @if (x.colony) {<span class="muted small">colony</span>} @else {
+                  @if (!x.colony) {
                     @if (x.embassy; as e) {
                       @if (embassyNext(e); as n) {
                         <button class="btn btn--small" (click)="buildEmbassy(x.village.id)" [disabled]="!n.affordable"
@@ -233,7 +247,10 @@ import { embassyRules } from '../../core/embassy';
                   </div>
                 }
                 @if (!x.colony && x.garrison?.auxiliaries) {<ov-auxiliaries [vassal]="x" />}
+                }
+                </div>
               }
+              </div>
               @for (t of v.dominance?.threats ?? []; track t.player_id) {
                 <p class="small bad">{{ t.player_name }} has won {{ t.wins }} of {{ v.dominance!.needed }} battles in a row here. Defend once to reset.</p>
               }
@@ -267,6 +284,9 @@ import { embassyRules } from '../../core/embassy';
             <ov-units [units]="v.state.units" />
             @if (v.reinforcements.here.length) {
               <p class="muted small">+ reinforcements from {{ v.reinforcements.here.length }} village(s)</p>
+            }
+            @if (v.militia) {
+              <p class="muted small" title="Civil servants: when the city is attacked its citizens fight too">+ citizens under arms: <ov-units [units]="v.militia" /></p>
             }
           </section>
         </div>
@@ -364,6 +384,23 @@ export class VillageComponent {
       this.renaming.set(false);
       void this.game.refreshMe();
     }
+  }
+
+  /** Vassals and colonies whose details are unfolded in the Dominion panel (all folded at first). */
+  protected readonly expanded = signal<ReadonlySet<number>>(new Set());
+  protected readonly emptyIds: ReadonlySet<number> = new Set();
+  protected isOpen(id: number): boolean {
+    return this.expanded().has(id);
+  }
+  protected toggle(id: number): void {
+    this.expanded.update((s) => {
+      const next = new Set(s);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+  protected openAll(vassals: { village: { id: number } }[]): void {
+    this.expanded.set(new Set(vassals.map((x) => x.village.id)));
   }
 
   protected openCity(id: number): void {

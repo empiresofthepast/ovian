@@ -146,6 +146,31 @@ export const DEFAULT_LABELS: Record<string, string> = {
   'error.admin_only': 'Only superusers can open this.',
   'error.network': 'The server cannot be reached.',
   'error.slow_down': 'You are sending messages too fast.',
+  // hub: one account for many worlds
+  'error.tribe_required': 'Choose a people to found your first city in this world.',
+  'error.link_required': 'A player of this name already lives in this world: enter its password, or choose another name.',
+  'error.rename_on_hub': 'Your name comes from your account on the hub: change it there.',
+  'error.register_on_hub': 'New players join this world through the hub: create an account there.',
+  'error.early_access_only': 'Only founders (and patrons, when allowed) can enter this world for now.',
+  'error.world_upcoming': 'This world has not opened yet.',
+  'error.world_closed': 'This world is closed to newcomers.',
+  'error.world_ended': 'This world has ended.',
+  'error.patreon_taken': 'This Patreon account is linked to another player.',
+  'error.patreon_disabled': 'Patreon is not set up on this site.',
+  'error.invalid_ticket': 'The pass into this world has expired. Try again.',
+  'error.already_linked': 'That player already belongs to an account.',
+  'error.founder_number_taken': 'Another founder has that number.',
+  'error.badge_not_found': 'No such badge.',
+  'error.invalid_badge_id': 'A badge id has 2 to 32 lowercase letters, digits, _ or -.',
+  'error.patreon_tier_required': 'A patron badge needs a Patreon tier id, or * for any pledge.',
+  'error.invalid_world_id': 'A world id has 1 to 32 lowercase letters, digits, _ or -.',
+  'error.invalid_email': 'That email address does not look right.',
+  'error.account_not_found': 'No such account.',
+  'error.world_not_found': 'No such world.',
+  'error.badge_or_account_not_found': 'No such badge or account.',
+  'error.unknown_tribe': 'Choose one of the peoples on offer.',
+  'nav.account': 'Account',
+  'nav.hub-admin': 'Hub admin',
 };
 
 export const DEFAULT_ICONS: Record<string, string> = {
@@ -172,4 +197,6 @@ export const DEFAULT_ICONS: Record<string, string> = {
   'nav.festival': '🏛',
   'nav.chronicle': '📜',
   'nav.governors': '⚜',
+  'nav.account': '☉',
+  'nav.hub-admin': '✦',
 };

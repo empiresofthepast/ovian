@@ -16,6 +16,7 @@ from ..errors import GameError, rule
 from ..repo import VillageRow, get_player, get_village, save_village
 from ..security import PlayerId, hash_password, issue_token, require_session, verify_password
 from .base import Module
+from .hub import NO_PASSWORD
 
 if TYPE_CHECKING:
     from ..game import Game, Tx
@@ -97,6 +98,8 @@ def token_response(game: Game, player: dict[str, Any]) -> dict[str, Any]:
 
 @router.post("/auth/register", status_code=201)
 async def register(body: Register, game: GameDep) -> dict[str, Any]:
+    if not game.settings.local_registration:
+        raise GameError(403, "register_on_hub", "new players join this world through the hub")
     if not USERNAME.match(body.username):
         raise GameError(422, "invalid_username", "3-24 letters, digits, _ or -")
     if body.tribe not in game.content.tribe_ids():
@@ -141,7 +144,8 @@ async def me(player_id: PlayerId, game: GameDep) -> dict[str, Any]:
             "SELECT id, name, x, y, population FROM villages WHERE player_id = $1 ORDER BY id", player_id
         )
         unread = await conn.fetchval("SELECT count(*) FROM reports WHERE player_id = $1 AND NOT read", player_id)
-        is_admin, vacation_until, bot, pmeta = await conn.fetchrow("SELECT is_admin, vacation_until, bot, meta FROM players WHERE id = $1", player_id)
+        is_admin, vacation_until, bot, pmeta, account_id, badges, founder_no = await conn.fetchrow(
+            "SELECT is_admin, vacation_until, bot, meta, account_id, badges, founder_no FROM players WHERE id = $1", player_id)
     return {
         "id": player["id"],
         "username": player["username"],
@@ -152,6 +156,9 @@ async def me(player_id: PlayerId, game: GameDep) -> dict[str, Any]:
         "is_admin": is_admin,
         "vacation_until": vacation_until,
         "bot": bot,
+        "account_id": account_id,
+        "badges": badges,
+        "founder_no": founder_no,
         "tutorial": not pmeta.get("tutorial_off", False),
         "former_names": pmeta.get("former_names", []),
         "rename_ready_at": (pmeta["renamed_at"] + int(game.settings.rename_days * 86_400_000)) if pmeta.get("renamed_at") else None,
@@ -178,6 +185,8 @@ async def change_username(body: NewName, request: Request, player_id: PlayerId, 
             p = await tx.conn.fetchrow("SELECT id, username, tribe, password_hash, bot, meta FROM players WHERE id = $1 FOR UPDATE", player_id)
             if p["bot"]:
                 raise rule("bots_keep_their_name")
+            if p["password_hash"] == NO_PASSWORD:
+                raise rule("rename_on_hub", "your name comes from your account on the hub")
             if not await verify_password(body.password, p["password_hash"]):
                 raise GameError(401, "invalid_credentials", "wrong password")
             old = p["username"]
@@ -210,7 +219,8 @@ async def change_username(body: NewName, request: Request, player_id: PlayerId, 
 
 
 class DeleteAccount(BaseModel):
-    password: str
+    #: Not needed by players who come from the hub (they have no password in the world).
+    password: str = ""
     #: The username again, as a guard against a slip.
     confirm: str
 
@@ -228,12 +238,12 @@ async def delete_account(body: DeleteAccount, request: Request, player_id: Playe
     from .submission import release
 
     async with game.tx() as tx:
-        p = await tx.conn.fetchrow("SELECT id, username, password_hash, bot FROM players WHERE id = $1 FOR UPDATE", player_id)
+        p = await tx.conn.fetchrow("SELECT id, username, password_hash, bot, account_id FROM players WHERE id = $1 FOR UPDATE", player_id)
         if p is None:
             raise GameError(404, "player_not_found")
         if p["bot"]:
             raise rule("bots_stay", "AI rulers are removed by the administrator")
-        if not await verify_password(body.password, p["password_hash"]):
+        if p["password_hash"] != NO_PASSWORD and not await verify_password(body.password, p["password_hash"]):
             raise GameError(401, "invalid_credentials", "wrong password")
         if body.confirm.strip().lower() != p["username"].lower():
             raise rule("confirm_username", "type your username to confirm")
@@ -283,6 +293,10 @@ async def delete_account(body: DeleteAccount, request: Request, player_id: Playe
         now = game.clock.now()
         for vid in mine:
             tx.publish(game.topics.map, {"type": "map.village_removed", "at": now, "data": {"id": vid}})
+    if p["account_id"] is not None:
+        from .hub import tell_hub_left
+
+        tell_hub_left(game, p["account_id"])
     return {"deleted": True}
 
 

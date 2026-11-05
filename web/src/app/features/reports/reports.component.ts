@@ -47,6 +47,13 @@ import { UI } from '../../shared/ui';
                 <tr><th>Losses</th><td><ov-units [units]="g.losses" /></td></tr>
               </table>
             }
+            @if (d.defender.militia; as m) {
+              <h3 class="subtitle">Citizens under arms</h3>
+              <table class="table small">
+                <tr><th>Troops</th><td><ov-units [units]="m.units" /></td></tr>
+                <tr><th>Fallen</th><td><ov-units [units]="m.losses" /></td></tr>
+              </table>
+            }
             <p class="small">{{ 'report.loot' | label: 'Loot' }}: <ov-cost [cost]="d.loot" /></p>
             @if (d.culture?.attacker_bonus || d.culture?.defender_bonus) {
               <p class="small">{{ 'report.prestige' | label: 'Cultural prestige' }}:

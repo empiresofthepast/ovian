@@ -4,12 +4,13 @@ import { Api } from '../../core/api.service';
 import { GameStore } from '../../core/game.store';
 import { HallOfFame, Medal, MedalsView } from '../../core/models';
 import { UI } from '../../shared/ui';
+import { BadgesComponent } from '../../shared/badges';
 
 type Tab = 'players' | 'medals' | 'fame';
 
 @Component({
   selector: 'ov-rankings',
-  imports: [DatePipe, DecimalPipe, NgTemplateOutlet, ...UI],
+  imports: [DatePipe, DecimalPipe, NgTemplateOutlet, BadgesComponent, ...UI],
   template: `
     <div class="page-head"><h1 class="page-title">{{ 'nav.rankings' | label }}</h1></div>
     <div class="tabs" role="tablist">
@@ -28,7 +29,7 @@ type Tab = 'players' | 'medals' | 'fame';
               <tbody>
                 @for (r of rows(); track r.id) {
                   <tr [class.me]="r.id === game.me()?.id">
-                    <td>{{ r.rank }}</td><td>{{ r.username }}@if (r.bot) { <span title="AI ruler">🤖</span>}</td><td>{{ r.tribe | name: 'tribe' }}</td>
+                    <td>{{ r.rank }}</td><td>{{ r.username }}@if (r.bot) { <span title="AI ruler">🤖</span>}@if (r.badges?.length) { <ov-badges [badges]="r.badges" [founderNo]="r.founder_no" />}</td><td>{{ r.tribe | name: 'tribe' }}</td>
                     <td class="num">{{ r.villages }}</td><td class="num">{{ r.population }}</td><td class="num">{{ r.vassals ?? 0 }}</td>
                   </tr>
                 }

@@ -6,10 +6,13 @@ import { RealtimeService } from '../../core/realtime.service';
 import { SkinService } from '../../core/skin.service';
 import { UI } from '../../shared/ui';
 import { AssistantsComponent } from './assistants.component';
+import { RouterLink } from '@angular/router';
+import { Hub } from '../../core/hub';
+import { BadgesComponent } from '../../shared/badges';
 
 @Component({
   selector: 'ov-settings',
-  imports: [AssistantsComponent, ...UI],
+  imports: [AssistantsComponent, RouterLink, BadgesComponent, ...UI],
   template: `
     <div class="page-head"><h1 class="page-title">{{ 'nav.settings' | label }}</h1></div>
     <section class="panel">
@@ -40,7 +43,7 @@ import { AssistantsComponent } from './assistants.component';
         </table>
       }
       @if (game.me(); as me) {
-        <p class="small muted">Signed in as {{ me.username }} ({{ me.tribe | name: 'tribe' }}).
+        <p class="small muted">Signed in as {{ me.username }} <ov-badges [badges]="me.badges" [founderNo]="me.founder_no" /> ({{ me.tribe | name: 'tribe' }}).
           @if (me.protected_until > game.now()) { Beginner protection for {{ me.protected_until - game.now() | duration }}. }
         </p>
       }
@@ -48,7 +51,10 @@ import { AssistantsComponent } from './assistants.component';
     @if (game.me(); as me) {
       <section class="panel">
         <h2 class="panel__title">{{ 'settings.rename' | label: 'Change your name' }}</h2>
-        @if ((me.rename_ready_at ?? 0) > game.now()) {
+        @if (me.account_id) {
+          <p class="small muted">{{ 'error.rename_on_hub' | label: 'Your name comes from your account on the hub: change it there.' }}
+            @if (hubEnabled) {<a routerLink="/account">{{ 'nav.account' | label: 'Account' }}</a>}</p>
+        } @else if ((me.rename_ready_at ?? 0) > game.now()) {
           <p class="small muted">You can change your name again in {{ me.rename_ready_at! - game.now() | duration }}.</p>
         } @else {
           <form class="row-form" (submit)="$event.preventDefault(); rename()">
@@ -62,13 +68,16 @@ import { AssistantsComponent } from './assistants.component';
       </section>
       <section class="panel">
       <details class="danger-zone">
-        <summary>Delete your account</summary>
+        <summary>{{ me.account_id ? 'Leave this world' : 'Delete your account' }}</summary>
+        @if (me.account_id) {<p class="small muted">Only your player in this world is deleted; your hub account and your other worlds stay.</p>}
         <p class="small">This cannot be undone. Your cities leave the map with everything in them, and your reports, messages and achievements are deleted.
           Cities you hold as vassals go free; troops of other players in your cities, or marching on them, go home; your alliance passes to the next member.</p>
         <form class="row-form" (submit)="$event.preventDefault(); deleteAccount()">
           <input name="delconfirm" [value]="delConfirm" (input)="delConfirm = $any($event.target).value" [placeholder]="'Type ' + me.username" aria-label="Type your username to confirm" autocomplete="off" />
-          <input name="delpw" type="password" [value]="delPassword" (input)="delPassword = $any($event.target).value" placeholder="Your password" aria-label="Your password" autocomplete="current-password" />
-          <button class="btn  btn--danger" [disabled]="busy || !delPassword || delConfirm.trim().toLowerCase() !== me.username.toLowerCase()">{{ delArmed ? 'Really delete, for good' : 'Delete account' }}</button>
+          @if (!me.account_id) {
+            <input name="delpw" type="password" [value]="delPassword" (input)="delPassword = $any($event.target).value" placeholder="Your password" aria-label="Your password" autocomplete="current-password" />
+          }
+          <button class="btn  btn--danger" [disabled]="busy || (!delPassword && !me.account_id) || delConfirm.trim().toLowerCase() !== me.username.toLowerCase()">{{ delArmed ? 'Really delete, for good' : 'Delete account' }}</button>
         </form>
         @if (delArmed) {<p class="small bad">Press again to delete {{ me.username }} and all its cities. <button type="button" class="linkbtn" (click)="delArmed = false">Cancel</button></p>}
       </details>
@@ -83,6 +92,7 @@ export class SettingsComponent {
   protected readonly game = inject(GameStore);
   protected readonly engine = inject(EngineService);
   protected readonly realtime = inject(RealtimeService);
+  protected readonly hubEnabled = inject(Hub).enabled;
   protected newName = '';
   protected password = '';
   protected busy = false;

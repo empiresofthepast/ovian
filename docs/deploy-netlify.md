@@ -22,7 +22,9 @@ on every push to `main` that touches the web, the engine, the content packs or t
    - variable `OVIAN_API_ORIGIN`: the game server, e.g. `https://api.example.org`. Netlify forwards
      `/api/*` there, so the browser talks to one origin;
    - variable `OVIAN_MQTT_URL`: the broker's WebSocket, `wss://...` (see below);
-   - optional variable `OVIAN_MCP_URL`.
+   - optional variable `OVIAN_MCP_URL`;
+   - with a hub ([worlds.md](worlds.md)): `OVIAN_HUB_ORIGIN` (served at `/hub/`, and turns the hub login on) and
+     `OVIAN_WORLDS`, further worlds as `w3=https://w3.example.org w4=…` (served at `/w/<id>/`).
 3. Point your domain at the site in Netlify (*Domain management*). The official world uses
    `empires.ofthepast.org`; its documentation is at `empiresofthepast.github.io`.
 

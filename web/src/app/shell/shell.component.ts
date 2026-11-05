@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CONFIG } from '../core/config';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { GameStore } from '../core/game.store';
@@ -8,6 +9,7 @@ import { FEATURES } from '../features';
 import { ChatComponent } from '../features/chat/chat.component';
 import { UI } from '../shared/ui';
 import { EngineService } from '../core/engine.service';
+import { HubSession, patreonNotice } from '../features/hub/hub-session';
 
 @Component({
   selector: 'ov-shell',
@@ -44,6 +46,11 @@ import { EngineService } from '../core/engine.service';
           <button class="btn btn--ghost" (click)="chatOpen.set(!chatOpen())" [attr.aria-pressed]="chatOpen()">
             <ov-icon key="nav.chat" /> {{ 'nav.chat' | label: 'Chat' }}
           </button>
+          @if (hub.hub.enabled) {
+            <a class="btn btn--ghost world-switch" routerLink="/worlds" [title]="'hub.switch_world' | label: 'Switch world'">
+              🌍 @if (hub.world) {<span class="world-switch__name">{{ hub.world.name }}</span> · }{{ 'hub.worlds' | label: 'Worlds' }}
+            </a>
+          }
           @if (dioramaUrl) {<a class="btn btn--ghost" [href]="dioramaUrl" title="Your city in 3D">{{ 'nav.diorama' | label: '3D view' }}</a>}
           <button class="btn btn--ghost" (click)="logout()">{{ 'nav.logout' | label: 'Log out' }}</button>
         </div>
@@ -63,6 +70,10 @@ import { EngineService } from '../core/engine.service';
 
       @if (game.inspecting()) {
         <div class="inspect-banner" role="status">👁 {{ game.village()?.owner?.name }}'s city {{ game.village()?.name }}, read-only.
+          <button class="btn btn--small" (click)="game.home()">Back to my city</button></div>
+      }
+      @if (game.stewarding()) {
+        <div class="inspect-banner" role="status">🏛 You are steward of {{ game.village()?.name }}: build here as in your own city, paid from its stores. Its other orders stay its owner's.
           <button class="btn btn--small" (click)="game.home()">Back to my city</button></div>
       }
       <main class="main"><router-outlet /></main>
@@ -86,9 +97,28 @@ export class ShellComponent {
   private readonly engine = inject(EngineService);
   private readonly router = inject(Router);
   protected readonly dioramaUrl = inject(CONFIG).dioramaUrl ?? '';
+  protected readonly hub = inject(HubSession);
   protected readonly chatOpen = signal(false);
+
+  constructor() {
+    if (this.hub.hub.enabled) void this.hub.load();
+    const code = this.hub.patreonReturn();
+    if (code) {
+      const n = patreonNotice(code);
+      this.game.toast(this.skin.label(n.key, n.text), n.tone);
+      if (code === 'linked') void this.hub.load(true);
+    }
+    // badges change (a founder named, a pledge begun): keep the player's own profile current
+    this.realtime.messages.pipe(takeUntilDestroyed()).subscribe(({ event }) => {
+      if (event.type === 'player.badges') {
+        this.game.me.update((m) => m && { ...m, badges: event.data.badges, founder_no: event.data.founder_no });
+        void this.hub.load(true);
+      }
+    });
+  }
   protected readonly sideNav = computed(() => this.skin.skin()?.layout?.nav === 'side');
-  protected readonly nav = computed(() => FEATURES.filter((f) => f.nav && !this.skin.hidden(f.id) && (!f.admin || !!this.game.me()?.is_admin)));
+  protected readonly nav = computed(() => FEATURES.filter((f) => f.nav && !this.skin.hidden(f.id) && (!f.admin || !!this.game.me()?.is_admin)
+    && (!f.hub || this.hub.hub.enabled) && (!f.hubAdmin || !!this.hub.me()?.is_admin)));
 
   protected readonly resources = computed(() => {
     const v = this.game.village();
@@ -116,6 +146,10 @@ export class ShellComponent {
 
   protected logout(): void {
     this.game.logout();
+    if (this.hub.hub.enabled) {
+      this.hub.logout();
+      return;
+    }
     void this.router.navigateByUrl('/login');
   }
 }

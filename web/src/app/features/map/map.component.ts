@@ -7,6 +7,8 @@ import { GameStore } from '../../core/game.store';
 import { MapVillage, Tile } from '../../core/models';
 import { SkinService } from '../../core/skin.service';
 import { UI } from '../../shared/ui';
+import { BadgesComponent } from '../../shared/badges';
+import { Badge } from '../../core/hub';
 import { colonyBlocker, migrationSeconds } from '../../core/ver-sacrum';
 
 const TILE = 30;
@@ -17,7 +19,7 @@ const DEFAULT_TERRAIN: Record<string, string> = {
 
 @Component({
   selector: 'ov-map',
-  imports: [FormsModule, ...UI],
+  imports: [FormsModule, BadgesComponent, ...UI],
   template: `
     <div class="page-head">
       <h1 class="page-title">{{ 'nav.map' | label }}</h1>
@@ -42,7 +44,7 @@ const DEFAULT_TERRAIN: Record<string, string> = {
           <p class="small">{{ 'terrain.' + t.terrain | label: t.terrain }}</p>
           @if (selectedVillage(); as v) {
             <h3 class="subtitle">{{ v.name }}</h3>
-            <p class="small">{{ v.player_name }}@if (v.bot) { <span title="AI ruler">🤖</span>} · {{ v.tribe | name: 'tribe' }} · <ov-icon key="stat.population" /> {{ v.population }}</p>
+            <p class="small">{{ v.player_name }}@if (v.bot) { <span title="AI ruler">🤖</span>}@if (owner(); as o) {@if (o.id === v.player_id && o.badges.length) { <ov-badges [badges]="o.badges" [founderNo]="o.founder_no" />}} · {{ v.tribe | name: 'tribe' }} · <ov-icon key="stat.population" /> {{ v.population }}</p>
             @if (v.overlord_id) {<p class="small">⛓ Vassal of {{ v.overlord_name }} ({{ v.overlord_player_name }})</p>}
             @if (v.vassals) {<p class="small">Overlord of {{ v.vassals }} {{ v.vassals === 1 ? 'city' : 'cities' }}</p>}
             @if (distance() !== null) {<p class="small muted">{{ distance()!.toFixed(1) }} tiles away</p>}
@@ -128,6 +130,9 @@ export class MapComponent implements AfterViewInit {
     const t = this.selected();
     return t ? this.villages().get(`${t.x},${t.y}`) : undefined;
   });
+  /** The selected city's ruler: badges (founder, patron, awards), fetched once per player. */
+  protected readonly owner = signal<{ id: number; badges: Badge[]; founder_no: number | null } | null>(null);
+  private readonly owners = new Map<number, Promise<{ id: number; badges: Badge[]; founder_no: number | null }>>();
   protected readonly distance = computed(() => {
     const t = this.selected();
     const v = this.game.village();
@@ -143,6 +148,21 @@ export class MapComponent implements AfterViewInit {
       this.center.set({ x: qx, y: qy });
       this.selected.set(this.tiles.get(`${qx},${qy}`) ?? { x: qx, y: qy, terrain: 'plain', settleable: false });
       this.pendingSelect = `${qx},${qy}`;
+    });
+    effect(() => {
+      const id = this.selectedVillage()?.player_id;
+      if (!id) return;
+      let p = this.owners.get(id);
+      if (!p) {
+        p = this.api.player(id).then(
+          (r) => ({ id, badges: (r?.badges ?? []) as Badge[], founder_no: r?.founder_no ?? null }),
+          () => ({ id, badges: [], founder_no: null }),
+        );
+        this.owners.set(id, p);
+      }
+      void p.then((o) => {
+        if (this.selectedVillage()?.player_id === id) this.owner.set(o);
+      });
     });
     effect(() => {
       const c = this.center();

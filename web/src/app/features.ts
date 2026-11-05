@@ -13,6 +13,10 @@ export interface Feature {
   nav: boolean;
   /** Only superusers see it. */
   admin?: boolean;
+  /** Only when the site has a hub (one account for many worlds). */
+  hub?: boolean;
+  /** Only hub administrators see it. */
+  hubAdmin?: boolean;
 }
 
 export const FEATURES: Feature[] = [
@@ -26,5 +30,7 @@ export const FEATURES: Feature[] = [
   { id: 'chronicle', path: 'chronicle', nav: true, load: () => import('./features/chronicle/chronicle.component').then((m) => m.ChronicleComponent) },
   { id: 'governors', path: 'governors', nav: true, load: () => import('./features/governors/governors.component').then((m) => m.GovernorsComponent) },
   { id: 'admin', path: 'admin', nav: true, admin: true, load: () => import('./features/admin/admin.component').then((m) => m.AdminComponent) },
+  { id: 'account', path: 'account', nav: true, hub: true, load: () => import('./features/hub/account.component').then((m) => m.AccountComponent) },
+  { id: 'hub-admin', path: 'hub-admin', nav: true, hubAdmin: true, load: () => import('./features/hub/hub-admin.component').then((m) => m.HubAdminComponent) },
   { id: 'settings', path: 'settings', nav: true, load: () => import('./features/settings/settings.component').then((m) => m.SettingsComponent) },
 ];

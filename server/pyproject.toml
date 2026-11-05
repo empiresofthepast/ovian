@@ -18,6 +18,7 @@ dependencies = [
   "pluggy>=1.5",
   "aiomqtt>=2.3,<3",
   "pydantic-settings>=2.6",
+  "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
@@ -25,13 +26,14 @@ test = ["pytest>=8", "pytest-asyncio>=0.24", "httpx>=0.27"]
 
 [project.scripts]
 ovian-server = "ovian_server.__main__:main"
+ovian-hub = "ovian_hub.__main__:main"
 
 # Third-party plugins register here, see docs/modding.md
 [project.entry-points."ovian.plugins"]
 beginner_protection = "ovian_server.plugins.beginner_protection"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ovian_server"]
+packages = ["src/ovian_server", "src/ovian_hub"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

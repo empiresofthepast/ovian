@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     # days a player waits between two changes of username (real days, not game time)
     rename_days: float = 7
 
+    # The hub (docs/worlds.md): shared with it (its OVIAN_HUB_WORLD_SECRET); empty means this world has no hub.
+    hub_secret: str = ""
+    # Where this world reaches the hub to report who joined, e.g. http://hub:8000; empty: it does not report.
+    hub_url: str = ""
+    # False: new players come only through the hub (POST /auth/register is closed).
+    local_registration: bool = True
+
     # Comma separated extra plugin modules to load, besides installed entry points.
     plugins: str = ""
     # Comma separated entry-point plugin names to skip.

@@ -30,12 +30,21 @@ interface LevyDraft { unit: string; count: number; from: number }
       <div class="topbar__who">
         @if (emblem()) {<img class="emblem" [src]="emblem()" alt="" />}
         <div>
-          @if ((game.me()?.villages?.length ?? 0) > 1 && !game.inspecting()) {
+          @if (renaming()?.id === village()?.id && village()) {
+            <form class="rename-form" (submit)="$event.preventDefault(); saveName(nm.value)">
+              <input #nm class="rename-form__input" [value]="renaming()!.name" maxlength="40" aria-label="City name" (keydown.escape)="renaming.set(null)" autofocus />
+              <button class="btn btn--gold btn--small" title="Save the name">✓</button>
+              <button type="button" class="btn btn--ghost btn--small" (click)="renaming.set(null)" title="Cancel">✕</button>
+            </form>
+          } @else if ((game.me()?.villages?.length ?? 0) > 1 && !game.inspecting()) {
             <select class="topbar__village topbar__switch" [value]="village()?.id" (change)="switchCity($any($event.target).value)" aria-label="Your cities" title="Switch city">
               @for (c of game.me()!.villages; track c.id) {<option [value]="c.id" [selected]="c.id === village()?.id">{{ c.name }} ({{ c.x }}|{{ c.y }})</option>}
             </select>
           } @else {
             <div class="topbar__village">{{ village()?.name }}</div>
+          }
+          @if (!game.inspecting() && !game.stewarding() && village() && renaming()?.id !== village()?.id) {
+            <button type="button" class="rename-btn" (click)="startRename(village()!.id, village()!.name)" [title]="'Rename ' + village()!.name">✎</button>
           }
           <div class="topbar__civ">{{ civName() }} · {{ phaseName() }}@if (village()?.submission; as s) { · <span [class.bad]="s.village.player_id !== village()!.player_id" title="Pays tribute; its culture follows the overlord">{{ s.village.player_id === village()!.player_id ? 'colony' : 'vassal' }} of @if (s.village.player_id === village()!.player_id && !game.inspecting()) {<button type="button" class="linkbtn" (click)="goTo(s.village.id)" [title]="'Go to ' + s.village.name">{{ s.village.name }}</button>} @else {{{ s.village.name }}}</span>}
             @if (village()?.season; as se) {&nbsp;· <a class="season-chip" routerLink="/year" [title]="se.name + ', year ' + se.year + (se.festival ? '. ' + se.festival.name + ' open!' : '')">{{ seasonIcon(se.id) }} {{ se.name }}@if (se.festival) { 🏛}</a>}
@@ -85,6 +94,12 @@ interface LevyDraft { unit: string; count: number; from: number }
       <div class="inspect hud-panel" role="status">
         <span>👁 {{ village()?.owner?.name }}'s city, read-only</span>
         <button class="btn btn--small" (click)="game.inspecting() && refreshInspect()" title="Reload">↻</button>
+        <button class="btn btn--gold btn--small" (click)="backHome()">Back to my city</button>
+      </div>
+    }
+    @if (game.stewarding()) {
+      <div class="inspect hud-panel" role="status">
+        <span title="No governor rules this vassal city and your embassy is high: its construction is yours to order, paid from its stores">🏛 Steward of {{ village()?.name }}: you may build here</span>
         <button class="btn btn--gold btn--small" (click)="backHome()">Back to my city</button>
       </div>
     }
@@ -146,6 +161,12 @@ interface LevyDraft { unit: string; count: number; from: number }
         @for (u of troops(); track u.id) {
           <div class="troop" [title]="u.name"><dio-portrait [src]="u.icon" [alt]="u.name" [small]="true" /><span>{{ u.count }}</span></div>
         } @empty {<p class="muted small">No troops at home.</p>}
+        @if (citizens().length) {
+          <div class="small muted" title="Civil servants: when the city is attacked its citizens fight too, then go back to work">+ citizens under arms</div>
+          @for (u of citizens(); track u.id) {
+            <div class="troop troop--militia" [title]="u.name + ' (citizens)'"><dio-portrait [src]="u.icon" [alt]="u.name" [small]="true" /><span>{{ u.count | n }}</span></div>
+          }
+        }
         @if (village()?.starvation; as st) {
           @if (st.starving) {
             <div class="alert alert--bad" title="The cheapest troops die first, until the city feeds itself">☠ Troops are starving: {{ st.deficit | n }}/h short</div>
@@ -232,13 +253,33 @@ interface LevyDraft { unit: string; count: number; from: number }
               @if (d.taxes.default !== null) {<button type="button" class="linkbtn small" (click)="setRealmTax(null)" title="Back to the usual tribute">reset</button>}
             </div>
           }
+          @if (d.vassals.length > 1) {
+            <div class="vassals-bar small muted">
+              <span class="grow">{{ d.vassals.length }} cities bound to you</span>
+              <button type="button" class="linkbtn small" (click)="openAll(d.vassals)">open all</button>
+              <button type="button" class="linkbtn small" (click)="expanded.set(emptyIds)">close all</button>
+            </div>
+          }
+          <div class="vassals">
           @for (x of d.vassals; track x.id) {
-            <div class="vassal">
+            <div class="vassal" [class.vassal--open]="isOpen(x.id)">
               <div class="dom">
+                <button type="button" class="fold" (click)="toggle(x.id)" [attr.aria-expanded]="isOpen(x.id)" [title]="(isOpen(x.id) ? 'Fold ' : 'Unfold ') + x.name">{{ isOpen(x.id) ? '▾' : '▸' }}</button>
                 @if (x.emblem) {<img class="dom__emblem" [src]="x.emblem" alt="" />}
-                <div class="grow">⛓ @if (x.colony) {<button type="button" class="linkbtn" (click)="goTo(x.id)">{{ x.name }}</button>} @else {{{ x.name }}}&nbsp;<span class="muted">({{ x.player }})</span></div>
+                @if (x.colony && renaming()?.id === x.id) {
+                  <form class="rename-form grow" (submit)="$event.preventDefault(); saveName(cn.value)">
+                    <input #cn class="rename-form__input" [value]="renaming()!.name" maxlength="40" aria-label="Colony name" (keydown.escape)="renaming.set(null)" autofocus />
+                    <button class="btn btn--gold btn--small" title="Save the name">✓</button>
+                    <button type="button" class="btn btn--ghost btn--small" (click)="renaming.set(null)" title="Cancel">✕</button>
+                  </form>
+                } @else {
+                  <div class="grow">@if (x.colony) {<button type="button" class="linkbtn" (click)="goTo(x.id)">{{ x.name }}</button>} @else {{{ x.name }}}&nbsp;<span class="muted">({{ x.player }})</span>
+                    @if (x.colony && !game.inspecting()) {<button type="button" class="rename-btn" (click)="startRename(x.id, x.name)" [title]="'Rename ' + x.name">✎</button>}</div>
+                }
                 @if (x.colony) {<button type="button" class="tag tag--link" (click)="goTo(x.id)" [title]="'Go to ' + x.name + ' (founded by a ver sacrum, bound to this city for good)'">colony ›</button>}
+                @if (x.steward) {<button type="button" class="tag tag--link" (click)="goTo(x.id)" [title]="'No governor rules ' + x.name + ' and your embassy is high: build there as in your own city, from its stores'">🏛 manage ›</button>}
               </div>
+              @if (isOpen(x.id)) {
               <dio-cost [cost]="x.flow" title="Tribute received per hour" />
               @if (!x.colony) {
                 <div class="tax-line">
@@ -315,8 +356,10 @@ interface LevyDraft { unit: string; count: number; from: number }
                   </div>
                 }
               }
+              }
             </div>
           }
+          </div>
           @for (t of d.threats; track t.player) {
             <div class="alert alert--bad small" title="Win one defence to reset">{{ t.player }}: {{ t.wins }}/{{ d.needed }} wins in a row against you</div>
           }
@@ -410,7 +453,7 @@ export class VillageComponent implements OnDestroy {
       overlord: s ? { id: s.village.id, benefits: vassalBenefits(s.benefits), own: !!s.colony || s.village.player_id === v.player_id, name: s.village.name, player: s.player_name, pct: Math.round(s.tribute * 100), flow: s.flow, civ: civ(s.tribe), emblem: emblem(s.tribe), voluntary: !!s.voluntary, taxed: s.tax?.source === 'city' || s.tax?.source === 'realm' } : null,
       offer: v.fealty_offer ?? null,
       offers: v.fealty_offers ?? [],
-      vassals: (v.vassals ?? []).map((x) => ({ colony: !!x.colony, id: x.village.id, name: x.village.name, player: x.player_name, flow: x.flow, emblem: emblem(x.tribe),
+      vassals: (v.vassals ?? []).map((x) => ({ colony: !!x.colony, steward: !!x.steward, id: x.village.id, name: x.village.name, player: x.player_name, flow: x.flow, emblem: emblem(x.tribe),
         embassy: x.embassy ?? null, next: x.embassy ? this.embassyNext(x.embassy) : null, tax: x.tax ?? null,
         sites: (x.sites ?? []).map((s) => ({ ...s, name: s.building ? (this.engine.building(s.building)?.name ?? s.building) : '', next: s.building ? this.embassyNext(s) : null,
           // offer what can still be raised once, on the first free site
@@ -528,6 +571,12 @@ export class VillageComponent implements OnDestroy {
       .map(([id, count]) => ({ id, count, name: this.engine.unit(id)?.name ?? id, icon: this.art.unitIcon(id) })),
   );
 
+  protected readonly citizens = computed(() =>
+    Object.entries(this.village()?.militia ?? {})
+      .filter(([, n]) => n > 0)
+      .map(([id, count]) => ({ id, count, name: this.engine.unit(id)?.name ?? id, icon: this.art.unitIcon(id) })),
+  );
+
   protected readonly incoming = computed(() => {
     const now = this.game.now();
     return (this.village()?.movements.incoming ?? []).map((m) => ({
@@ -621,7 +670,44 @@ export class VillageComponent implements OnDestroy {
     await this.game.home();
   }
 
+  /** Vassals and colonies whose details are unfolded in the Dominion panel (all folded at first). */
+  protected readonly expanded = signal<ReadonlySet<number>>(new Set());
+  protected readonly emptyIds: ReadonlySet<number> = new Set();
+  protected isOpen(id: number): boolean {
+    return this.expanded().has(id);
+  }
+  protected toggle(id: number): void {
+    this.expanded.update((s) => {
+      const next = new Set(s);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+  protected openAll(vassals: { id: number }[]): void {
+    this.expanded.set(new Set(vassals.map((x) => x.id)));
+  }
+
   /** Opens one of your own cities (a colony, or the city that founded it). */
+  /** The city or colony whose name is being edited. */
+  protected readonly renaming = signal<{ id: number; name: string } | null>(null);
+
+  protected startRename(id: number, name: string): void {
+    this.renaming.set({ id, name });
+  }
+
+  protected async saveName(value: string): Promise<void> {
+    const r = this.renaming();
+    const name = value.trim();
+    if (!r || !name) return;
+    if (name === r.name) return this.renaming.set(null);
+    if (await this.game.act(() => this.api.rename(r.id, name), `${r.name} is now ${name}`)) {
+      this.renaming.set(null);
+      const here = this.village()?.id;
+      // a colony's new name shows in this city's list of vassals once the city is reloaded
+      await Promise.all([this.game.refreshMe(), here && here !== r.id ? this.game.selectVillage(here) : null]);
+    }
+  }
+
   protected goTo(id: number): void {
     if (this.game.inspecting()) return;
     void this.router.navigateByUrl('/');

@@ -28,7 +28,8 @@ contentment, governments and seasons (the ones that change production).
   (seasons, governments). Modules call it, or `repo.refresh_all`, when their inputs change.
 - **Contentment** adds up reasons from the city itself, its timed effects and the
   `ovian_contentment` hook (governments, seasons). A happy city produces up to 10% more, and an angry one
-  up to 40% less. An unhappy vassal gathers unrest and, at the top, rises up (`release(reason="uprising")`).
+  up to 40% less. Above 50 points (`defense_from`) its citizens also take up arms when it is attacked: +0.4% defense
+  per point over it (`defense_per_point`), up to +20% at 100 (`defense_max`). An unhappy vassal gathers unrest and, at the top, rises up (`release(reason="uprising")`).
   Agitators (the `incite` mission) add unrest directly. Colonies never rebel.
 - **Amenities and politics.** Buildings with a `contentment` effect (antiquity: Public Gardens, Public Baths,
   Amphitheatre) add points, up to `amenities_max`. Techs listed in `contentment.techs` change a city's politics once

@@ -101,6 +101,8 @@ export interface ResearchJob {
 }
 
 export interface VillageView extends VillageRef {
+  /** Opened by its overlord as steward: they may build here, paid from this city's stores. */
+  steward?: boolean;
   population: number;
   state: VillageState;
   economy: Economy;
@@ -141,6 +143,8 @@ export interface VillageView extends VillageRef {
   gods?: GodsView;
   great?: GreatBuilding[];
   contentment?: ContentmentView;
+  /** Citizens who take up arms when the city is attacked (civil servants), as units. */
+  militia?: Record<string, number>;
   government?: { id: string; label: string; anarchy_until: number };
   season?: SeasonNow;
   omen?: Omen;
@@ -266,6 +270,9 @@ export interface ContentmentView {
   factors?: { label: string; value: number }[];
   /** Production change from contentment, as a fraction. */
   production?: number;
+  /** Defense the citizens add when the city is attacked, as a fraction (above ``defense_from`` points). */
+  defense?: number;
+  defense_from?: number;
   unrest?: number;
   rebel_at?: number;
   rebel_below?: number;
@@ -552,6 +559,8 @@ export interface Vassal extends CityRef {
   embassy?: EmbassyInfo | null;
   /** This overlord's other sites there (cultural exchange, garrison). */
   sites?: EmbassyInfo[];
+  /** No governor rules it and the embassy is high enough: the overlord builds there as in their own city. */
+  steward?: boolean;
   /** This overlord's garrison there: how many troops may be out on campaign at once, how many are, and who is stationed. */
   garrison?: { capacity: number; out: number; here: Units; auxiliaries?: Auxiliaries };
   tax?: TaxInfo;
@@ -722,6 +731,12 @@ export interface Me {
   tutorial?: boolean;
   /** Earlier usernames, oldest first. */
   former_names?: string[];
+  /** Set when the player comes from the hub (one account for many worlds): renames happen there. */
+  account_id?: number | null;
+  /** Badges from the hub (founder, patron, awards); also on GET /players/{id} and /rankings rows. */
+  badges?: import('./hub').Badge[];
+  /** Founder number (Founder #3), when a founder. */
+  founder_no?: number | null;
   /** When the name may change again (null: now). */
   rename_ready_at?: number | null;
 }

@@ -10,6 +10,10 @@ foreign exchange). They are built in the style of the overlord's civilization.
   (antiquity: contentment). The vassal cannot build, cancel or pull it down.
 - **The foreign exchange** is the vassal's own: every level lowers the tribute it pays by
   ``exchange_relief`` (a fraction of the tribute, at most all of it).
+- **Stewardship.** While no governor rules a vassal city (neither the vassal's own nor a prefect) and the
+  overlord's embassy there stands at ``steward_level`` or more (antiquity: 6), the overlord manages its
+  construction as if it were their own: they open the city, and order and cancel buildings there, paid from
+  the city's own stores. The view says so with ``steward: true`` (and ``vassals[].steward`` for the overlord).
 - **Breaking free** (or passing to another overlord) leaves the embassy as ``ruin``, in the
   old overlord's style. An embassy never started just leaves an empty foreign site. A ruin can be
   pulled down to free its site. If the same player rules the city again, the old embassy site is
@@ -21,7 +25,7 @@ changes hands, so a city may show a mix of styles. The village view lists the fo
 under ``foreign`` and, for an overlord, the embassy of each vassal under ``vassals[].embassy``.
 
     extensions:
-      embassies: { building: embassy, ruin: ruin, exchange: exchange, exchange_slots: 1, exchange_relief: 0.03 }
+      embassies: { building: embassy, ruin: ruin, exchange: exchange, exchange_slots: 1, exchange_relief: 0.03, steward_level: 6 }
 """
 
 from __future__ import annotations
@@ -45,7 +49,7 @@ if TYPE_CHECKING:
 
 router = APIRouter(tags=["submission"])
 DEFAULTS: dict[str, Any] = {"building": "embassy", "ruin": "ruin", "exchange": "exchange", "exchange_slots": 1, "exchange_relief": 0.03,
-                            "overlord": [], "overlord_slots": 0}
+                            "overlord": [], "overlord_slots": 0, "steward_level": 0}
 
 
 def cfg(game: Game) -> dict[str, Any] | None:
@@ -254,6 +258,21 @@ async def ovian_build_demolished(game: Game, tx: Tx, village: VillageRow, buildi
     await _exchange_changed(game, tx, village, building)
 
 
+async def steward(game: Game, conn: asyncpg.Connection, v: VillageRow, player_id: int) -> bool:
+    """May this player, the city's overlord, build in it as if it were their own? (see Stewardship)"""
+    c = cfg(game)
+    if c is None or not c["steward_level"] or v.player_id == player_id:
+        return False
+    lord = await conn.fetchval("SELECT o.player_id FROM vassals s JOIN villages o ON o.id = s.overlord_id WHERE s.vassal_id = $1", v.id)
+    if lord != player_id or await conn.fetchval("SELECT 1 FROM governors WHERE village_id = $1", v.id):
+        return False
+    q = quarter_of(v, player_id)
+    if q is None or q["embassy"] >= len(v.state["slots"]):
+        return False
+    site = v.state["slots"][q["embassy"]]
+    return site.get("building") == c["building"] and int(site.get("level") or 0) >= int(c["steward_level"])
+
+
 async def site_info(conn: asyncpg.Connection, v: VillageRow, slot: int) -> dict[str, Any]:
     s = v.state["slots"][slot]
     jobs = await site_jobs(conn, v.id, slot)
@@ -306,6 +325,7 @@ async def ovian_village_view(game: Game, conn: asyncpg.Connection, village: Vill
         vv = await get_village(conn, x["village"]["id"])
         x["embassy"] = await embassy_info(game, conn, vv, village.player_id)
         x["sites"] = await lord_sites_info(game, conn, vv, village.player_id)
+        x["steward"] = await steward(game, conn, vv, village.player_id)
         cap, out = await garrison_room(game, conn, vv, village.player_id)
         if cap:
             here = await conn.fetchval("SELECT units FROM stationed WHERE host_id = $1 AND home_id = $2", vv.id, village.id) or {}

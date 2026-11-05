@@ -1,5 +1,6 @@
 import { Component, Pipe, PipeTransform, computed, inject, input } from '@angular/core';
 import { EngineService } from '@core/engine.service';
+import { Badge } from '@core/hub';
 import { ResourceMap } from '@core/models';
 import { ArtService } from './art/art.service';
 
@@ -99,4 +100,37 @@ export class ClockPipe implements PipeTransform {
   }
 }
 
-export const UI = [DurationPipe, NumberPipe, ClockPipe, CostComponent, PortraitComponent, UnitsComponent];
+/** The name a badge shows: the founder badge carries its number ("Founder #3"). */
+export function badgeName(b: Badge, founderNo?: number | null): string {
+  return b.kind === 'founder' && founderNo ? `${b.name} #${founderNo}` : b.name;
+}
+
+/**
+ * Hub badges (founder, patron, awards) as small coloured chips; the name is the tooltip,
+ * or written out with [named]. Cosmetic only: badges never change the game.
+ */
+@Component({
+  selector: 'dio-badges',
+  template: `
+    @for (b of list(); track b.id) {
+      <span class="badge" [class.badge--named]="named()" [style.--badge]="b.color || '#b8892c'" [title]="b.title" role="img" [attr.aria-label]="b.label">
+        <span class="badge__icon" aria-hidden="true">{{ b.icon || '★' }}</span>@if (named()) {<span class="badge__name">{{ b.label }}</span>}
+      </span>
+    }
+  `,
+  host: { class: 'badges' },
+})
+export class BadgesComponent {
+  readonly badges = input<Badge[] | null | undefined>([]);
+  readonly founderNo = input<number | null | undefined>(null);
+  /** write the names next to the icons */
+  readonly named = input(false);
+  protected readonly list = computed(() =>
+    (this.badges() ?? []).map((b) => {
+      const label = badgeName(b, this.founderNo());
+      return { ...b, label, title: b.description ? `${label}: ${b.description}` : label };
+    }),
+  );
+}
+
+export const UI = [DurationPipe, NumberPipe, ClockPipe, CostComponent, PortraitComponent, UnitsComponent, BadgesComponent];

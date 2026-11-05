@@ -119,6 +119,7 @@ export class ReportsComponent {
     return [
       { label: 'Attacker', name: d.attacker.player.name, village: d.attacker.village?.name ?? '', units: this.units(d.attacker.units, d.attacker.losses) },
       { label: 'Defender', name: d.defender.player.name, village: d.defender.village?.name ?? '', units: this.units(d.defender.units, d.defender.losses) },
+      ...(d.defender.militia ? [{ label: 'Citizens under arms', name: d.defender.player.name, village: d.defender.village?.name ?? '', units: this.units(d.defender.militia.units, d.defender.militia.losses) }] : []),
     ];
   }
 }

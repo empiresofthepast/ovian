@@ -93,6 +93,7 @@ docker run --rm --network ovian_default -v "$PWD/scripts:/s:ro" -v "$PWD/shots:/
 - [Realtime](docs/realtime.md): MQTT topics, payloads and permissions, for writing other clients and bots.
 - [Antiquity](docs/antiquity.md): how 0 A.D. units become Ovian units.
 - [Diorama](docs/diorama.md): the 3D client and its art pipeline.
+- [Many worlds](docs/worlds.md): the hub, one account for every world, founders, badges and Patreon.
 - [OpenFantasyMaps](docs/ofm.md): a proposal for running a world on an OFM map.
 
 ## AI rulers (bots)

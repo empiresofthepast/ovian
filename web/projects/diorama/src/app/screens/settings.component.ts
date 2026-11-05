@@ -1,18 +1,20 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Api } from '@core/api.service';
-import { CONFIG } from '@core/config';
+import { CONFIG, selectedWorld } from '@core/config';
 import { EngineService } from '@core/engine.service';
 import { GameStore } from '@core/game.store';
+import { Hub } from '@core/hub';
 import { RealtimeService } from '@core/realtime.service';
 import { ArtService } from '../art/art.service';
 import { PrefsService, ScenePrefs } from '../prefs.service';
 import { UI } from '../ui';
+import { HubAccountComponent } from '../hub/hub-account.component';
 import { AssistantsComponent } from './assistants.component';
 
 @Component({
   selector: 'dio-settings',
-  imports: [AssistantsComponent, ...UI],
+  imports: [AssistantsComponent, HubAccountComponent, ...UI],
   template: `
     <section class="hud-panel dialog settings" role="dialog" aria-label="Settings">
       <button class="close" (click)="close()" aria-label="Close" title="Close (Esc)">✕</button>
@@ -47,6 +49,12 @@ import { AssistantsComponent } from './assistants.component';
         </div>
         <div>
           <h3 class="subhead">This world</h3>
+          @if (hub.enabled) {
+            <div class="world-switch">
+              <span class="grow"><strong>{{ worldName }}</strong></span>
+              <button class="btn btn--small" type="button" (click)="switchWorld()">⇄ Switch world</button>
+            </div>
+          }
           @if (game.world(); as w) {
             <dl class="effects small">
               <dt>World</dt><dd>{{ w.id }}</dd>
@@ -76,11 +84,14 @@ import { AssistantsComponent } from './assistants.component';
               @if (emblem()) {<img class="emblem" [src]="emblem()" alt="" />}
               <div class="small">
                 <strong>{{ me.username }}</strong>, {{ civName() }}
+                @if (me.badges?.length) {<br /><dio-badges [badges]="me.badges" [founderNo]="me.founder_no" [named]="true" />}
                 @if (me.protected_until > game.now()) {<br /><span class="muted">Beginner protection for {{ me.protected_until - game.now() | dur: 'ms' }}</span>}
               </div>
             </div>
             <h3 class="subhead">Change your name</h3>
-            @if ((me.rename_ready_at ?? 0) > game.now()) {
+            @if (me.account_id) {
+              <p class="small muted">Your name comes from your Ovian account, the same in every world.</p>
+            } @else if ((me.rename_ready_at ?? 0) > game.now()) {
               <p class="small muted">You can change your name again in {{ me.rename_ready_at! - game.now() | dur: 'ms' }}.</p>
             } @else {
               <form class="row-form" (submit)="$event.preventDefault(); rename()">
@@ -93,16 +104,17 @@ import { AssistantsComponent } from './assistants.component';
             @if (me.former_names?.length) {<p class="small muted">Formerly: {{ me.former_names!.join(', ') }}</p>}
             <details class="danger-zone">
               <summary>Delete your account</summary>
-              <p class="small">This cannot be undone. Your cities leave the map with everything in them, and your reports, messages and achievements are deleted.
+              <p class="small">@if (me.account_id) {This deletes your player in this world only; your Ovian account and your other worlds stay. }This cannot be undone. Your cities leave the map with everything in them, and your reports, messages and achievements are deleted.
                 Cities you hold as vassals go free; troops of other players in your cities, or marching on them, go home; your alliance passes to the next member.</p>
               <form class="row-form" (submit)="$event.preventDefault(); deleteAccount()">
                 <input name="delconfirm" [value]="delConfirm" (input)="delConfirm = $any($event.target).value" [placeholder]="'Type ' + me.username" aria-label="Type your username to confirm" autocomplete="off" />
-                <input name="delpw" type="password" [value]="delPassword" (input)="delPassword = $any($event.target).value" placeholder="Your password" aria-label="Your password" autocomplete="current-password" />
-                <button class="btn btn--small btn--danger" [disabled]="busy || !delPassword || delConfirm.trim().toLowerCase() !== me.username.toLowerCase()">{{ delArmed ? 'Really delete, for good' : 'Delete account' }}</button>
+                @if (!me.account_id) {<input name="delpw" type="password" [value]="delPassword" (input)="delPassword = $any($event.target).value" placeholder="Your password" aria-label="Your password" autocomplete="current-password" />}
+                <button class="btn btn--small btn--danger" [disabled]="busy || (!delPassword && !me.account_id) || delConfirm.trim().toLowerCase() !== me.username.toLowerCase()">{{ delArmed ? 'Really delete, for good' : 'Delete account' }}</button>
               </form>
               @if (delArmed) {<p class="small bad">Press again to delete {{ me.username }} and all its cities. <button type="button" class="linkbtn" (click)="delArmed = false">Cancel</button></p>}
             </details>
           }
+          @if (hub.enabled) {<dio-hub-account />}
           <dio-assistants />
           <div class="btn-row">
             @if (ledgerUrl) {<a class="btn btn--small" [href]="ledgerUrl">Open the ledger view</a>}
@@ -165,6 +177,8 @@ export class SettingsComponent {
   private readonly art = inject(ArtService);
   private readonly router = inject(Router);
   protected readonly ledgerUrl = inject(CONFIG).ledgerUrl ?? '';
+  protected readonly hub = inject(Hub);
+  protected readonly worldName = selectedWorld()?.name ?? this.hub.worldId ?? 'this world';
   protected readonly qualities: { id: ScenePrefs['quality']; label: string }[] = [
     { id: 'low', label: 'Low' }, { id: 'medium', label: 'Medium' }, { id: 'high', label: 'High' },
   ];
@@ -211,8 +225,13 @@ export class SettingsComponent {
   }
 
   protected logout(): void {
+    if (this.hub.enabled) this.hub.logout();
     this.game.logout();
     void this.router.navigateByUrl('/welcome');
+  }
+
+  protected switchWorld(): void {
+    void this.router.navigateByUrl('/worlds');
   }
 
   protected close(): void {

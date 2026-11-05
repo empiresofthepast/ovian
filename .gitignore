@@ -9,3 +9,5 @@ shots/
 engine/target/
 __pycache__/
 *.pyc
+worlds/*.env
+!worlds/example.env

@@ -21,6 +21,12 @@ import { UI } from '../../shared/ui';
           <div class="row small"><span class="grow">{{ 'contentment.production' | label: 'Production' }}</span>
             <strong [class.good]="c.production > 0" [class.bad]="c.production < 0">{{ pct(c.production) }}</strong></div>
         }
+        @if (c.defense) {
+          <div class="row small" [title]="'Above ' + c.defense_from + ' contentment the citizens take up arms when the city is attacked'"><span class="grow">{{ 'contentment.defense' | label: 'Defense' }}</span>
+            <strong class="good">{{ pct(c.defense) }}</strong></div>
+        } @else if (c.defense_from !== undefined && c.score !== undefined) {
+          <div class="row small muted"><span class="grow">Above {{ c.defense_from }} contentment, citizens help defend the city</span></div>
+        }
         @if (c.can_rebel || (c.unrest ?? 0) > 0) {
           <div class="row small"><span class="grow">{{ 'contentment.unrest' | label: 'Unrest' }}</span>
             <span [class.bad]="(c.unrest ?? 0) > 0">{{ (c.unrest ?? 0).toFixed(0) }} / {{ c.rebel_at }}</span></div>

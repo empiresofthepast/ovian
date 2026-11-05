@@ -11,7 +11,8 @@ from pydantic import BaseModel, Field
 
 from ..deps import GameDep
 from ..errors import GameError, not_found, rule
-from ..repo import VillageRow, accrue, get_player, hosted_upkeep, own_village, save_village
+from ..errors import forbidden
+from ..repo import VillageRow, accrue, get_player, get_village, hosted_upkeep, own_village, save_village
 from ..security import PlayerId
 from .base import Module
 
@@ -99,6 +100,18 @@ async def village_view(game: Game, conn: asyncpg.Connection, v: VillageRow) -> d
     return view
 
 
+async def managed_village(game: Game, conn: asyncpg.Connection, village_id: int, player_id: int, *, lock: bool = False) -> VillageRow:
+    """The player's own city, or a vassal city whose construction they manage as its steward (see embassies)."""
+    v = await get_village(conn, village_id, lock=lock)
+    if v.player_id == player_id:
+        return v
+    from .embassies import steward
+
+    if await steward(game, conn, v, player_id):
+        return v
+    raise forbidden("not_your_village")
+
+
 async def push_village(game: Game, tx: Tx, v: VillageRow) -> dict[str, Any]:
     """Send the owner a fresh view of the village after commit, and return it."""
     view = await village_view(game, tx.conn, v)
@@ -139,8 +152,11 @@ def plan(fn: Any, *args: Any) -> dict[str, Any]:
 @router.get("/villages/{village_id}")
 async def get_village_view(village_id: int, player_id: PlayerId, game: GameDep) -> dict[str, Any]:
     async with game.tx() as tx:
-        v = await own_village(tx.conn, village_id, player_id)
-        return await village_view(game, tx.conn, v)
+        v = await managed_village(game, tx.conn, village_id, player_id)
+        view = await village_view(game, tx.conn, v)
+        if v.player_id != player_id:
+            view["steward"] = True
+        return view
 
 
 @router.get("/villages/{village_id}/options")
@@ -149,7 +165,7 @@ async def options(village_id: int, player_id: PlayerId, game: GameDep) -> dict[s
     techs, each with its cost and time or the reason it is blocked (``blocked``). For scripts and
     AI assistants; the order endpoints check everything again."""
     async with game.tx() as tx:
-        v = await own_village(tx.conn, village_id, player_id)
+        v = await managed_village(game, tx.conn, village_id, player_id)
         await accrue(game, tx, v)
         player = await get_player(tx.conn, player_id)
         jobs = await build_jobs(tx.conn, v.id)
@@ -248,7 +264,7 @@ async def build_jobs(conn: asyncpg.Connection, village_id: int) -> list[asyncpg.
 @router.post("/villages/{village_id}/build")
 async def build(village_id: int, order: BuildOrder, player_id: PlayerId, game: GameDep) -> dict[str, Any]:
     async with game.tx() as tx:
-        v = await own_village(tx.conn, village_id, player_id, lock=True)
+        v = await managed_village(game, tx.conn, village_id, player_id, lock=True)
         await accrue(game, tx, v)
         jobs = [j for j in await build_jobs(tx.conn, v.id) if not j["payload"].get("paid_by") or j["payload"]["slot"] == order.slot]
         queue = [{"slot": j["payload"]["slot"], "building": j["payload"]["building"], "level": j["payload"]["level"]} for j in jobs]
@@ -394,10 +410,12 @@ async def demolish(village_id: int, slot: int, player_id: PlayerId, game: GameDe
 async def cancel(village_id: int, job_id: int, player_id: PlayerId, game: GameDep) -> dict[str, Any]:
     """Cancel a construction or training job and refund what has not been delivered."""
     async with game.tx() as tx:
-        v = await own_village(tx.conn, village_id, player_id, lock=True)
+        v = await managed_village(game, tx.conn, village_id, player_id, lock=True)
         job = await tx.conn.fetchrow("SELECT * FROM jobs WHERE id = $1 AND village_id = $2 FOR UPDATE", job_id, v.id)
         if job is None or job["kind"] not in (BUILD, TRAIN, RESEARCH):
             raise not_found("job_not_found")
+        if v.player_id != player_id and job["kind"] != BUILD:
+            raise forbidden("not_your_village")
         p = job["payload"]
         if p.get("paid_by") and p["paid_by"] != player_id:
             raise rule("paid_by_overlord", "your overlord pays for this construction; only it can stop it")

@@ -13,7 +13,8 @@ Each city has a contentment score, the sum of reasons its people give:
 - whatever other modules return from ``ovian_contentment`` (governments, seasons).
 
 A happy city produces up to 10% more (``bonus_per_point`` per point), an unhappy one
-up to 40% less (``penalty_per_point``). A vassal whose score is below ``rebel_below``
+up to 40% less (``penalty_per_point``). Above ``defense_from`` points its citizens also take up arms when it is
+attacked: ``defense_per_point`` of defense for each point over it, up to ``defense_max`` (+20% at 100). A vassal whose score is below ``rebel_below``
 gathers unrest (one point per missing point per hour, at world speed); at
 ``rebel_at`` it rises up and throws off its overlord. Colonies never rebel.
 
@@ -51,6 +52,7 @@ DEFAULTS: dict[str, float] = {
     "tribute": -15, "colony": -5, "defeat": -5, "defeat_hours": 24, "defeat_max": -20,
     "bonus_per_point": 0.002, "bonus_max": 0.1, "penalty_per_point": 0.004, "penalty_max": 0.4,
     "rebel_below": -10, "rebel_at": 100, "calm_rate": 10, "tick_minutes": 30,
+    "defense_from": 50, "defense_per_point": 0.004, "defense_max": 0.2,
 }
 
 
@@ -193,6 +195,12 @@ def effect_of(game: Game, score: float) -> float:
     return max(-c["penalty_max"], score * c["penalty_per_point"])
 
 
+def defense_of(game: Game, score: float) -> float:
+    """Defense a content city's citizens add when it is attacked, as a fraction."""
+    c = cfg(game)
+    return round(min(c["defense_max"], max(0.0, score - c["defense_from"]) * c["defense_per_point"]), 4)
+
+
 async def score(game: Game, conn: asyncpg.Connection, v: VillageRow) -> tuple[float, list[tuple[str, float]]]:
     f = await factors(game, conn, v)
     return max(-100.0, min(100.0, sum(n for _, n in f))), f
@@ -300,6 +308,17 @@ async def ovian_boost(game: Game, conn: asyncpg.Connection, village: VillageRow)
 
 
 @hookimpl
+async def ovian_battle_prepare(game: Game, tx: Tx, battle: dict[str, Any], attacker: VillageRow, defender: VillageRow) -> None:
+    if not enabled(game) or defender.meta.get("camp"):
+        return
+    s, _ = await score(game, tx.conn, defender)
+    d = defense_of(game, s)
+    if d:
+        battle["defense_bonus"] = battle.get("defense_bonus", 0.0) + d
+        battle.setdefault("modifiers", {})["contentment_defense"] = d
+
+
+@hookimpl
 async def ovian_battle_resolved(game: Game, tx: Tx, battle: dict[str, Any], result: dict[str, Any], report: dict[str, Any],
                                 attacker: VillageRow, defender: VillageRow) -> None:
     if not enabled(game) or not result["attacker_won"] or defender.meta.get("camp"):
@@ -337,6 +356,8 @@ async def ovian_village_view(game: Game, conn: asyncpg.Connection, village: Vill
         "score": round(s, 1),
         "factors": [{"label": label, "value": n} for label, n in f],
         "production": round(effect_of(game, s), 4),
+        "defense": defense_of(game, s),
+        "defense_from": c["defense_from"],
         "unrest": round(await unrest_now(game, conn, village, s), 1),
         "rebel_at": c["rebel_at"],
         "rebel_below": c["rebel_below"] + pol["rebel_below"],

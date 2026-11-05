@@ -1,13 +1,18 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { GameStore } from '@core/game.store';
+import { Hub } from '@core/hub';
 
 const signedIn = () => inject(GameStore).loggedIn() || inject(Router).parseUrl('/welcome');
 const signedOut = () => !inject(GameStore).loggedIn() || inject(Router).parseUrl('/');
+/** With a hub, the welcome page is the hub's: sign in, then choose a world. */
+const worldOnly = () => !inject(Hub).enabled || inject(Router).parseUrl('/worlds');
+const withHub = () => inject(Hub).enabled || inject(Router).parseUrl('/welcome');
 
 /** The village (3D scene + HUD) is the shell; other screens open over it as child routes. */
 export const routes: Routes = [
-  { path: 'welcome', canActivate: [signedOut], loadComponent: () => import('./login/login.component').then((m) => m.LoginComponent) },
+  { path: 'welcome', canActivate: [signedOut, worldOnly], loadComponent: () => import('./login/login.component').then((m) => m.LoginComponent) },
+  { path: 'worlds', title: 'Worlds', canActivate: [withHub], loadComponent: () => import('./hub/worlds.component').then((m) => m.WorldsComponent) },
   {
     path: '',
     canActivate: [signedIn],
@@ -28,6 +33,7 @@ export const routes: Routes = [
       { path: 'year', title: 'Year and games', loadComponent: () => import('./screens/festival.component').then((m) => m.FestivalComponent) },
       { path: 'chronicle', title: 'Chronicle', loadComponent: () => import('./screens/chronicle.component').then((m) => m.ChronicleComponent) },
       { path: 'admin', title: 'Admin', loadComponent: () => import('./screens/admin.component').then((m) => m.AdminComponent) },
+      { path: 'hub-admin', title: 'Hub administration', canActivate: [withHub], loadComponent: () => import('./hub/hub-admin.component').then((m) => m.HubAdminComponent) },
       { path: 'reports', title: 'Reports', loadComponent: () => import('./village/reports.component').then((m) => m.ReportsComponent) },
     ],
   },

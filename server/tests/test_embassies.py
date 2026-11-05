@@ -175,3 +175,41 @@ async def test_cultural_exchange_and_garrison(game: Game, register):
     assert {v["state"]["slots"][i]["building"] for i in (q["embassy"], culture_site, garrison_site)} <= {"ruin", None}
     assert v["state"]["slots"][culture_site]["building"] == "ruin"
     assert not (await alice.village())["state"].get("culture_in")
+
+
+async def test_overlord_stewards_a_city_without_a_ruler(game: Game, register):
+    from .test_realm import extensions
+
+    alice, bob, _ = await neighbours(game, register)
+    await patch_state(game, bob.village_id, lambda s: (rich(s), give_buildings(s, town_hall=10)))
+    n = len((await bob.village())["state"]["slots"])
+    await bow(game, bob.village_id, alice.village_id)
+    url = f"/villages/{bob.village_id}"
+    with extensions(game, embassies=game.content.extensions["embassies"] | {"steward_level": 6}):
+        # a low embassy gives no say in the city
+        await patch_state(game, bob.village_id, lambda s: s["slots"][n].update(level=5))
+        assert (await alice.get(url)).status_code == 403
+        await patch_state(game, bob.village_id, lambda s: s["slots"][n].update(level=6))
+        mine = await alice.village()
+        assert next(x for x in mine["vassals"] if x["village"]["id"] == bob.village_id)["steward"] is True
+        v = (await alice.get(url)).json()
+        assert v["steward"] is True and v["id"] == bob.village_id
+
+        # the overlord builds there as in their own city, from the city's own stores
+        free = (await alice.get(f"{url}/options")).json()["free_sites"][0]
+        before = v["state"]["resources"]
+        r = await alice.post(f"{url}/build", {"slot": free, "building": "temple"})
+        assert r.status_code == 200, r.text
+        after = r.json()["state"]["resources"]
+        assert sum(after.values()) < sum(before.values())
+        job = r.json()["build_queue"][0]["id"]
+        # the city's other orders stay its owner's
+        assert (await alice.post(f"{url}/train", {"unit": "legionary", "count": 1})).status_code == 403
+        assert (await alice.delete(f"{url}/jobs/{job}")).status_code == 200
+
+        # a governor in the city ends the stewardship
+        await game.pool.execute(
+            "INSERT INTO governors(player_id, name, tribe, traits, village_id, hired_at) VALUES ($1, 'Marcus', 'legion', '[]', $2, 0)",
+            bob.id, bob.village_id)
+        assert (await alice.get(url)).status_code == 403
+        assert (await alice.post(f"{url}/build", {"slot": free, "building": "temple"})).status_code == 403

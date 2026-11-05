@@ -189,6 +189,11 @@ async def bind(game: Game, tx: Tx, vassal: VillageRow, lord: VillageRow, tribute
     """Record ``vassal`` as paying ``tribute`` to ``lord`` (no checks, no events)."""
     await tx.conn.execute("INSERT INTO vassals(vassal_id, overlord_id, since) VALUES ($1, $2, $3)", vassal.id, lord.id, game.clock.now())
     await accrue(game, tx, vassal)  # settle at the old rate first
+    from .contentment import unrest_now
+
+    # unrest only gathers while a city pays tribute: settle it as a free city first,
+    # or the hours since its last tick count against it and it may rise up at once
+    vassal.meta["unrest"], vassal.meta["unrest_at"] = round(await unrest_now(game, tx.conn, vassal), 3), game.clock.now()
     from .embassies import tribute_factor
 
     vassal.state["tribute"] = tribute * tribute_factor(game, vassal)  # foreign exchanges lighten it

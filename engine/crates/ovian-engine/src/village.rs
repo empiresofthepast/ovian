@@ -52,6 +52,10 @@ pub struct Village {
     /// may be negative. A resource never drops below 10% of its production.
     #[serde(default, skip_serializing_if = "ResourceMap::is_empty")]
     pub boost_by: ResourceMap,
+    /// Parallel construction jobs granted to this city by an administrator, replacing the phase's and the
+    /// technologies' count when set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_queue: Option<usize>,
 }
 
 fn is_zero(x: &f64) -> bool {
@@ -212,7 +216,7 @@ impl Content {
             .resource_ids()
             .map(|r| (r.to_string(), rules.start.resources.get(r).copied().unwrap_or(0.0)))
             .collect();
-        Village { resources, resources_at: now, slots, units: Units::new(), techs: Vec::new(), tribute: 0.0, tribute_in: ResourceMap::new(), culture_in: 0.0, culture_relics: 0.0, boost: 0.0, boost_by: ResourceMap::new() }
+        Village { resources, resources_at: now, slots, units: Units::new(), techs: Vec::new(), tribute: 0.0, tribute_in: ResourceMap::new(), culture_in: 0.0, culture_relics: 0.0, boost: 0.0, boost_by: ResourceMap::new(), build_queue: None }
     }
 
     /// Highest level of each building present.
@@ -344,8 +348,12 @@ impl Content {
         }
     }
 
-    /// Parallel construction jobs: the phase's (or the pack's) plus any from technologies.
+    /// Parallel construction jobs: the phase's (or the pack's) plus any from technologies,
+    /// unless an administrator set the city's own.
     pub fn build_queue(&self, v: &Village) -> usize {
+        if let Some(n) = v.build_queue {
+            return n;
+        }
         let base = self.phase(v).and_then(|p| p.build_queue).unwrap_or(self.pack.village.build_queue);
         base + v.techs.iter().filter_map(|t| self.tech(t)).map(|t| t.build_queue).sum::<usize>()
     }

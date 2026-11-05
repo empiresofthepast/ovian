@@ -3,11 +3,12 @@ import { Router } from '@angular/router';
 import { Api } from '@core/api.service';
 import { EngineService } from '@core/engine.service';
 import { GameStore } from '@core/game.store';
+import { Badge } from '@core/hub';
 import { HallOfFame, MedalsView, Victory } from '@core/models';
 import { ArtService } from '../art/art.service';
 import { UI } from '../ui';
 
-interface Row { rank: number; id: number; username: string; tribe: string; bot?: boolean; villages: number; population: number; culture: number; vassals?: number; alliance_tag?: string | null }
+interface Row { rank: number; id: number; username: string; tribe: string; bot?: boolean; villages: number; population: number; culture: number; vassals?: number; alliance_tag?: string | null; badges?: Badge[]; founder_no?: number | null }
 
 @Component({
   selector: 'dio-rankings',
@@ -93,7 +94,7 @@ interface Row { rank: number; id: number; username: string; tribe: string; bot?:
             @for (r of view(); track r.id) {
               <tr [class.me]="r.id === game.me()?.id">
                 <td class="num">{{ r.rank }}</td>
-                <td>@if (r.alliance_tag) {<span class="muted">[{{ r.alliance_tag }}]</span> }<strong>{{ r.username }}</strong>@if (r.bot) {&nbsp;<span title="An AI ruler">🤖</span>}</td>
+                <td>@if (r.alliance_tag) {<span class="muted">[{{ r.alliance_tag }}]</span> }<strong>{{ r.username }}</strong>@if (r.badges?.length) {&nbsp;<dio-badges [badges]="r.badges" [founderNo]="r.founder_no" />}@if (r.bot) {&nbsp;<span title="An AI ruler">🤖</span>}</td>
                 <td class="civcell">@if (r.emblem) {<img [src]="r.emblem" alt="" />}{{ r.civ }}</td>
                 <td class="num">{{ r.villages }}</td>
                 <td class="num">{{ r.population | n }}</td>

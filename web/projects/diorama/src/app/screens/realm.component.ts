@@ -28,7 +28,9 @@ import { UI } from '../ui';
               <span class="mood__face" aria-hidden="true">{{ face(c.score!) }}</span>
               <div>
                 <div><strong>{{ c.score }}</strong> contentment in {{ game.village()?.name }}</div>
-                <div class="small">{{ (c.production ?? 0) >= 0 ? '+' : '' }}{{ ((c.production ?? 0) * 100).toFixed(1) }}% production</div>
+                <div class="small">{{ (c.production ?? 0) >= 0 ? '+' : '' }}{{ ((c.production ?? 0) * 100).toFixed(1) }}% production
+                  @if (c.defense) {· <span class="good" [title]="'Above ' + c.defense_from + ' contentment the citizens take up arms when the city is attacked'">+{{ (c.defense * 100).toFixed(1) }}% defense</span>}</div>
+                @if (!c.defense && c.defense_from !== undefined) {<div class="small muted">Above {{ c.defense_from }} contentment, citizens help defend the city.</div>}
               </div>
             </div>
             <table class="table factors">

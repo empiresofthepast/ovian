@@ -63,7 +63,7 @@ async def map_area(
 @router.get("/players/{player_id}")
 async def player(player_id: int, game: GameDep) -> dict[str, Any]:
     assert game.pool is not None
-    p = await game.pool.fetchrow("SELECT id, username, tribe, created_at, protected_until, bot, meta->'government'->>'id' AS government FROM players WHERE id = $1",
+    p = await game.pool.fetchrow("SELECT id, username, tribe, created_at, protected_until, bot, badges, founder_no, meta->'government'->>'id' AS government FROM players WHERE id = $1",
                                  player_id)
     if p is None:
         raise not_found("player_not_found")
@@ -75,7 +75,7 @@ async def player(player_id: int, game: GameDep) -> dict[str, Any]:
 async def rankings(game: GameDep, limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0)) -> list[dict[str, Any]]:
     assert game.pool is not None
     rows = await game.pool.fetch(
-        """SELECT p.id, p.username, p.tribe, p.bot, coalesce(sum(v.population), 0)::int AS population, count(v.id)::int AS villages,
+        """SELECT p.id, p.username, p.tribe, p.bot, p.badges, p.founder_no, coalesce(sum(v.population), 0)::int AS population, count(v.id)::int AS villages,
                   coalesce(sum(v.culture), 0)::float AS culture,
                   (SELECT count(*) FROM vassals s JOIN villages o ON o.id = s.overlord_id WHERE o.player_id = p.id)::int AS vassals
                   , (SELECT a.tag FROM alliance_members am JOIN alliances a ON a.id = am.alliance_id WHERE am.player_id = p.id) AS alliance_tag

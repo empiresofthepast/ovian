@@ -28,8 +28,32 @@ services:
       OVIAN_ADMIN_USERS: ${OVIAN_ADMIN_USERS:-}
       OVIAN_BOT_USERS: ${OVIAN_BOT_USERS:-}
       OVIAN_RENAME_DAYS: ${OVIAN_RENAME_DAYS:-7}
+      OVIAN_HUB_SECRET: ${OVIAN_HUB_WORLD_SECRET:-}
+      OVIAN_HUB_URL: ${OVIAN_HUB_INTERNAL_URL:-}
+      OVIAN_LOCAL_REGISTRATION: ${OVIAN_LOCAL_REGISTRATION:-true}
     depends_on: { db: { condition: service_healthy } }
     ports: ["${OVIAN_API_PORT:-47080}:8000"]
+    restart: unless-stopped
+
+  # The hub: one account for every world, founders, badges, Patreon, the list of worlds. See docs/worlds.md.
+  # Opt in with COMPOSE_PROFILES=hub; create its database once: docker compose exec db createdb -U ovian ovian_hub
+  hub:
+    profiles: [hub]
+    build: { context: ., dockerfile: docker/server.Dockerfile, target: runtime }
+    command: ["ovian-hub"]
+    environment:
+      OVIAN_HUB_DATABASE_URL: postgresql://ovian:ovian@db:5432/${OVIAN_HUB_DATABASE_NAME:-ovian_hub}
+      OVIAN_HUB_JWT_SECRET: ${OVIAN_HUB_JWT_SECRET:-dev-hub-secret-change-me-please-0123456789}
+      OVIAN_HUB_WORLD_SECRET: ${OVIAN_HUB_WORLD_SECRET:-}
+      OVIAN_HUB_ADMIN_USERS: ${OVIAN_HUB_ADMIN_USERS:-}
+      OVIAN_HUB_PUBLIC_URL: ${OVIAN_HUB_PUBLIC_URL:-http://localhost:47174}
+      OVIAN_HUB_PUBLIC_API_URL: ${OVIAN_HUB_PUBLIC_API_URL:-http://localhost:47174/hub}
+      OVIAN_HUB_WORLDS: ${OVIAN_HUB_WORLDS:-}
+      OVIAN_HUB_PATREON_CLIENT_ID: ${OVIAN_HUB_PATREON_CLIENT_ID:-}
+      OVIAN_HUB_PATREON_CLIENT_SECRET: ${OVIAN_HUB_PATREON_CLIENT_SECRET:-}
+      OVIAN_HUB_PATREON_WEBHOOK_SECRET: ${OVIAN_HUB_PATREON_WEBHOOK_SECRET:-}
+      OVIAN_HUB_PATREON_CAMPAIGN_ID: ${OVIAN_HUB_PATREON_CAMPAIGN_ID:-}
+    depends_on: { db: { condition: service_healthy } }
     restart: unless-stopped
 
   broker:
@@ -47,6 +71,9 @@ services:
       OVIAN_DEFAULT_SKIN: ${OVIAN_DEFAULT_SKIN:-parchment}
       OVIAN_DIORAMA_URL: ${OVIAN_DIORAMA_PUBLIC_URL:-}
       OVIAN_MCP_URL: ${OVIAN_MCP_PUBLIC_URL:-}
+      OVIAN_PUBLIC_HUB_URL: ${OVIAN_PUBLIC_HUB_URL:-}
+      OVIAN_HUB_UPSTREAM: ${OVIAN_HUB_UPSTREAM:-}
+      OVIAN_WORLDS: ${OVIAN_WORLDS:-}
     depends_on: [server, broker]
     ports: ["${OVIAN_WEB_PORT:-47173}:80"]
     restart: unless-stopped
@@ -57,6 +84,9 @@ services:
     environment:
       OVIAN_LEDGER_URL: ${OVIAN_LEDGER_PUBLIC_URL:-}
       OVIAN_MCP_URL: ${OVIAN_MCP_PUBLIC_URL:-}
+      OVIAN_PUBLIC_HUB_URL: ${OVIAN_PUBLIC_HUB_URL:-}
+      OVIAN_HUB_UPSTREAM: ${OVIAN_HUB_UPSTREAM:-}
+      OVIAN_WORLDS: ${OVIAN_WORLDS:-}
     depends_on: [server, broker]
     ports: ["${OVIAN_DIORAMA_PORT:-47174}:80"]
     restart: unless-stopped

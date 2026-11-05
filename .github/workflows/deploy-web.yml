@@ -6,6 +6,8 @@
 # Variables: OVIAN_API_ORIGIN    where Netlify forwards /api/* (e.g. https://api.empires.ofthepast.org)
 #            OVIAN_MQTT_URL      the broker for live updates, wss://... (a browser on https cannot use ws://)
 #            OVIAN_MCP_URL       optional, the MCP server shown in Settings
+#            OVIAN_HUB_ORIGIN    optional, the hub (one account for many worlds), served at /hub/
+#            OVIAN_WORLDS        optional, further worlds: "w3=https://w3.example.org w4=..." served at /w/<id>/
 name: deploy-web
 on:
   push:
@@ -94,6 +96,8 @@ jobs:
           API: ${{ vars.OVIAN_API_ORIGIN }}
           MQTT: ${{ vars.OVIAN_MQTT_URL }}
           MCP: ${{ vars.OVIAN_MCP_URL }}
+          HUB: ${{ vars.OVIAN_HUB_ORIGIN }}
+          WORLDS: ${{ vars.OVIAN_WORLDS }}
           LEDGER: /ledger/
           DIORAMA: /
         run: |

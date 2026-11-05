@@ -12,8 +12,11 @@ server {
   location = /health  { proxy_pass ${OVIAN_API_UPSTREAM}; }
   location = /docs    { proxy_pass ${OVIAN_API_UPSTREAM}; }
   location = /openapi.json { proxy_pass ${OVIAN_API_UPSTREAM}; }
+  # The hub and further worlds (OVIAN_HUB_UPSTREAM, OVIAN_WORLDS), written by 40-ovian-config.sh.
+  include /etc/nginx/ovian/*.conf;
   # Never expose the broker callbacks.
   location /internal/ { return 404; }
+  location /api/v1/internal/ { return 404; }
 
   location /mqtt {
     proxy_pass ${OVIAN_MQTT_UPSTREAM};

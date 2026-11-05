@@ -193,11 +193,20 @@ Each new overlord opens a foreign quarter at the end of its vassal's site list:
   - `cultural_exchange`: sends 5% of the vassal's culture per level to the overlord's city (`culture_in` on its state).
   - `garrison`: the overlord's troops stationed there may set out from it (`send` with `garrison: <vassal id>`), up to 100 per level out at once. Survivors return to the garrison; loot goes home.
 - `exchange_slots` **sites of the city's own** for foreign buildings: the `exchange` lowers the tribute by `exchange_relief` per level.
+- **Stewardship** (`steward_level`, antiquity 6): while no governor rules the city (neither its own nor a prefect) and the overlord's embassy stands at that level or higher, the overlord manages the city's construction as if it were their own. They open it (`GET /villages/{vassal}` answers with `steward: true`), and order and cancel buildings there with the usual routes, paid from the city's own stores. Training, research and the rest stay the owner's. `0` turns it off.
 - **Breaking free** (or passing to another overlord) leaves every overlord building as `ruin`, in the old overlord's style, and drops unfinished work (the overlord gets its money back). The city may clear ruins, but the sites stay that overlord's. If the same player rules the city again, it gets its old sites back.
 
 ```yaml
 embassies: { building: embassy, ruin: ruin, exchange: exchange, exchange_slots: 1, exchange_relief: 0.03,
-             overlord: [cultural_exchange, garrison], overlord_slots: 2 }
+             overlord: [cultural_exchange, garrison], overlord_slots: 2, steward_level: 6 }
+```
+
+### Civil servants (militia)
+
+Techs listed in `militia.techs` (antiquity: **Civil Servants**, Fortress 10, after Veterans) make a city's citizens fight when it is attacked or raided: its population times the tech's value, as the people's spearman (`<tribe>_infantry_spearman`, else its cheapest infantry; `units` overrides per tribe). They stand as one more group of defenders, appear in the report under `defender.militia`, and go back to work afterwards: the fallen do not lower the population. The village view lists them as `militia`.
+
+```yaml
+militia: { techs: { civil_servants: 1.0 } }
 ```
 
 ### Auxiliaries
