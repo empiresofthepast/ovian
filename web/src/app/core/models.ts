@@ -380,6 +380,34 @@ export interface MarketView {
   speed: number;
   shipments: { outgoing: boolean; from: { id: number; name: string }; to: { id: number; name: string }; resources: ResourceMap; arrives_at: number }[];
   offers: { id: number; give: ResourceMap; want: ResourceMap; merchants: number; created_at: number }[];
+  /** Profit and bandits (extensions.trade), when the world has them. */
+  trade?: {
+    profit_per_tile: number; profit_max: number; profit_cap_per_level: number;
+    bandits_from: number; bandits_per_tile: number; bandits_max: number; bandits_take: number;
+    /** Earned today by this city's merchants abroad, and the most it may earn a day. */
+    profit_today: number; profit_cap: number;
+  };
+}
+
+/** A pact of peace between two players, with an optional tribute (GET /treaties). */
+export interface Treaty {
+  id: number;
+  status: 'proposed' | 'active';
+  with: { id: number; name: string };
+  proposed_by_me: boolean;
+  since: number | null;
+  /** Notice given: the pact holds until then. */
+  ends_at: number | null;
+  last_paid_at: number | null;
+  created_at: number;
+  tribute: { i_pay: boolean; resources: ResourceMap; every_hours: number } | null;
+}
+
+export interface TreatiesView {
+  treaties: Treaty[];
+  /** You broke a pact: marked on the map until then. */
+  treacherous_until: number | null;
+  rules: { notice_hours: number; treachery_hours: number; treachery_mood: number; min_tribute_hours: number };
 }
 
 export interface TradeOffer {
@@ -816,6 +844,10 @@ export interface MapVillage extends VillageRef {
   /** An AI ruler. */
   bot?: boolean;
   camp_level?: number | null;
+  /** The player broke a pact recently. */
+  treacherous?: boolean;
+  /** Ruins of a city its player abandoned (a barbarian camp now). */
+  abandoned_by?: string | null;
   alliance_tag?: string | null;
   alliance_id?: number | null;
 }

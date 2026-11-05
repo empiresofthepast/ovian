@@ -570,7 +570,13 @@ extensions:
   # Every `every` levels of the city centre earn one ver sacrum: migrants found a colony you manage,
   # at most level x `range_per_level` tiles away, which pays `tribute` to its mother city.
   # Settlers (roster.extra) found a colony in a barbarian camp they help take (see modules/settlers.py).
-  settlers: { unit: settler }
+  settlers: { unit: settler, price_growth: 1.5 }
+  # Cities of players not seen for `days` fall to the barbarians; a horde marches on the strongest player;
+  # merchants earn abroad and may be robbed off the roads; pacts between players, with tribute and treachery.
+  abandon: { days: 7 }
+  horde: { every_hours: 24, warning_hours: 3, ratio: 1.0, min_troops: 150 }
+  trade: { profit_per_tile: 0.01, profit_max: 0.25, profit_cap_per_level: 2000, bandits_from: 6, bandits_per_tile: 0.02, bandits_max: 0.3, bandits_take: 0.5 }
+  treaties: { notice_hours: 6, treachery_hours: 48, treachery_mood: -15 }
   # A Wikipedia article for every building and unit (English titles; clients link base + title).
   wikipedia:
     base: https://en.wikipedia.org/wiki/

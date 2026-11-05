@@ -225,8 +225,10 @@ wikipedia:
 
 `settlers.unit` names a unit suffix (antiquity: `settler`, so `<tribe>_settler`, trained in the civic centre from level 10, at three times the cost of a ver sacrum; `roster.extra` in `tools/zeroad/antiquity.yaml` adds it to every people). Send settlers with an attack or a raid on a barbarian camp: if the attackers win and a settler lives, one stays and the camp becomes the attacker's city, a colony of the city it came from (bound like a ver sacrum colony). It starts as a new city does plus all the camp's stores, even beyond its storage; the troops carry no loot home. The battle report has `settled`, and a `ver_sacrum` report announces the colony.
 
+Each settler costs `price_growth` (1.5) times more for every city the player holds beyond the first and for every settler they already have (at home, marching, stationed or in training); the village view's `settler_price` is the current multiple.
+
 ```yaml
-settlers: { unit: settler }
+settlers: { unit: settler, price_growth: 1.5 }
 ```
 
 Barbarian camps may also yield a find among the spoils: `archaeology.camp_find_chance` × the camp's level, at most `camp_find_max`, named from `archaeology.finds.camp`.
@@ -237,6 +239,40 @@ With a garrison in a vassal, the overlord may train the vassal's own units there
 
 ```yaml
 auxiliaries: { cost: 1.25, mood_per_100: -3, mood_max: -15, mood_hours: 24 }
+```
+
+## Frontier
+
+### Abandoned cities
+
+A player not seen for `abandon.days` real days (not on vacation, not a bot) loses every city to the barbarians: each becomes a camp, "Ruins of <name>", keeping its troops and stores (or a camp garrison when it had none), one camp level per `per_level` population. Vassals go free, foreign garrisons march home, trade routes and offers end. Settlers can found a colony in the ruins. A player who comes back with no city starts afresh with a new one. Without `abandon`, cities are never abandoned.
+
+```yaml
+abandon: { days: 7, every_minutes: 60, per_level: 400 }
+```
+
+### The barbarian horde
+
+Every `horde.every_hours` real hours the barbarians gather against the player with the largest population (seen within `active_days`, not protected or on vacation). The horde leaves the nearest camp `warning_hours` after the alarm, which the chronicle gives to the whole world so neighbours can send reinforcements. It has `ratio` troops per soldier defending the city (at least `min_troops`). Survivors do not stay: their loot is left in the camp. Battle reports carry `horde: true`; throwing it back counts as `hordes_repelled` for the defender and every player whose troops fought there.
+
+```yaml
+horde: { every_hours: 24, warning_hours: 3, ratio: 1.0, min_troops: 150, active_days: 3 }
+```
+
+### Trade profit and bandits
+
+Merchants' journeys leave no reports. With `trade`, merchants who deliver to another player's city bring home `profit_per_tile` of the cargo for every tile travelled (at most `profit_max`), up to `profit_cap_per_level` a day per market level. Beyond `bandits_from` tiles and off the roads, bandits may rob a caravan (`bandits_per_tile` per tile beyond, at most `bandits_max`) and take `bandits_take` of it; a robbed caravan earns nothing. A robbery of a one-off shipment is reported; a route shows it on the route. The village view's `market.trade` has the rules and `profit_today` / `profit_cap`.
+
+```yaml
+trade: { profit_per_tile: 0.01, profit_max: 0.25, profit_cap_per_level: 2000, bandits_from: 6, bandits_per_tile: 0.02, bandits_max: 0.3, bandits_take: 0.5 }
+```
+
+### Treaties
+
+Players swear pacts of peace (`POST /treaties` with `to` and an optional `tribute`: `payer` "me" or "them", `resources`, `every_hours`; the other side accepts with `POST /treaties/{id}/accept`; `DELETE /treaties/{id}` withdraws, declines, or gives `notice_hours` of notice). The tribute goes from the payer's first city to the other's first city; unpaid, the pact lapses. A pact does not stop an attack: attacking or raiding a partner breaks it, marks the breaker `treacherous` on the map and in profiles for `treachery_hours`, and costs their cities `treachery_mood` contentment meanwhile.
+
+```yaml
+treaties: { notice_hours: 6, treachery_hours: 48, treachery_mood: -15, min_tribute_hours: 1 }
 ```
 
 ## Archaeology

@@ -138,6 +138,10 @@ async def login(body: Login, game: GameDep) -> dict[str, Any]:
 @router.get("/me")
 async def me(player_id: PlayerId, game: GameDep) -> dict[str, Any]:
     assert game.pool is not None
+    if not await game.pool.fetchval("SELECT 1 FROM villages WHERE player_id = $1", player_id):
+        from .abandon import fresh_start
+
+        await fresh_start(game, player_id)  # back after the barbarians took everything
     async with game.pool.acquire() as conn:
         player = await get_player(conn, player_id)
         villages = await conn.fetch(

@@ -228,7 +228,7 @@ async def on_run(game: Game, tx: Tx, job: dict[str, Any]) -> None:
         async with tx.conn.transaction():  # a failed run must not undo the reschedule
             merchants = await reserve(game, tx, home, r["resources"])
             await save_village(game, tx, home)
-            await ship(game, tx, home, target, r["resources"], merchants)
+            await ship(game, tx, home, target, r["resources"], merchants, route=r["id"])
     except GameError as e:
         error = e.code
         home = await get_village(tx.conn, r["village_id"], lock=True)

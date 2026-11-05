@@ -240,7 +240,7 @@ async def _reload(conn: asyncpg.Connection, *rows: VillageRow) -> None:
 async def ovian_battle_resolved(game: Game, tx: Tx, battle: dict[str, Any], result: dict[str, Any], report: dict[str, Any],
                                 attacker: VillageRow, defender: VillageRow) -> None:
     r = rules(game)
-    if battle["kind"] not in r.kinds or attacker.player_id == defender.player_id or defender.meta.get("camp"):
+    if battle["kind"] not in r.kinds or attacker.player_id == defender.player_id or defender.meta.get("camp") or attacker.meta.get("camp"):
         return
     conn = tx.conn
     info: dict[str, Any] = {"needed": r.wins}

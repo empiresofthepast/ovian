@@ -304,6 +304,7 @@ async def _battle(game: Game, tx: Tx, m: dict[str, Any], home: VillageRow, targe
         "attack_multiplier": 1.0,
         "hero": m["hero"],
         "at": at,
+        "mission": m.get("mission"),
     }
     await game.emit("ovian_battle_prepare", game=game, tx=tx, battle=battle, attacker=home, defender=target)
     engine_battle = {k: battle[k] for k in ("kind", "attackers", "defenders", "defense_bonus", "attack_multiplier")}

@@ -3,7 +3,7 @@ import { CONFIG } from './config';
 import {
   AccessToken,
   ChatMessage, CultureView, MapVillage, Me, Pack, Report, ReportSummary, Tile, Units, VillageView, WorldInfo, AdminView, Alliance, MyAlliance, TradeOffer, HeroView, Quest, Achievement, Victory, GreatBuilding, ResourceMap,
-  GovernmentView, Calendar, Road, MedalsView, Medal, HallOfFame, ChronicleEntry, EmbassyInfo, Find, GovernorsView } from './models';
+  GovernmentView, Calendar, Road, MedalsView, Medal, HallOfFame, ChronicleEntry, EmbassyInfo, Find, GovernorsView, Treaty, TreatiesView } from './models';
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
@@ -117,6 +117,12 @@ export class Api {
     return this.request<VillageView>('POST', `/villages/${villageId}/routes`, { x, y, resources, every_hours: everyHours });
   }
   dropRoute(id: number) { return this.request<VillageView>('DELETE', `/routes/${id}`); }
+  treaties() { return this.request<TreatiesView>('GET', '/treaties'); }
+  proposeTreaty(to: string, tribute?: { payer: 'me' | 'them'; resources: ResourceMap; every_hours: number }) {
+    return this.request<Treaty>('POST', '/treaties', tribute ? { to, tribute } : { to });
+  }
+  acceptTreaty(id: number) { return this.request<Treaty>('POST', `/treaties/${id}/accept`); }
+  endTreaty(id: number) { return this.request<Treaty | { ended: true }>('DELETE', `/treaties/${id}`); }
   medals() { return this.request<MedalsView>('GET', '/medals'); }
   playerMedals(id: number) { return this.request<Medal[]>('GET', `/players/${id}/medals`); }
   hallOfFame() { return this.request<HallOfFame>('GET', '/hall-of-fame'); }

@@ -3702,6 +3702,26 @@ extensions:
       distance: 15
   settlers:
     unit: settler
+    price_growth: 1.5
+  abandon:
+    days: 7
+  horde:
+    every_hours: 24
+    warning_hours: 3
+    ratio: 1.0
+    min_troops: 150
+  trade:
+    profit_per_tile: 0.01
+    profit_max: 0.25
+    profit_cap_per_level: 2000
+    bandits_from: 6
+    bandits_per_tile: 0.02
+    bandits_max: 0.3
+    bandits_take: 0.5
+  treaties:
+    notice_hours: 6
+    treachery_hours: 48
+    treachery_mood: -15
   wikipedia:
     base: https://en.wikipedia.org/wiki/
     buildings:

@@ -88,14 +88,14 @@ class Game:
         from . import modules as builtin
 
         from .modules import (alliances, calendar, chronicle, contentment, culture, gods, governments, great, heroes, market, medals, omens,
-                              player_rules, pve, roads, rounds, starvation, submission, ver_sacrum, embassies, archaeology, auxiliaries, governors, militia, settlers)
+                              player_rules, pve, roads, rounds, starvation, submission, ver_sacrum, embassies, archaeology, auxiliaries, governors, militia, settlers, abandon, horde, treaties)
 
         self.pm.register(builtin, name="ovian.builtin")
         self.pm.register(culture, name="ovian.culture")
         self.pm.register(submission, name="ovian.submission")
         self.pm.register(ver_sacrum, name="ovian.ver_sacrum")
         for mod in (alliances, market, heroes, pve, gods, great, player_rules, chronicle, contentment, governments, calendar, omens, medals,
-                    rounds, roads, starvation, embassies, archaeology, auxiliaries, governors, militia, settlers):
+                    rounds, roads, starvation, embassies, archaeology, auxiliaries, governors, militia, settlers, abandon, horde, treaties):
             self.pm.register(mod, name=f"ovian.{mod.__name__.rsplit('.', 1)[-1]}")
         disabled = set(Settings.split(self.settings.disabled_plugins))
         for ep in entry_points(group="ovian.plugins"):

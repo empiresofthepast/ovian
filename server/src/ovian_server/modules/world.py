@@ -49,7 +49,8 @@ async def map_area(
                   op.username AS overlord_player_name, op.tribe AS overlord_tribe,
                   (SELECT count(*) FROM vassals sv WHERE sv.overlord_id = v.id)::int AS vassals,
                   p.protected_until, (p.protected_until > $5 OR p.vacation_until > $5) AS protected, p.vacation_until > $5 AS vacation,
-                  p.npc, p.bot, v.meta->'camp'->'level' AS camp_level, a.tag AS alliance_tag, a.id AS alliance_id
+                  p.npc, p.bot, v.meta->'camp'->'level' AS camp_level, coalesce((p.meta->>'treacherous_until')::bigint > $5, false) AS treacherous,
+                  v.meta->'abandoned'->>'player' AS abandoned_by, a.tag AS alliance_tag, a.id AS alliance_id
            FROM villages v JOIN players p ON p.id = v.player_id
              LEFT JOIN alliance_members am ON am.player_id = p.id LEFT JOIN alliances a ON a.id = am.alliance_id
              LEFT JOIN vassals s ON s.vassal_id = v.id LEFT JOIN villages o ON o.id = s.overlord_id
@@ -63,7 +64,8 @@ async def map_area(
 @router.get("/players/{player_id}")
 async def player(player_id: int, game: GameDep) -> dict[str, Any]:
     assert game.pool is not None
-    p = await game.pool.fetchrow("SELECT id, username, tribe, created_at, protected_until, bot, badges, founder_no, meta->'government'->>'id' AS government FROM players WHERE id = $1",
+    p = await game.pool.fetchrow("""SELECT id, username, tribe, created_at, protected_until, bot, badges, founder_no, meta->'government'->>'id' AS government,
+                                 (meta->>'treacherous_until')::bigint AS treacherous_until FROM players WHERE id = $1""",
                                  player_id)
     if p is None:
         raise not_found("player_not_found")

@@ -12,6 +12,17 @@ Configured by the content pack::
 
     extensions:
       market: { building: market, carry: 1000, speed: 12 }
+      trade:                       # profit and bandits (optional)
+        profit_per_tile: 0.01      # merchants who deliver to another player's city bring home this share of the
+        profit_max: 0.25           #   cargo per tile travelled, up to profit_max (same goods, on top of the payment)
+        profit_cap_per_level: 2000 # ...but a city earns at most this much a day per market level
+        bandits_from: 6            # beyond this many tiles, off the roads, bandits may rob a caravan:
+        bandits_per_tile: 0.02     #   chance per tile beyond, up to bandits_max; they take bandits_take of it
+        bandits_max: 0.3
+        bandits_take: 0.5
+
+Merchants' journeys leave no reports (they would be thousands); a robbery is the exception,
+and only for a one-off shipment (routes show it on the route and as an event).
 """
 
 from __future__ import annotations
@@ -41,6 +52,36 @@ router = APIRouter(tags=["market"])
 def cfg(game: Game) -> dict[str, Any]:
     c = game.content.extensions.get("market", {})
     return {"building": c.get("building", "market"), "carry": float(c.get("carry", 1000)), "speed": float(c.get("speed", 12))}
+
+
+def trade_cfg(game: Game) -> dict[str, float] | None:
+    c = game.content.extensions.get("trade")
+    if c is None:
+        return None
+    d = {"profit_per_tile": 0.01, "profit_max": 0.25, "profit_cap_per_level": 2000, "bandits_from": 6, "bandits_per_tile": 0.02,
+         "bandits_max": 0.3, "bandits_take": 0.5}
+    return {k: float(c.get(k, v)) for k, v in d.items()}
+
+
+def bandit_chance(game: Game, tiles: float, on_road: bool) -> float:
+    t = trade_cfg(game)
+    if t is None or on_road:
+        return 0.0
+    return max(0.0, min(t["bandits_max"], t["bandits_per_tile"] * (tiles - t["bandits_from"])))
+
+
+def day_of(ms: int) -> int:
+    return ms // 86_400_000
+
+
+def profit_room(game: Game, v: VillageRow, now: int) -> float:
+    """How much more profit this city may earn today."""
+    t = trade_cfg(game)
+    if t is None:
+        return 0.0
+    p = v.meta.get("trade_profit") or {}
+    earned = p.get("earned", 0.0) if p.get("day") == day_of(now) else 0.0
+    return max(0.0, t["profit_cap_per_level"] * merchants_total(game, v) - earned)
 
 
 def merchants_total(game: Game, v: VillageRow) -> int:
@@ -83,7 +124,8 @@ async def reserve(game: Game, tx: Tx, v: VillageRow, resources: dict[str, float]
     return need
 
 
-async def ship(game: Game, tx: Tx, home: VillageRow, target: VillageRow, resources: dict[str, float], merchants: int, offer: int | None = None) -> None:
+async def ship(game: Game, tx: Tx, home: VillageRow, target: VillageRow, resources: dict[str, float], merchants: int, offer: int | None = None,
+               route: int | None = None) -> None:
     c = cfg(game)
     seconds = max(1.0, math.hypot(target.x - home.x, target.y - home.y) / c["speed"] * 3600 / game.content.pack["world"]["speed"])
     now = game.clock.now()
@@ -91,7 +133,7 @@ async def ship(game: Game, tx: Tx, home: VillageRow, target: VillageRow, resourc
 
     seconds = max(1.0, seconds * await travel_factor(game, tx.conn, "trade", home, target, now))
     payload = {"home": home.id, "to": target.id, "resources": resources, "merchants": merchants, "departs_at": now,
-               "from_name": home.name, "to_name": target.name, "offer": offer}
+               "from_name": home.name, "to_name": target.name, "offer": offer, "route": route}
     await game.schedule(tx, ARRIVE, now + int(seconds * 1000), payload, village_id=home.id)
     if target.player_id != home.player_id:
         game.event(tx, target.player_id, "trade.incoming", {"from": home.public(), "to": target.public(), "resources": resources,
@@ -124,23 +166,53 @@ async def send(village_id: int, body: Shipment, player_id: PlayerId, game: GameD
 
 
 async def on_arrive(game: Game, tx: Tx, job: dict[str, Any]) -> None:
+    import random
+
     from .villages import push_village
 
     p = job["payload"]
     vs = await lock_villages(tx.conn, p["home"], p["to"])
     home, target = vs.get(p["home"]), vs.get(p["to"])
+    goods = dict(p["resources"])
+    robbed: dict[str, float] = {}
+    profit: dict[str, float] = {}
+    t = trade_cfg(game)
+    if home is not None and target is not None and t is not None:
+        tiles = math.hypot(target.x - home.x, target.y - home.y)
+        lo, hi = min(home.id, target.id), max(home.id, target.id)
+        on_road = bool(await tx.conn.fetchval("SELECT 1 FROM roads WHERE a_id = $1 AND b_id = $2 AND ready_at <= $3", lo, hi, job["due_at"]))
+        if random.random() < bandit_chance(game, tiles, on_road):
+            robbed = {r: math.floor(n * t["bandits_take"]) for r, n in goods.items()}
+            goods = {r: n - robbed[r] for r, n in goods.items()}
+        foreign = target.player_id != home.player_id and not await tx.conn.fetchval("SELECT npc FROM players WHERE id = $1", target.player_id)
+        if foreign and not robbed:
+            share = min(t["profit_max"], t["profit_per_tile"] * tiles)
+            room = profit_room(game, home, job["due_at"])
+            total = sum(goods.values()) * share
+            scale = min(1.0, room / total) if total > 0 else 0.0
+            profit = {r: math.floor(n * share * scale) for r, n in goods.items() if math.floor(n * share * scale) > 0}
+            if profit:
+                day = day_of(job["due_at"])
+                prev = home.meta.get("trade_profit") or {}
+                earned = (prev.get("earned", 0.0) if prev.get("day") == day else 0.0) + sum(profit.values())
+                home.meta["trade_profit"] = {"day": day, "earned": earned}
+                await save_village(game, tx, home)
     if target is not None:
         await accrue(game, tx, target, at=job["due_at"])
-        target.state = game.engine.deposit(target.state, p["resources"])
+        target.state = game.engine.deposit(target.state, goods)
         await save_village(game, tx, target)
-        data = {"from": {"id": p["home"], "name": p["from_name"]}, "to": target.public(), "resources": p["resources"]}
-        await add_report(game, tx, target.player_id, "trade", f"Merchants from {p['from_name']} reached {target.name}", data)
         await push_village(game, tx, target)
     if home is not None:
-        if target is not None and target.player_id != home.player_id:
-            await add_report(game, tx, home.player_id, "trade", f"Your merchants reached {p['to_name']}", {"from": home.public(), "to": target.public(), "resources": p["resources"]})
+        if robbed:
+            data = {"from": home.public(), "to": target.public() if target else {"id": p["to"], "name": p["to_name"]}, "robbed": robbed,
+                    "delivered": goods}
+            game.event(tx, home.player_id, "trade.robbed", data)
+            if p.get("route"):
+                await tx.conn.execute("UPDATE trade_routes SET last_error = $2 WHERE id = $1", p["route"], "bandits robbed the last caravan")
+            else:
+                await add_report(game, tx, home.player_id, "trade", f"Bandits robbed your merchants on the way to {p['to_name']}", data)
         back = job["due_at"] + (job["due_at"] - p["departs_at"])
-        await game.schedule(tx, RETURN, back, {"home": home.id, "merchants": p["merchants"]}, village_id=home.id)
+        await game.schedule(tx, RETURN, back, {"home": home.id, "merchants": p["merchants"], "profit": profit}, village_id=home.id)
         await bump_stat(tx.conn, home.player_id, "trades")
         await push_village(game, tx, home)
 
@@ -149,9 +221,16 @@ async def on_return(game: Game, tx: Tx, job: dict[str, Any]) -> None:
     from .villages import push_village
 
     try:
-        home = await get_village(tx.conn, job["payload"]["home"])
+        home = await get_village(tx.conn, job["payload"]["home"], lock=True)
     except Exception:  # noqa: BLE001 - the city is gone
         return
+    profit = job["payload"].get("profit") or {}
+    if profit:  # what the merchants earned abroad; like loot, it may exceed storage
+        await accrue(game, tx, home, at=job["due_at"])
+        for r, n in profit.items():
+            home.state["resources"][r] = home.state["resources"].get(r, 0) + n
+        await save_village(game, tx, home)
+        await bump_stat(tx.conn, home.player_id, "trade_profit", sum(profit.values()))
     await push_village(game, tx, home)
 
 
@@ -252,6 +331,12 @@ async def ovian_village_view(game: Game, conn: asyncpg.Connection, village: Vill
                        "arrives_at": j["due_at"]} for j in jobs],
         "offers": [dict(o) for o in my_offers],
     }
+    t = trade_cfg(game)
+    if t is not None:
+        now = game.clock.now()
+        p = village.meta.get("trade_profit") or {}
+        view["market"]["trade"] = t | {"profit_today": p.get("earned", 0.0) if p.get("day") == day_of(now) else 0.0,
+                                       "profit_cap": t["profit_cap_per_level"] * total}
 
 
 module = Module("market", router=router, jobs={ARRIVE: on_arrive, RETURN: on_return})
