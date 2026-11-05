@@ -349,8 +349,8 @@ buildings:
     max_level: 25
     requires: { civic_centre: 20, temple: 10, university: 10 }
     zeroad: wonder
-    cost: { total: 20000, mix: { food: 3000, wood: 5000, stone: 8000, metal: 4000 }, factor: 1.15 }
-    time: { base: 7200, factor: 1.12 }
+    cost: { total: 200000, mix: { food: 3000, wood: 5000, stone: 8000, metal: 4000 }, factor: 1.15 }  # 10x (2026-11-05)
+    time: { base: 72000, factor: 1.12 }
     population: 5
     effects: { culture: { base: 50, factor: 1.1, round: 1 } }
   - id: wall

@@ -705,13 +705,13 @@ buildings:
     university: 10
   cost:
     base:
-      food: 3000
-      wood: 5000
-      stone: 8000
-      metal: 4000
+      food: 30000
+      wood: 50000
+      stone: 80000
+      metal: 40000
     factor: 1.15
   time:
-    base: 7200
+    base: 72000
     factor: 1.12
   population: 5
   effects:
