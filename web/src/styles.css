@@ -396,3 +396,7 @@ img.ov-icon { height: 1.25em; object-fit: contain; }
 .hub-fieldset .row, .hub-fieldset .form__row { width: 100%; }
 .hub-checks { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; align-items: center; }
 .nowrap { white-space: nowrap; }
+
+/* Wikipedia references (extensions.wikipedia) */
+.wiki { font-size: 0.8em; font-weight: 400; white-space: nowrap; color: inherit; opacity: .75; text-decoration: underline dotted; }
+.wiki:hover { opacity: 1; }

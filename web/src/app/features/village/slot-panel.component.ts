@@ -30,6 +30,7 @@ interface Option {
         <h2 class="panel__title"><ov-icon [key]="'building.' + b.id" /> {{ b.id | name: 'building' }}
           <span class="muted">{{ 'level' | label: 'level' }} {{ level() }}</span></h2>
         @if (b.description) {<p class="muted">{{ b.description }}</p>}
+        <p class="small"><ov-wiki kind="building" [id]="b.id" [label]="true" /></p>
         @for (e of effects(); track e.label) {
           <div class="row small"><span class="grow">{{ e.label }}</span><span>{{ e.now }}</span>
             @if (e.next !== null) {<span class="muted">→ {{ e.next }}</span>}</div>
@@ -112,7 +113,7 @@ interface Option {
             <div class="train">
               <div class="train__head">
                 <ov-icon [key]="'unit.' + u.def.id" />
-                <strong class="grow">{{ u.def.id | name: 'unit' }}</strong>
+                <strong class="grow">{{ u.def.id | name: 'unit' }} <ov-wiki kind="unit" [id]="u.def.id" /></strong>
                 <span class="small muted" title="attack / defense vs infantry / vs cavalry">
                   <ov-icon key="stat.attack" />{{ u.def.attack }} <ov-icon key="stat.defense" />{{ u.def.defense.infantry }}/{{ u.def.defense.cavalry }}
                   <ov-icon key="stat.speed" />{{ u.def.speed }} <ov-icon key="stat.carry" />{{ u.def.carry }}
@@ -139,7 +140,7 @@ interface Option {
           <div class="option" [class.option--locked]="o.plan && !o.plan.ok">
             <div class="row">
               <ov-icon [key]="'building.' + o.def.id" />
-              <strong class="grow">{{ o.def.id | name: 'building' }}</strong>
+              <strong class="grow">{{ o.def.id | name: 'building' }} <ov-wiki kind="building" [id]="o.def.id" /></strong>
               <button class="btn btn--primary btn--small" [disabled]="(o.plan && !o.plan.ok) || busy()" (click)="build(o.def.id)">
                 {{ 'construct' | label: 'Build' }}
               </button>

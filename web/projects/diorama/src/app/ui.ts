@@ -1,5 +1,6 @@
 import { Component, Pipe, PipeTransform, computed, inject, input } from '@angular/core';
 import { EngineService } from '@core/engine.service';
+import { WikiLinkComponent } from '@core/wiki';
 import { Badge } from '@core/hub';
 import { ResourceMap } from '@core/models';
 import { ArtService } from './art/art.service';
@@ -133,4 +134,4 @@ export class BadgesComponent {
   );
 }
 
-export const UI = [DurationPipe, NumberPipe, ClockPipe, CostComponent, PortraitComponent, UnitsComponent, BadgesComponent];
+export const UI = [DurationPipe, NumberPipe, ClockPipe, CostComponent, PortraitComponent, UnitsComponent, BadgesComponent, WikiLinkComponent];

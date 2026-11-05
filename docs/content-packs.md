@@ -209,6 +209,18 @@ Techs listed in `militia.techs` (antiquity: **Civil Servants**, Fortress 10, aft
 militia: { techs: { civil_servants: 1.0 } }
 ```
 
+### Wikipedia references
+
+`wikipedia` gives an English Wikipedia article for each building and unit (titles; clients link `base` + title, and show
+nothing for ids without one). Antiquity covers all of them.
+
+```yaml
+wikipedia:
+  base: https://en.wikipedia.org/wiki/
+  buildings: { civic_centre: Agora, baths: Thermae }
+  units: { athen_infantry_spearman: Hoplite, rome_infantry_spearman: Triarii }
+```
+
 ### Settlers
 
 `settlers.unit` names a unit suffix (antiquity: `settler`, so `<tribe>_settler`, trained in the civic centre from level 10, at three times the cost of a ver sacrum; `roster.extra` in `tools/zeroad/antiquity.yaml` adds it to every people). Send settlers with an attack or a raid on a barbarian camp: if the attackers win and a settler lives, one stays and the camp becomes the attacker's city, a colony of the city it came from (bound like a ver sacrum colony). It starts as a new city does plus all the camp's stores, even beyond its storage; the troops carry no loot home. The battle report has `settled`, and a `ver_sacrum` report announces the colony.

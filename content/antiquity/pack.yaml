@@ -3702,6 +3702,173 @@ extensions:
       distance: 15
   settlers:
     unit: settler
+  wikipedia:
+    base: https://en.wikipedia.org/wiki/
+    buildings:
+      woodline: Logging
+      quarry: Quarry
+      mine: Mining
+      field: Field (agriculture)
+      civic_centre: Agora
+      storehouse: Horreum
+      farmstead: Farm
+      house: Domus
+      rally_point: Castra
+      barracks: Barracks
+      stable: Stable
+      fortress: Fortification
+      temple: Ancient Greek temple
+      university: Mouseion
+      market: Marketplace
+      gardens: Roman gardens
+      baths: Thermae
+      amphitheatre: Amphitheatre
+      embassy: Proxeny
+      exchange: Emporium (antiquity)
+      cultural_exchange: Hellenistic period
+      garrison: Garrison
+      ruin: Ruins
+      great_theatre: Theatre of ancient Greece
+      great_forge: Ferrous metallurgy
+      wonder: Seven Wonders of the Ancient World
+      wall: Defensive wall
+    units:
+      athen_infantry_javelineer: Peltast
+      athen_infantry_archer: Cretan archers
+      athen_infantry_spearman: Hoplite
+      athen_infantry_slinger: Psiloi
+      athen_cavalry_swordsman: Hippeis
+      athen_cavalry_javelineer: Prodromoi
+      athen_champion_marine: Trireme
+      athen_champion_infantry: Athenian military
+      spart_infantry_spearman_neodamodes: Neodamodes
+      spart_infantry_spearman: Perioeci
+      spart_infantry_javelineer: Helots
+      spart_champion_infantry_swordsman: Sciritae
+      spart_cavalry_spearman: Hippeis
+      spart_cavalry_javelineer: Prodromoi
+      spart_champion_infantry_spear: Spartan army
+      mace_infantry_slinger: Slinger
+      mace_infantry_archer: Cretan archers
+      mace_infantry_pikeman: Pezhetairos
+      mace_infantry_javelineer: Agrianes
+      mace_cavalry_javelineer: Odrysian kingdom
+      mace_cavalry_spearman: Xyston
+      mace_champion_infantry_spearman: Hypaspists
+      mace_champion_cavalry: Companion cavalry
+      ptol_infantry_spearman_merc: Thyreophoroi
+      ptol_infantry_swordsman_merc: Galatians (people)
+      ptol_infantry_javelineer: Thyreophoroi
+      ptol_infantry_pikeman: Macedonian phalanx
+      ptol_infantry_slinger: Slinger
+      ptol_cavalry_spearman_merc: Cleruchy
+      ptol_cavalry_javelineer_merc: Ptolemaic army
+      ptol_cavalry_archer: Camel cavalry
+      ptol_champion_cavalry: Agema
+      ptol_champion_elephant: War elephant
+      sele_infantry_swordsman_merc: Rhomphaia
+      sele_infantry_archer_merc: Seleucid army
+      sele_infantry_spearman: Thyreophoroi
+      sele_infantry_pikeman: Macedonian phalanx
+      sele_infantry_javelineer: Seleucid army
+      sele_cavalry_spearman_merc: Companion cavalry
+      sele_cavalry_javelineer: Seleucid army
+      sele_cavalry_archer: Dahae
+      sele_champion_cavalry: Cataphract
+      sele_champion_elephant: War elephant
+      rome_infantry_spearman: Triarii
+      rome_infantry_swordsman: Hastati
+      rome_champion_infantry_spear_gladiator: Hoplomachus
+      rome_champion_infantry_sword_gladiator: Murmillo
+      rome_infantry_antesignanus: Velites
+      rome_cavalry_spearman: Equites
+      rome_cavalry_javelineer: Socii
+      rome_champion_infantry_swordsman: Extraordinarii
+      rome_champion_cavalry: Roman cavalry
+      cart_infantry_spearman: Military of Carthage
+      cart_infantry_archer: Mauretania
+      cart_cavalry_javelineer: Numidian cavalry
+      cart_champion_infantry: Sacred Band of Carthage
+      cart_champion_elephant: North African elephant
+      iber_infantry_spearman: Iberians
+      iber_infantry_swordsman: Falcata
+      iber_infantry_javelineer: Lusitanians
+      iber_infantry_slinger: Balearic slinger
+      iber_cavalry_spearman: Iberians
+      iber_cavalry_javelineer: Cantabrian circle
+      iber_champion_infantry_swordsman: Devotio
+      iber_champion_cavalry: Iberians
+      gaul_infantry_spearman: Gauls
+      gaul_infantry_javelineer: Gauls
+      gaul_infantry_slinger: Slinger
+      gaul_cavalry_swordsman: Gauls
+      gaul_cavalry_javelineer: Gauls
+      gaul_champion_infantry_swordsman: Soldurios
+      gaul_champion_cavalry: Gauls
+      brit_infantry_spearman: Celtic Britons
+      brit_infantry_javelineer: Celtic Britons
+      brit_infantry_slinger: Slinger
+      brit_cavalry_swordsman: Celtic Britons
+      brit_cavalry_javelineer: Celtic Britons
+      brit_champion_infantry_swordsman: Celtic Britons
+      brit_champion_chariot: Chariot
+      germ_infantry_spearman: Cimbri
+      germ_infantry_swordsman: Teutons
+      germ_champion_infantry_maceman: Club (weapon)
+      germ_infantry_javelineer: Ambrones
+      germ_infantry_slinger: Slinger
+      germ_cavalry_spearman: Cimbri
+      germ_cavalry_javelineer: Tigurini
+      germ_champion_infantry_axeman: Cimbrian War
+      germ_champion_cavalry: Cimbri
+      achae_infantry_spearman: Sparabara
+      achae_infantry_javelineer: Lydia
+      achae_infantry_archer: Sogdia
+      achae_cavalry_spearman: Cappadocia (satrapy)
+      achae_cavalry_axeman: Hyrcania
+      achae_cavalry_javelineer: Medes
+      achae_champion_cavalry: Bactria
+      achae_champion_elephant: War elephant
+      maur_infantry_spearman: Maurya Empire
+      maur_infantry_swordsman: Khanda (sword)
+      maur_infantry_archer: Dhanurveda
+      maur_cavalry_swordsman: Maurya Empire
+      maur_cavalry_javelineer: Maurya Empire
+      maur_elephant_archer: War elephant
+      maur_champion_chariot: Chariot
+      maur_champion_elephant: War elephant
+      kush_infantry_spearman: Kingdom of Kush
+      kush_infantry_pikeman: Meroë
+      kush_infantry_swordsman: Meroë
+      kush_infantry_archer: Ta-Seti
+      kush_cavalry_spearman: Kingdom of Kush
+      kush_cavalry_javelineer: Napata
+      kush_champion_cavalry: Kingdom of Kush
+      kush_champion_elephant: War elephant
+      han_infantry_spearman: Military of the Han dynasty
+      han_infantry_pikeman: Ji (polearm)
+      han_infantry_crossbowman: Crossbow
+      han_infantry_archer: Military of the Han dynasty
+      han_cavalry_spearman: Military of the Han dynasty
+      han_cavalry_swordsman: Dao (Chinese sword)
+      han_cavalry_archer: Mounted archery
+      han_champion_infantry_spearman_academy: Military of the Han dynasty
+      han_champion_cavalry_spearman_academy: Youzhou (ancient China)
+      athen_settler: Greek colonisation
+      spart_settler: Greek colonisation
+      mace_settler: Hellenistic period
+      ptol_settler: Cleruchy
+      sele_settler: Seleucid Empire
+      rome_settler: Colonia (Roman)
+      cart_settler: Colonies in antiquity
+      iber_settler: Iberians
+      gaul_settler: Celts
+      brit_settler: Celtic Britons
+      germ_settler: Migration Period
+      achae_settler: Achaemenid Empire
+      maur_settler: Maurya Empire
+      kush_settler: Kingdom of Kush
+      han_settler: Tuntian
   ver_sacrum:
     every: 10
     range_per_level: 0.5

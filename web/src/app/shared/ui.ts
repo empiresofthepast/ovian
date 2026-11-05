@@ -1,5 +1,6 @@
 import { Component, Pipe, PipeTransform, computed, inject, input } from '@angular/core';
 import { EngineService } from '../core/engine.service';
+import { WikiLinkComponent } from '../core/wiki';
 import { ResourceMap, Units } from '../core/models';
 import { SkinService, isImage } from '../core/skin.service';
 
@@ -123,4 +124,4 @@ export class LabelPipe implements PipeTransform {
   }
 }
 
-export const UI = [IconComponent, CostComponent, UnitsComponent, DurationPipe, ClockPipe, NamePipe, LabelPipe] as const;
+export const UI = [IconComponent, CostComponent, UnitsComponent, DurationPipe, ClockPipe, NamePipe, LabelPipe, WikiLinkComponent] as const;

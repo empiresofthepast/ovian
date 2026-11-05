@@ -39,6 +39,7 @@ interface Option {
       <div class="selection__body">
         @if (def(); as b) {
           @if (b.description) {<p class="muted">{{ b.description }}</p>}
+          <p class="small"><ov-wiki kind="building" [id]="b.id" [label]="true" /></p>
           @if (b.unique === false && copies() > 1) {<p class="small muted">One of {{ copies() }} in this city: storage adds up and training runs in parallel.</p>}
           <dl class="effects">
             @for (e of effects(); track e.label) {
@@ -118,7 +119,7 @@ interface Option {
             </div>
           }
         } @else if (chosen(); as o) {
-          <h3 class="subhead">{{ o.def.name }}</h3>
+          <h3 class="subhead">{{ o.def.name }} <ov-wiki kind="building" [id]="o.def.id" /></h3>
           <p class="muted">{{ o.def.description }}</p>
           <p class="small muted">{{ o.def.unique === false ? (copiesOf(o.def.id) ? 'You can build several: you have ' + copiesOf(o.def.id) + ' already.' : 'You can build several of these.') : 'Only one per city.' }}</p>
           <dio-cost [cost]="o.cost" [have]="game.resources()" />
@@ -208,7 +209,7 @@ interface Option {
             </div>
             @if (!techInfo() && unitInfo(); as u) {
               <div class="train">
-                <div><strong>{{ u.def.name }}</strong> <span class="muted small">{{ u.def.class }}</span></div>
+                <div><strong>{{ u.def.name }}</strong> <span class="muted small">{{ u.def.class }}</span> <ov-wiki kind="unit" [id]="u.def.id" /></div>
                 <div class="stats small">
                   <span title="Attack">⚔ {{ u.def.attack }}</span>
                   <span title="Defense against infantry / cavalry">⛨ {{ u.def.defense.infantry }} / {{ u.def.defense.cavalry }}</span>
