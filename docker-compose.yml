@@ -31,8 +31,20 @@ services:
       OVIAN_HUB_SECRET: ${OVIAN_HUB_WORLD_SECRET:-}
       OVIAN_HUB_URL: ${OVIAN_HUB_INTERNAL_URL:-}
       OVIAN_LOCAL_REGISTRATION: ${OVIAN_LOCAL_REGISTRATION:-true}
+      # the admin infrastructure page: containers through a read-only Docker proxy, the host's /proc read-only
+      OVIAN_DOCKER_URL: http://dockerproxy:2375
+      OVIAN_COMPOSE_PROJECT: ovian
+      OVIAN_HOST_PROC: /host/proc
+    volumes: ["/proc/stat:/host/proc/stat:ro", "/proc/meminfo:/host/proc/meminfo:ro"]
     depends_on: { db: { condition: service_healthy } }
     ports: ["${OVIAN_API_PORT:-47080}:8000"]
+    restart: unless-stopped
+
+  # Docker API for the infrastructure page: listing containers and their stats only (no writes, not published).
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    environment: { CONTAINERS: 1, INFO: 1, POST: 0 }
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
     restart: unless-stopped
 
   # The hub: one account for every world, founders, badges, Patreon, the list of worlds. See docs/worlds.md.

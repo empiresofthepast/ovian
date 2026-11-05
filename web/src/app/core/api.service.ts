@@ -3,7 +3,7 @@ import { CONFIG } from './config';
 import {
   AccessToken,
   ChatMessage, CultureView, MapVillage, Me, Pack, Report, ReportSummary, Tile, Units, VillageView, WorldInfo, AdminView, Alliance, MyAlliance, TradeOffer, HeroView, Quest, Achievement, Victory, GreatBuilding, ResourceMap,
-  GovernmentView, Calendar, Road, MedalsView, Medal, HallOfFame, ChronicleEntry, EmbassyInfo, Find, GovernorsView, Treaty, TreatiesView } from './models';
+  GovernmentView, Calendar, Road, MedalsView, Medal, HallOfFame, ChronicleEntry, EmbassyInfo, Find, GovernorsView, Treaty, TreatiesView, InfraView } from './models';
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
@@ -156,6 +156,7 @@ export class Api {
   }
   heartbeat() { return this.request<void>('POST', '/me/heartbeat'); }
   adminVillage(id: number) { return this.request<VillageView>('GET', `/admin/villages/${id}`); }
+  adminInfra() { return this.request<InfraView>('GET', '/admin/infra'); }
   adminPlayers() { return this.request<AdminView>('GET', '/admin/players'); }
   rankings() { return this.request<any[]>('GET', '/rankings'); }
   player(id: number) { return this.request<any>('GET', `/players/${id}`); }

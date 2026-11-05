@@ -903,3 +903,25 @@ export interface TrainPlan {
 
 /** A personal access token for scripts and AI assistants (the full value is shown only once). */
 export interface AccessToken { id: number; name: string; prefix: string; created_at: number; last_used_at: number | null; token?: string }
+
+/** GET /admin/infra: CPU and memory of the stack's containers and of the host. */
+export interface InfraContainer {
+  name: string;
+  service: string | null;
+  image: string;
+  state: string;
+  status: string;
+  /** Percent of one core (100 = one core busy), like `docker stats`. */
+  cpu_percent: number;
+  /** Bytes, without the page cache. */
+  mem_used: number;
+  mem_limit: number;
+  pids: number | null;
+}
+
+export interface InfraView {
+  at: number;
+  containers: InfraContainer[];
+  totals: { cpu_percent: number; mem_used: number; containers: number; running: number };
+  host: { cpus: number; cpu_percent: number; mem_total: number; mem_used: number; mem_available: number } | null;
+}

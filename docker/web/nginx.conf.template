@@ -7,11 +7,15 @@ server {
   index index.html;
   gzip on;
   gzip_types application/json application/javascript text/css image/svg+xml model/vnd.collada+xml;
+  # Look the server and broker up again (Docker's DNS) rather than once at start: a recreated container gets a new address.
+  resolver 127.0.0.11 valid=10s ipv6=off;
+  set $api_upstream ${OVIAN_API_UPSTREAM};
+  set $mqtt_upstream ${OVIAN_MQTT_UPSTREAM};
 
-  location /api/      { proxy_pass ${OVIAN_API_UPSTREAM}; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
-  location = /health  { proxy_pass ${OVIAN_API_UPSTREAM}; }
-  location = /docs    { proxy_pass ${OVIAN_API_UPSTREAM}; }
-  location = /openapi.json { proxy_pass ${OVIAN_API_UPSTREAM}; }
+  location /api/      { proxy_pass $api_upstream; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+  location = /health  { proxy_pass $api_upstream; }
+  location = /docs    { proxy_pass $api_upstream; }
+  location = /openapi.json { proxy_pass $api_upstream; }
   # The hub and further worlds (OVIAN_HUB_UPSTREAM, OVIAN_WORLDS), written by 40-ovian-config.sh.
   include /etc/nginx/ovian/*.conf;
   # Never expose the broker callbacks.
@@ -19,7 +23,7 @@ server {
   location /api/v1/internal/ { return 404; }
 
   location /mqtt {
-    proxy_pass ${OVIAN_MQTT_UPSTREAM};
+    proxy_pass $mqtt_upstream;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $connection_upgrade;
