@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Api, ApiError } from '@core/api.service';
 import { EngineService } from '@core/engine.service';
 import { GameStore } from '@core/game.store';
@@ -8,11 +8,12 @@ import { ContentmentView, Government, GovernmentView, ResourceMap } from '@core/
 import { politicsText } from '@core/politics';
 import { ArtService } from '../art/art.service';
 import { UI } from '../ui';
+import { TreatiesComponent } from './treaties.component';
 
-/** Government, the people's mood, roads and trade routes. */
+/** Government, the people's mood, pacts with other players, roads and trade routes. */
 @Component({
   selector: 'dio-realm',
-  imports: [FormsModule, ...UI],
+  imports: [FormsModule, TreatiesComponent, ...UI],
   template: `
     <section class="hud-panel dialog realm" role="dialog" aria-label="Realm">
       <button class="close" (click)="close()" aria-label="Close" title="Close (Esc)">✕</button>
@@ -81,6 +82,8 @@ import { UI } from '../ui';
         } @else {<p class="muted">Loading…</p>}
       }
 
+      @if (tab() === 'pacts') {<dio-treaties [prefill]="pactWith" />}
+
       @if (tab() === 'roads') {
         @if (game.village(); as v) {
           @if (v.roads; as r) {
@@ -138,8 +141,11 @@ export class RealmComponent {
   private readonly engine = inject(EngineService);
   private readonly art = inject(ArtService);
   private readonly router = inject(Router);
-  protected readonly tabs = [{ id: 'people', label: 'People' }, { id: 'government', label: 'Government' }, { id: 'roads', label: 'Roads & routes' }];
-  protected readonly tab = signal('people');
+  protected readonly tabs = [{ id: 'people', label: 'People' }, { id: 'government', label: 'Government' }, { id: 'pacts', label: 'Pacts' }, { id: 'roads', label: 'Roads & routes' }];
+  private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
+  protected readonly tab = signal(this.query.get('tab') ?? 'people');
+  /** /realm?tab=pacts&with=name opens the pact form for that player. */
+  protected readonly pactWith = this.query.get('with');
   protected readonly gov = signal<GovernmentView | null>(null);
   protected roadTo: number | null = null;
   protected rx = 0;

@@ -12,6 +12,8 @@ const KIND: Record<string, { icon: string; label: string }> = {
   pact: { icon: '🤝', label: 'Pacts' }, alliance: { icon: '⚭', label: 'Alliances' }, phase: { icon: '▲', label: 'Growth' },
   wonder: { icon: '🏛', label: 'Wonders' }, great: { icon: '🏟', label: 'Great buildings' }, festival: { icon: '🏅', label: 'Games' },
   government: { icon: '⚜', label: 'Governments' }, round: { icon: '⌛', label: 'Rounds' }, renamed: { icon: '✎', label: 'New names' },
+  horde: { icon: '☠', label: 'Hordes' }, abandoned: { icon: '🏚', label: 'Abandoned cities' }, treaty: { icon: '✍', label: 'Treaties' },
+  treachery: { icon: '⚠', label: 'Treachery' },
 };
 
 /** The public history of the world, with a GeoJSON export. */

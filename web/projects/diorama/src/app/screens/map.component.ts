@@ -19,7 +19,7 @@ const COLOURS: Record<string, string> = {
 };
 
 /** World map: the terrain painted with 0 A.D. textures, villages as civilization emblems. */
-const label = (v: MapVillage) => (v.alliance_tag ? `[${v.alliance_tag}] ` : '') + v.name + (v.bot ? ' 🤖' : '');
+const label = (v: MapVillage) => (v.alliance_tag ? `[${v.alliance_tag}] ` : '') + v.name + (v.bot ? ' 🤖' : '') + (v.treacherous ? ' ⚠' : '');
 
 @Component({
   selector: 'dio-map',
@@ -56,11 +56,13 @@ const label = (v: MapVillage) => (v.alliance_tag ? `[${v.alliance_tag}] ` : '') 
               <div>
                 <h3 class="subhead">@if (v.alliance_tag) {<span class="muted">[{{ v.alliance_tag }}]</span> }{{ v.name }}</h3>
                 @if (v.npc) {
+                  @if (v.abandoned_by) {<div class="small">🏚 Ruins of a city abandoned by {{ v.abandoned_by }}, now held by barbarians.</div>}
                   <div class="small">Barbarian camp, level {{ v.camp_level }}. Raid it for loot; heroes earn double experience here. It recovers an hour after each battle.</div>
                 } @else {
                   <div class="small">{{ v.player_name }}@if (ownerBadges(); as ob) {&nbsp;<dio-badges [badges]="ob.badges" [founderNo]="ob.founder_no" />}@if (v.bot) { 🤖 <span class="muted">(an AI ruler)</span>} · {{ tribeName(v.tribe) }}</div>
                 }
                 <div class="small muted">Population {{ v.population }}@if (v.culture) { · culture {{ v.culture | n }}}@if (distance() !== null) { · {{ distance()!.toFixed(1) }} tiles}</div>
+                @if (v.treacherous) {<div class="small bad" title="Its ruler attacked a pact partner: trust them at your peril">⚠ Oath-breaker: {{ v.player_name }} broke a pact recently</div>}
                 @if (v.overlord_id) {<div class="small bad">⛓ Vassal of {{ v.overlord_name }} ({{ v.overlord_player_name }}), {{ tribeName(v.overlord_tribe!) }} in culture</div>}
                 @if (v.vassals) {<div class="small">♛ Overlord of {{ v.vassals }} {{ v.vassals === 1 ? 'city' : 'cities' }}</div>}
               </div>
@@ -99,6 +101,9 @@ const label = (v: MapVillage) => (v.alliance_tag ? `[${v.alliance_tag}] ` : '') 
                 <button class="btn btn--small" (click)="send('reinforce')">Reinforce</button>
               </div>
 
+              @if (!v.npc) {
+                <button class="btn btn--ghost btn--small" (click)="pact(v.player_name)" [title]="'Offer ' + v.player_name + ' a pact of peace, with or without tribute'">🤝 Propose a pact</button>
+              }
               @if (!v.npc && !game.village()?.submission) {
                 @if (game.village()?.fealty_offer?.village?.id === v.id) {
                   <p class="small muted">{{ game.village()!.name }} has offered fealty to {{ v.name }}.</p>
@@ -736,6 +741,10 @@ export class MapComponent implements AfterViewInit {
   protected send(kind: string): void {
     const t = this.selected();
     if (t) void this.router.navigate(['/rally'], { queryParams: { x: t.x, y: t.y, kind } });
+  }
+
+  protected pact(player: string): void {
+    void this.router.navigate(['/realm'], { queryParams: { tab: 'pacts', with: player } });
   }
 
   protected async open(id: number): Promise<void> {

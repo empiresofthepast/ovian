@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Api } from '../../core/api.service';
@@ -8,7 +8,7 @@ import { UI } from '../../shared/ui';
 
 @Component({
   selector: 'ov-reports',
-  imports: [RouterLink, DecimalPipe, ...UI],
+  imports: [RouterLink, DatePipe, DecimalPipe, ...UI],
   template: `
     <div class="page-head"><h1 class="page-title">{{ 'nav.reports' | label }}</h1></div>
     <div class="reports">
@@ -30,7 +30,7 @@ import { UI } from '../../shared/ui';
           </div>
           @if (r.kind === 'battle') {
             @let d = r.data;
-            <p class="small muted">{{ 'kind.' + d.kind | label }} · {{ d.at | clock }} ·
+            <p class="small muted">@if (d.horde) {<span class="tag tag--attack">{{ 'report.horde' | label: 'Barbarian horde' }}</span> }{{ 'kind.' + d.kind | label }} · {{ d.at | clock }} ·
               {{ d.winner === 'attacker' ? ('report.attacker_won' | label: 'The attacker won') : ('report.defender_won' | label: 'The defender held') }}</p>
             @for (side of [d.attacker, d.defender]; track $index) {
               <h3 class="subtitle">{{ $index === 0 ? ('report.attacker' | label: 'Attacker') : ('report.defender' | label: 'Defender') }}:
@@ -89,6 +89,22 @@ import { UI } from '../../shared/ui';
             } @else {
               <p class="small">Someone settled ({{ r.data.x }}|{{ r.data.y }}) first. The migrants came home; the resources and the ver sacrum are back in {{ r.data.from.name }}.</p>
             }
+          } @else if (r.kind === 'treaty') {
+            @let d = r.data;
+            @if (d.breaker) {
+              <p class="small bad">{{ d.breaker.name }} broke your pact and marches on {{ d.target?.name }}@if (d.target) { ({{ d.target.x }}|{{ d.target.y }})}.
+                The world marks them as an oath-breaker until {{ d.until | date: 'short' }}.</p>
+            } @else if (d.status) {
+              <p class="small">{{ d.status === 'active' ? 'Pact' : 'Proposed pact' }} with <strong>{{ d.with?.name }}</strong>@if (d.since) {, sworn {{ d.since | date: 'short' }}}@if (d.ends_at) {; notice given, it ends {{ d.ends_at | date: 'short' }}}.</p>
+              <p class="small">@if (d.tribute; as tr) {Tribute: @if (tr.i_pay) {you pay} @else {they pay you} <ov-cost [cost]="tr.resources" /> every {{ tr.every_hours }}h.} @else {No tribute.}</p>
+              @if (d.status === 'proposed') {<p class="small"><a routerLink="/realm" fragment="pacts">{{ 'treaty.answer' | label: 'Answer it in the realm' }} →</a></p>}
+            } @else if (d.tribute) {
+              <p class="small">The pact with {{ d.with }} lapsed: the tribute (<ov-cost [cost]="d.tribute" />) went unpaid.</p>
+            }
+          } @else if (r.kind === 'trade' && r.data.robbed) {
+            <p class="small">{{ r.data.from?.name }} → {{ r.data.to?.name }}</p>
+            <p class="small bad">{{ 'report.bandits' | label: 'Bandits took' }} <ov-cost [cost]="r.data.robbed" />.</p>
+            <p class="small">{{ 'report.delivered' | label: 'Delivered' }}: <ov-cost [cost]="r.data.delivered" /></p>
           } @else {
             <p class="small">{{ r.data.from?.name }} → {{ r.data.to?.name }}</p>
             <ov-units [units]="r.data.units" />

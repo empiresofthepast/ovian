@@ -309,6 +309,8 @@ img.ov-icon { height: 1.25em; object-fit: contain; }
 .seg__opt--off { opacity: .4; cursor: not-allowed; text-decoration: line-through; }
 
 .inspect-banner { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 16px; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.callout { padding: 0.5rem 0.75rem; border-radius: var(--radius-small); border-left: 3px solid var(--accent); background: var(--surface-2); }
+.callout--bad { border-left-color: var(--bad); color: var(--bad); font-weight: 600; }
 
 /* ---------- realm: tutorial, mood, omens, seasons, cards ---------- */
 .stats { flex-wrap: wrap; align-items: center; }

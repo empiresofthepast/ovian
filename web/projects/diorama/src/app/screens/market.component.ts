@@ -20,6 +20,10 @@ import { UI } from '../ui';
           <p class="muted">Build a market in this city to hire merchants. Each level adds one.</p>
         } @else {
           <p class="small">Merchants: <strong>{{ mk.merchants - mk.busy }}</strong> of {{ mk.merchants }} free, each carrying {{ mk.carry | n }}, at {{ mk.speed }} tiles per hour.</p>
+          @if (mk.trade; as tr) {
+            <p class="small muted">Merchants delivering to other players' cities bring home {{ pct(tr.profit_per_tile) }}% of the cargo per tile (up to {{ pct(tr.profit_max) }}%), at most {{ tr.profit_cap | n }} a day: today <strong>{{ tr.profit_today | n }}</strong>.
+              Beyond {{ tr.bandits_from }} tiles, off the roads, bandits may rob a caravan ({{ pct(tr.bandits_per_tile) }}% more likely each tile, up to {{ pct(tr.bandits_max) }}%) and take {{ pct(tr.bandits_take) }}% of it.</p>
+          }
           <div class="market__cols">
             <form (ngSubmit)="send()">
               <h3 class="subhead">Send resources</h3>
@@ -144,6 +148,10 @@ export class MarketComponent {
 
   protected async cancel(id: number): Promise<void> {
     if (await this.game.act(() => this.api.cancelOffer(id), 'Offer withdrawn')) await this.load();
+  }
+
+  protected pct(x: number): string {
+    return String(Math.round(x * 1000) / 10);
   }
 
   protected close(): void {

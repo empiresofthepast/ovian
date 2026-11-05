@@ -32,6 +32,8 @@ export class GameStore {
   readonly allianceEvents = new Subject<GameEvent>();
   /** Events on the server topic (seasons, festival, medals, chronicle, rounds). */
   readonly serverEvents = new Subject<GameEvent>();
+  /** Events on the player's own topic (treaties and the rest). */
+  readonly playerEvents = new Subject<GameEvent>();
   /** Set when someone has won the world with a wonder. */
   readonly winner = signal<{ player: { id: number; name: string }; village: { name: string }; at: number } | null>(null);
 
@@ -229,6 +231,8 @@ export class GameStore {
       this.mapEvents.next(event);
       return;
     }
+    this.playerEvents.next(event);
+    const res = (m: Record<string, number>) => Object.entries(m ?? {}).filter(([, n]) => n).map(([k, n]) => `${Math.round(n)} ${this.skin.label(`resource.${k}`, this.engine.pack()?.resources.find((r) => r.id === k)?.name ?? k)}`).join(', ');
     const name = (kind: string, id: string) => this.skin.label(`${kind}.${id}`, (kind === 'building' ? this.engine.building(id)?.name : this.engine.unit(id)?.name) ?? id);
     switch (event.type) {
       case 'village.updated':
@@ -300,6 +304,27 @@ export class GameStore {
         break;
       case 'road.built':
         this.toast(`${this.skin.label('road_built', 'The road is finished')}: ${d.a.name} ⟷ ${d.b.name}`, 'good');
+        break;
+      case 'horde.incoming': {
+        const mins = Math.max(0, Math.round((d.arrives_at - this.now()) / 60_000));
+        const eta = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+        this.toast(`⚔ ${this.skin.label('horde_incoming', 'A barbarian horde of')} ${d.troops} ${this.skin.label('marches_on', 'marches on')} ${d.to.name} ${this.skin.label('from', 'from')} ${d.from.name}, ${this.skin.label('arriving_in', 'arriving in')} ${eta}`, 'bad');
+        break;
+      }
+      case 'trade.robbed':
+        this.toast(`${this.skin.label('bandits_took', 'Bandits robbed the caravan from')} ${d.from.name} ${this.skin.label('to', 'to')} ${d.to.name}: ${res(d.robbed)}`, 'bad');
+        break;
+      // treaty.proposed / treaty.accepted come with a report (report.new toasts it)
+      case 'treaty.broken':
+        this.toast(this.skin.label('treaty_broken', 'You broke a pact: the world marks you as an oath-breaker and your cities are restless'), 'bad');
+        break;
+      case 'treaty.ended':
+        this.toast(d.reason === 'declined' && d.with
+          ? `${d.with.name} ${this.skin.label('treaty_declined', 'declined or withdrew the pact proposal')}`
+          : this.skin.label('treaty_ended', 'A pact has ended'), 'info');
+        break;
+      case 'treaty.tribute':
+        this.toast(`${this.skin.label('tribute_from', 'Tribute from')} ${d.from.name}: ${res(d.resources)}`, 'good');
         break;
       case 'government.settled':
         this.toast(this.skin.label('government_settled', 'Order is restored: the new government rules'), 'good');

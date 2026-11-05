@@ -7,6 +7,8 @@ import { ChronicleEntry } from '../../core/models';
 import { UI } from '../../shared/ui';
 
 const PAGE = 50;
+/** Readable names for kinds that are not plain words (skins may still override "chronicle.<kind>"). */
+const KINDS: Record<string, string> = { horde: 'barbarian horde', abandoned: 'abandoned', treaty: 'pact', treachery: 'treachery' };
 
 /** The public history of the world, newest first. */
 @Component({
@@ -22,13 +24,13 @@ const PAGE = 50;
       <div class="chips" role="group" aria-label="Filter">
         <button class="chip" [class.chip--on]="!kind()" (click)="filter('')">{{ 'chronicle.all' | label: 'All' }}</button>
         @for (k of kinds(); track k) {
-          <button class="chip" [class.chip--on]="kind() === k" (click)="filter(k)">{{ 'chronicle.' + k | label: k }}</button>
+          <button class="chip" [class.chip--on]="kind() === k" (click)="filter(k)">{{ 'chronicle.' + k | label: kindName(k) }}</button>
         }
       </div>
       <div class="timeline">
         @for (e of entries(); track e.id) {
           <div class="timeline__item">
-            <span class="tag">{{ 'chronicle.' + e.kind | label: e.kind }}</span>
+            <span class="tag" [class.tag--attack]="e.kind === 'horde' || e.kind === 'treachery'">{{ 'chronicle.' + e.kind | label: kindName(e.kind) }}</span>
             <span>{{ e.title }}</span>
             <span class="timeline__meta small muted">{{ e.at | date: 'medium' }}
               @if (e.x !== null && e.y !== null) { · <a [routerLink]="'/map'" [queryParams]="{ x: e.x, y: e.y }">({{ e.x }}|{{ e.y }})</a>}</span>
@@ -62,6 +64,10 @@ export class ChronicleComponent {
       if (e.type.startsWith('chronicle')) void this.load();
     });
     inject(DestroyRef).onDestroy(() => sub.unsubscribe());
+  }
+
+  protected kindName(kind: string): string {
+    return KINDS[kind] ?? kind;
   }
 
   protected filter(kind: string): void {

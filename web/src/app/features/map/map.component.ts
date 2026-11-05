@@ -44,6 +44,8 @@ const DEFAULT_TERRAIN: Record<string, string> = {
           <p class="small">{{ 'terrain.' + t.terrain | label: t.terrain }}</p>
           @if (selectedVillage(); as v) {
             <h3 class="subtitle">{{ v.name }}</h3>
+            @if (v.abandoned_by) {<p class="small muted">🏚 Ruins of a city abandoned by {{ v.abandoned_by }}; barbarians hold it now@if (v.camp_level) { (camp level {{ v.camp_level }})}.</p>}
+            @if (v.treacherous) {<p class="small bad" title="This ruler attacked a pact partner: their word is worth little">⚠ {{ 'map.treacherous' | label: 'Oath-breaker: broke a pact recently' }}</p>}
             <p class="small">{{ v.player_name }}@if (v.bot) { <span title="AI ruler">🤖</span>}@if (owner(); as o) {@if (o.id === v.player_id && o.badges.length) { <ov-badges [badges]="o.badges" [founderNo]="o.founder_no" />}} · {{ v.tribe | name: 'tribe' }} · <ov-icon key="stat.population" /> {{ v.population }}</p>
             @if (v.overlord_id) {<p class="small">⛓ Vassal of {{ v.overlord_name }} ({{ v.overlord_player_name }})</p>}
             @if (v.vassals) {<p class="small">Overlord of {{ v.vassals }} {{ v.vassals === 1 ? 'city' : 'cities' }}</p>}
@@ -66,6 +68,9 @@ const DEFAULT_TERRAIN: Record<string, string> = {
                 } @else {
                   <button class="btn btn--ghost btn--small" (click)="fealty(v.id, v.name)" [title]="'Offer ' + game.village()?.name + ' as a vassal of ' + v.name + ': a lighter tribute for its protection; you may renounce it later'">⚑ Swear fealty</button>
                 }
+              }
+              @if (!v.npc && v.player_name) {
+                <button class="btn btn--ghost btn--small" (click)="pact(v.player_name)" title="A promise of peace, with an optional tribute">🤝 {{ 'treaty.propose' | label: 'Propose a pact' }}</button>
               }
             } @else if (v.id !== game.village()?.id) {
               <div class="btn-row">
@@ -98,6 +103,7 @@ const DEFAULT_TERRAIN: Record<string, string> = {
         <div class="legend small">
           <span><i class="sw sw--own"></i> {{ 'map.own' | label: 'Your villages' }}</span>
           <span><i class="sw sw--other"></i> {{ 'map.other' | label: 'Other villages' }}</span>
+          <span><span class="bad">●</span> {{ 'map.oath_breaker' | label: 'Oath-breaker' }}</span>
         </div>
       </aside>
     </div>
@@ -290,6 +296,13 @@ export class MapComponent implements AfterViewInit {
           ctx.beginPath();
           ctx.roundRect(px + TILE / 2 - r, py + TILE / 2 - r, r * 2, r * 2, 3);
           ctx.fill();
+          if (v.treacherous) {
+            // an oath-breaker: a small red mark in the corner
+            ctx.fillStyle = css.getPropertyValue('--bad').trim() || '#c0392b';
+            ctx.beginPath();
+            ctx.arc(px + TILE - 6, py + 6, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
           if (v.overlord_id) {
             // a vassal: dashed outline in its overlord's colour
             ctx.strokeStyle = v.overlord_player_id === myId ? (m.own ?? '#1f5fa8') : (m.other ?? '#9b3b1b');
@@ -380,7 +393,11 @@ export class MapComponent implements AfterViewInit {
     if (v) await this.game.act(() => this.api.offerFealty(v.id, to), `${v.name} offered fealty to ${name}`);
   }
 
-  protected send(kind: string): void {
+  protected pact(player: string): void {
+    void this.router.navigate(['/realm'], { queryParams: { pact: player }, fragment: 'pacts' });
+  }
+
+    protected send(kind: string): void {
     const t = this.selected();
     if (t) void this.router.navigate(['/rally'], { queryParams: { x: t.x, y: t.y, kind } });
   }

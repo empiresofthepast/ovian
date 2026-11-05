@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Api } from '../../core/api.service';
 import { EngineService } from '../../core/engine.service';
@@ -6,11 +7,12 @@ import { GameStore } from '../../core/game.store';
 import { Government, GovernmentView, ResourceMap, VillageRef } from '../../core/models';
 import { governmentEffects, resourceNamer } from '../../shared/effects';
 import { UI } from '../../shared/ui';
+import { TreatiesComponent } from './treaties.component';
 
-/** The realm: government, the roads of the current city and its trade routes. */
+/** The realm: government, pacts with other players, the roads of the current city and its trade routes. */
 @Component({
   selector: 'ov-realm',
-  imports: [FormsModule, ...UI],
+  imports: [FormsModule, DecimalPipe, TreatiesComponent, ...UI],
   template: `
     <div class="page-head"><h1 class="page-title">{{ 'nav.realm' | label }}</h1></div>
 
@@ -56,6 +58,8 @@ import { UI } from '../../shared/ui';
         <p class="muted small">Loading…</p>
       }
     </section>
+
+    <ov-treaties [invite]="pact()" />
 
     @if (game.village(); as v) {
       <div class="realm">
@@ -107,6 +111,12 @@ import { UI } from '../../shared/ui';
         <section class="panel">
           <h2 class="panel__title">{{ 'realm.routes' | label: 'Trade routes' }} <span class="muted small">{{ v.name }}</span></h2>
           <p class="small muted">The market's merchants carry the same goods from this city, again and again. A run is skipped when goods or merchants are missing.</p>
+          @if (v.market?.trade; as tr) {
+            <p class="small muted">Merchants delivering to other players' cities earn {{ tr.profit_per_tile * 100 | number: '1.0-1' }}% of the cargo per tile
+              (up to {{ tr.profit_max * 100 | number: '1.0-0' }}%), at most {{ tr.profit_cap | number: '1.0-0' }} a day; today: {{ tr.profit_today | number: '1.0-0' }}.
+              Beyond {{ tr.bandits_from }} tiles, off the roads, bandits may rob a caravan ({{ tr.bandits_per_tile * 100 | number: '1.0-1' }}% chance per tile further,
+              up to {{ tr.bandits_max * 100 | number: '1.0-0' }}%); they take {{ tr.bandits_take * 100 | number: '1.0-0' }}% of its cargo.</p>
+          }
           @for (t of v.routes ?? []; track t.id) {
             <div class="row small">
               <div class="grow">
@@ -152,6 +162,8 @@ export class RealmComponent {
   private readonly api = inject(Api);
   private readonly engine = inject(EngineService);
   protected readonly name = resourceNamer();
+  /** ?pact=<player>: open with a pact proposal to that player filled in. */
+  readonly pact = input<string>();
 
   protected readonly gov = signal<GovernmentView | null>(null);
   protected readonly govError = signal('');

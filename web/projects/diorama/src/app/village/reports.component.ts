@@ -1,5 +1,6 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Api } from '@core/api.service';
 import { EngineService } from '@core/engine.service';
 import { GameStore } from '@core/game.store';
@@ -7,10 +8,10 @@ import { Report, ReportSummary } from '@core/models';
 import { ArtService } from '../art/art.service';
 import { UI } from '../ui';
 
-/** Battle and reinforcement reports, with unit portraits. */
+/** Battle, reinforcement, trade and pact reports, with unit portraits. */
 @Component({
   selector: 'dio-reports',
-  imports: [...UI],
+  imports: [DatePipe, RouterLink, ...UI],
   template: `
     <section class="hud-panel reports" role="dialog" aria-label="Reports">
       <button class="close" (click)="close()" aria-label="Close" title="Close (Esc)">✕</button>
@@ -25,7 +26,7 @@ import { UI } from '../ui';
         </ul>
         <div class="reports__detail">
           @if (open(); as r) {
-            <h3 class="subhead">{{ r.title }}</h3>
+            <h3 class="subhead">{{ r.title }}@if (r.data?.horde) { <span class="tag tag--bad" title="The barbarians gathered against the strongest">Barbarian horde</span>}</h3>
             @if (r.data?.attacker) {
               @for (side of sides(r); track side.label) {
                 <div class="side-report">
@@ -75,6 +76,23 @@ import { UI } from '../ui';
               } @else {
                 <p class="small">Someone settled ({{ r.data.x }}|{{ r.data.y }}) first. The migrants came home; the resources and the ver sacrum are back in {{ r.data.from.name }}.</p>
               }
+            } @else if (r.kind === 'trade' && r.data?.robbed) {
+              <p class="small">On the way from {{ r.data.from?.name }} to {{ r.data.to?.name }}, bandits took <dio-cost [cost]="r.data.robbed" />.</p>
+              <p class="small">The rest was delivered: <dio-cost [cost]="r.data.delivered" /></p>
+              <p class="small muted">Roads keep caravans safe; long journeys off the roads tempt bandits.</p>
+            } @else if (r.kind === 'treaty' && r.data) {
+              @if (r.data.breaker; as b) {
+                <p class="small bad">{{ b.name }} broke your pact and marches on {{ r.data.target?.name }}.</p>
+                <p class="small muted">The map marks {{ b.name }} as an oath-breaker until {{ r.data.until | date: 'd MMM, HH:mm' }}, and their cities are unhappy.</p>
+              } @else if (r.data.status) {
+                <p class="small">Pact with <strong>{{ r.data.with?.name }}</strong>: {{ r.data.status === 'active' ? 'in force' : 'proposed' }}@if (r.data.ends_at) {<span class="bad">, ends {{ r.data.ends_at | date: 'd MMM, HH:mm' }}</span>}.</p>
+                @if (r.data.tribute; as tr) {
+                  <p class="small">{{ tr.i_pay ? 'You pay ' + r.data.with?.name : r.data.with?.name + ' pays you' }} <dio-cost [cost]="tr.resources" /> every {{ tr.every_hours }} h.</p>
+                } @else {<p class="small muted">No tribute.</p>}
+              } @else if (r.data.tribute) {
+                <p class="small">The pact with {{ r.data.with }} lapsed: the tribute of <dio-cost [cost]="r.data.tribute" /> could not be paid.</p>
+              }
+              <p class="small"><a routerLink="/realm" [queryParams]="{ tab: 'pacts' }">Your pacts</a></p>
             } @else if (r.data?.units) {
               <div class="troop-row">
                 @for (u of units(r.data.units, {}); track u.id) {
