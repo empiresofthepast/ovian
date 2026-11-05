@@ -319,7 +319,7 @@ class Bot:
             if s.get("building"):
                 levels[s["building"]] = max(levels.get(s["building"], 0), s["level"])
         units = [u for u in self.world.pack["units"] if u["tribe"] == self.tribe and u["class"] == "infantry"
-                 and levels.get(u["building"], 0) > 0 and not u.get("techs")
+                 and u.get("attack", 0) > 0 and levels.get(u["building"], 0) > 0 and not u.get("techs")
                  and all(levels.get(b, 0) >= n for b, n in (u.get("requires") or {}).items())]
         return min(units, key=lambda u: sum(u["cost"].values()), default=None)
 

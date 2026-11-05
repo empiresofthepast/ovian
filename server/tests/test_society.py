@@ -120,6 +120,30 @@ async def test_hero_leads_armies_and_grows(game: Game, client, register):
     assert (await alice.village())["economy"]["production"]["wood"] > before
 
 
+async def test_settlers_turn_a_camp_into_a_colony(game: Game, client, register):
+    from .test_realm import extensions
+
+    sam = await register("sam", "clans")
+    async with game.tx() as tx:
+        await pve.maintain(game, tx)
+    camp = min(await game.pool.fetch("SELECT v.id, v.x, v.y, v.state, v.meta FROM villages v JOIN players p ON p.id = v.player_id WHERE p.npc"),
+               key=lambda c: c["meta"]["camp"]["level"])
+    stores = camp["state"]["resources"]
+    await patch_state(game, sam.village_id, lambda s: s.__setitem__("units", {"axeman": 400, "clubman": 50}))
+    v = (await sam.post(f"/villages/{sam.village_id}/send", {"kind": "raid", "x": camp["x"], "y": camp["y"], "units": {"axeman": 400, "clubman": 50}})).json()
+    with extensions(game, settlers={"unit": "clubman"}):  # the classic pack has no settlers: clubmen stand in
+        await arrive(game, v)
+    colony = await game.pool.fetchrow("SELECT player_id, meta, state FROM villages WHERE id = $1", camp["id"])
+    assert colony["player_id"] == sam.id and colony["meta"]["mother_id"] == sam.village_id and "camp" not in colony["meta"]
+    assert all(colony["state"]["resources"][r] >= n for r, n in stores.items()), "the camp's stores stay in the new city"
+    assert await game.pool.fetchval("SELECT overlord_id FROM vassals WHERE vassal_id = $1", camp["id"]) == sam.village_id
+    assert not await game.pool.fetchval("SELECT 1 FROM jobs WHERE kind = $1 AND village_id = $2", pve.REGEN, camp["id"])
+    back = await game.pool.fetchrow("SELECT units, loot FROM movements WHERE home_id = $1 AND kind = 'return'", sam.village_id)
+    assert back["units"].get("clubman", 0) <= 49 and back["loot"] == {}, "one settler stays, the stores are not carried off"
+    kinds = [r["kind"] for r in (await sam.get("/reports")).json()]
+    assert kinds.count("battle") == 1 and "ver_sacrum" in kinds
+    assert camp["id"] in [c["id"] for c in (await sam.get("/me")).json()["villages"]]
+
 async def test_barbarian_camps_and_quests(game: Game, client, register):
     alice = await register("alice", "clans")
     async with game.tx() as tx:
@@ -131,7 +155,7 @@ async def test_barbarian_camps_and_quests(game: Game, client, register):
     v = (await alice.post(f"/villages/{alice.village_id}/send", {"kind": "raid", "x": camp["x"], "y": camp["y"], "units": {"axeman": 400}})).json()
     from .test_realm import extensions
 
-    with extensions(game, archaeology=game.content.extensions["archaeology"] | {"camp_find_chance": 1, "finds": {"camp": ["gold torque"]}}):
+    with extensions(game, archaeology=game.content.extensions["archaeology"] | {"camp_find_chance": 1, "camp_find_max": 1, "finds": {"camp": ["gold torque"]}}):
         await arrive(game, v)
     report = await last_report(alice)
     assert report["data"]["winner"] == "attacker" and report["data"]["camp"]

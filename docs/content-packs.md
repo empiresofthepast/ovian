@@ -209,6 +209,16 @@ Techs listed in `militia.techs` (antiquity: **Civil Servants**, Fortress 10, aft
 militia: { techs: { civil_servants: 1.0 } }
 ```
 
+### Settlers
+
+`settlers.unit` names a unit suffix (antiquity: `settler`, so `<tribe>_settler`, trained in the civic centre from level 10, at three times the cost of a ver sacrum; `roster.extra` in `tools/zeroad/antiquity.yaml` adds it to every people). Send settlers with an attack or a raid on a barbarian camp: if the attackers win and a settler lives, one stays and the camp becomes the attacker's city, a colony of the city it came from (bound like a ver sacrum colony). It starts as a new city does plus all the camp's stores, even beyond its storage; the troops carry no loot home. The battle report has `settled`, and a `ver_sacrum` report announces the colony.
+
+```yaml
+settlers: { unit: settler }
+```
+
+Barbarian camps may also yield a find among the spoils: `archaeology.camp_find_chance` × the camp's level, at most `camp_find_max`, named from `archaeology.finds.camp`.
+
 ### Auxiliaries
 
 With a garrison in a vassal, the overlord may train the vassal's own units there (`POST /villages/{vassal}/auxiliaries` with `from`, `unit`, `count`): the vassal's civilization, buildings and techs; the overlord pays `cost` times the price. They are stationed in the garrison, count against its room (levied plus in training), and set out from it like the other troops. Every 100 levied cost the city `mood_per_100` contentment for `mood_hours` (at most `mood_max`). When the city breaks free its auxiliaries join its army; levies in training are paid back.

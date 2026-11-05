@@ -55,6 +55,10 @@ import { UI } from '../../shared/ui';
               </table>
             }
             <p class="small">{{ 'report.loot' | label: 'Loot' }}: <ov-cost [cost]="d.loot" /></p>
+            @if (d.settled; as st) {
+              <p class="small good">Settlers stayed behind: the camp is now <strong>{{ st.village.name }}</strong>, your colony, with all its stores
+                (<ov-cost [cost]="st.stores" />).</p>
+            }
             @if (d.camp?.find; as f) {
               <p class="small good">Among the spoils: <strong>{{ f.name }}</strong> <span [class]="'grade grade--' + f.grade">{{ f.grade }}</span>,
                 now kept in {{ f.kept_in?.name }} (+{{ f.culture }} culture when shown in a temple).</p>

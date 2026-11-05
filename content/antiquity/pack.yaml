@@ -3214,6 +3214,238 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: athen_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: athen
+  building: civic_centre
+  class: infantry
+  cost: &id001
+    food: 24000
+    wood: 18000
+    stone: 12000
+    metal: 9000
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: &id002
+    infantry: 5
+    cavalry: 5
+  speed: 4
+  carry: 0
+  requires: &id003
+    civic_centre: 10
+- id: spart_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: spart
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: mace_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: mace
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: ptol_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: ptol
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: sele_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: sele
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: rome_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: rome
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: cart_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: cart
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: iber_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: iber
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: gaul_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: gaul
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: brit_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: brit
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: germ_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: germ
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: achae_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: achae
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: maur_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: maur
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: kush_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: kush
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
+- id: han_settler
+  name: Settlers
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  tribe: han
+  building: civic_centre
+  class: infantry
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 combat:
   base_defense: 10
   loss_exponent: 1.5
@@ -3468,6 +3700,8 @@ extensions:
       max: 0.3
       per_point: 1
       distance: 15
+  settlers:
+    unit: settler
   ver_sacrum:
     every: 10
     range_per_level: 0.5

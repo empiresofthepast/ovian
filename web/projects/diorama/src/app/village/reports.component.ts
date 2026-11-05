@@ -41,6 +41,9 @@ import { UI } from '../ui';
                 </div>
               }
               @if (r.data.loot) {<div class="small">Loot: <dio-cost [cost]="r.data.loot" /></div>}
+              @if (r.data.settled; as st) {
+                <div class="small good">Settlers stayed behind: the camp is now <strong>{{ st.village.name }}</strong>, your colony, with all its stores: <dio-cost [cost]="st.stores" /></div>
+              }
               @if (r.data.camp?.find; as f) {
                 <div class="small good">Among the spoils: <strong>{{ f.name }}</strong> ({{ f.grade }}), now kept in {{ f.kept_in?.name }}. Show it in a temple for +{{ f.culture }} culture.</div>
               }

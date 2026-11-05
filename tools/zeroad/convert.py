@@ -229,6 +229,14 @@ def convert(z: ZeroAD, cfg: dict) -> dict:
                 "icon": e.text("Identity/Icon"),
                 "specific_name": specific,
             }
+        for x in lim.get("extra", []):
+            uid = f"{civ}_{x['id']}"
+            units.append({"id": uid, "tribe": civ, **{k: v for k, v in x.items() if k not in ("id", "zeroad")}})
+            t = f"units/{civ}/{x['zeroad']}" if x.get("zeroad") else None
+            if t and z.has_template(t):
+                e = z.entity(t)
+                ext_units[uid] = {"template": t, "actor": e.text("VisualActor/Actor"), "icon": e.text("Identity/Icon"),
+                                  "specific_name": e.text("Identity/SpecificName")}
         ext_buildings = {}
         for b in cfg["buildings"]:
             zt = b.get("zeroad")

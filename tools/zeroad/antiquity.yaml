@@ -60,6 +60,13 @@ roster:
     barracks: [0, 0, 3, 5, 8]
     stable: [0, 3, 6]
     fortress: [1, 5]
+  # Units every people has besides its 0 A.D. roster: `<civ>_<id>`, looks borrowed from `zeroad` (units/<civ>/...).
+  # Settlers (three times a ver sacrum): sent with an army against a barbarian camp, one turns it into a colony.
+  extra:
+    - { id: settler, zeroad: support_female_citizen, name: Settlers, building: civic_centre, class: infantry,
+        description: "Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls, it becomes your colony, with all its stores. They do not fight.",
+        cost: { food: 24000, wood: 18000, stone: 12000, metal: 9000 }, upkeep: 3, time: 21600, attack: 0,
+        defense: { infantry: 5, cavalry: 5 }, speed: 4, carry: 0, requires: { civic_centre: 10 } }
 
 # Buildings. `zeroad` names the 0 A.D. structure (per civ) whose cost mix and
 # looks are borrowed; `total` is the level 1 cost before the mix is applied.
@@ -562,6 +569,8 @@ extensions:
   submission: { wins: 5, tribute: 0.1, kinds: [attack, raid], benefits: { production: 0.05, defense: 0.15, contentment: 5, trade_speed: 0.5 }, voluntary: { tribute: 0.05 }, taxes: { min: 0, max: 0.3, per_point: 1, distance: 15 } }
   # Every `every` levels of the city centre earn one ver sacrum: migrants found a colony you manage,
   # at most level x `range_per_level` tiles away, which pays `tribute` to its mother city.
+  # Settlers (roster.extra) found a colony in a barbarian camp they help take (see modules/settlers.py).
+  settlers: { unit: settler }
   ver_sacrum: { every: 10, range_per_level: 0.5, speed: 6, tribute: 0.1, cost: { food: 8000, wood: 6000, stone: 4000, metal: 3000 } }
   # Overlords may levy auxiliaries in a vassal with a garrison: the vassal's own troops, trained in its
   # buildings but paid for by the overlord, stationed in the garrison (they count against its room).

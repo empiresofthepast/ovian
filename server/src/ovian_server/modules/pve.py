@@ -64,7 +64,9 @@ async def npc_id(game: Game, conn: asyncpg.Connection) -> int:
 def garrison(game: Game, level: int, rng: random.Random) -> dict[str, int]:
     tribes = game.content.tribe_ids()
     tribe = rng.choice(tribes)
-    foot = sorted((u for u in game.content.pack["units"] if u["tribe"] == tribe and u["class"] == "infantry"), key=lambda u: sum(u["cost"].values()))
+    from .settlers import is_settler
+
+    foot = sorted((u for u in game.content.pack["units"] if u["tribe"] == tribe and u["class"] == "infantry" and not is_settler(game, u["id"])), key=lambda u: sum(u["cost"].values()))
     horse = sorted((u for u in game.content.pack["units"] if u["tribe"] == tribe and u["class"] == "cavalry"), key=lambda u: sum(u["cost"].values()))
     n = int(cfg(game)["troops_per_level"] * level)
     out: dict[str, int] = {}
@@ -157,6 +159,11 @@ async def ovian_battle_resolved(game: Game, tx: Tx, battle: dict[str, Any], resu
         if find:
             report["camp"]["find"] = find
             await save_village(game, tx, attacker)
+        from .settlers import settle, would_settle
+
+        if would_settle(game, result):  # once every hook has seen the battle, the camp becomes a colony
+            battle.setdefault("then", []).append(lambda: settle(game, tx, result, report, attacker, defender))
+            return
     if not defender.meta.get("regen_at"):
         due = game.clock.now() + int(cfg(game)["regen"] / game.content.pack["world"]["speed"] * 1000)
         defender.meta["regen_at"] = due

@@ -343,12 +343,15 @@ async def _battle(game: Game, tx: Tx, m: dict[str, Any], home: VillageRow, targe
         "defense_power": result["defense_power"],
         "defense_bonus": battle["defense_bonus"],
     }
+    defender_id = target.player_id  # settlers may make the target the attacker's own city
     await game.emit("ovian_battle_resolved", game=game, tx=tx, battle=battle, result=result, report=report, attacker=home, defender=target)
+    for then in battle.get("then", []):  # work a hook leaves for after every hook has seen the battle (settlers)
+        await then()
     verb = "attacks" if m["kind"] == "attack" else "raids"
     title = f"{home.name} {verb} {target.name}"
     await add_report(game, tx, home.player_id, "battle", title + (" (won)" if result["attacker_won"] else " (lost)"), report)
-    await add_report(game, tx, target.player_id, "battle", title + (" (defended)" if not result["attacker_won"] else " (lost)"), report)
-    for owner in {g["player_id"] for g in garrison} - {target.player_id, home.player_id}:
+    await add_report(game, tx, defender_id, "battle", title + (" (defended)" if not result["attacker_won"] else " (lost)"), report)
+    for owner in {g["player_id"] for g in garrison} - {defender_id, home.player_id}:
         await add_report(game, tx, owner, "battle", f"Your troops fought in {target.name}", report)
     await push_village(game, tx, target)
     await push_village(game, tx, home)
