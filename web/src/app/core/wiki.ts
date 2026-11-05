@@ -29,3 +29,15 @@ export class WikiLinkComponent {
   readonly label = input(false);
   protected readonly ref = computed(() => wikiRef(this.engine.pack(), this.kind(), this.id()));
 }
+
+/** Whether a unit is a settler (``extensions.settlers.unit``: the unit, or ``<tribe>_<unit>``). */
+export function isSettler(pack: { extensions?: Record<string, unknown> } | null | undefined, unit: string): boolean {
+  const suffix = (pack?.extensions?.['settlers'] as { unit?: string } | undefined)?.unit;
+  return !!suffix && (unit === suffix || unit.endsWith('_' + suffix));
+}
+
+/** A cost multiplied by ``factor``, rounded up. */
+export function scaleCost(cost: Record<string, number>, factor: number): Record<string, number> {
+  if (factor === 1) return cost;
+  return Object.fromEntries(Object.entries(cost).map(([r, c]) => [r, Math.ceil(c * factor)]));
+}

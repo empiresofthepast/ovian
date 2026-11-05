@@ -4,6 +4,8 @@
 
     settlers:
       unit: settler        # each people's settler is <tribe>_settler (a unit in the pack, trained in the city centre)
+      price_growth: 1.5    # each settler costs this much more for every city you hold beyond the first,
+                           # and for every settler you already have (at home, marching, stationed or in training)
 
 Send settlers with an attack or a raid on a barbarian camp. When the attackers win and at least one settler
 lives, one of them stays: the camp becomes a city of the attacker, a colony of the city they came from (as a
@@ -15,7 +17,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from ..hooks import hookimpl
 from ..repo import VillageRow, add_report, get_player, save_village
+from .base import Module
 
 if TYPE_CHECKING:
     from ..game import Game, Tx
@@ -28,6 +32,41 @@ def cfg(game: Game) -> dict[str, Any]:
 def is_settler(game: Game, unit: str) -> bool:
     suffix = cfg(game).get("unit")
     return bool(suffix) and (unit == suffix or unit.endswith("_" + str(suffix)))
+
+
+def growth(game: Game) -> float:
+    return float(cfg(game).get("price_growth", 1.5))
+
+
+async def settlers_held(game: Game, conn: Any, player_id: int) -> int:
+    """Settlers a player has or is training: at home, on the road, stationed abroad and queued."""
+    rows = await conn.fetch(
+        """SELECT v.state->'units' AS units FROM villages v WHERE v.player_id = $1
+           UNION ALL SELECT m.units FROM movements m JOIN villages v ON v.id = m.home_id WHERE v.player_id = $1
+           UNION ALL SELECT s.units FROM stationed s JOIN villages v ON v.id = s.home_id WHERE v.player_id = $1""",
+        player_id)
+    n = sum(int(c or 0) for r in rows for u, c in (r["units"] or {}).items() if is_settler(game, u))
+    from .villages import TRAIN
+
+    queued = await conn.fetch(
+        "SELECT j.payload FROM jobs j JOIN villages v ON v.id = j.village_id WHERE j.kind = $1 AND v.player_id = $2", TRAIN, player_id)
+    return n + sum(int(q["payload"].get("remaining", 0)) for q in queued if is_settler(game, q["payload"].get("unit", "")))
+
+
+async def price_factor(game: Game, conn: Any, player_id: int) -> float:
+    """What the next settler costs, as a multiple of its base price."""
+    cities = await conn.fetchval("SELECT count(*) FROM villages WHERE player_id = $1", player_id)
+    return growth(game) ** (max(0, int(cities) - 1) + await settlers_held(game, conn, player_id))
+
+
+async def price(game: Game, conn: Any, player_id: int, unit: str, count: int, cost: dict[str, float]) -> dict[str, float]:
+    """The cost of training ``count`` settlers: each one dearer than the last."""
+    if not is_settler(game, unit) or count < 1:
+        return cost
+    first = await price_factor(game, conn, player_id)
+    g = growth(game)
+    factor = sum(first * g ** i for i in range(count)) / count  # the plan's cost is base * count
+    return {r: c * factor for r, c in cost.items()}
 
 
 def would_settle(game: Game, result: dict[str, Any]) -> bool:
@@ -88,3 +127,13 @@ async def settle(game: Game, tx: Tx, result: dict[str, Any], report: dict[str, A
     await record(game, tx, "colony", f"Settlers from {home.name} took a barbarian camp and founded {camp.name}", village=camp,
                  data={"mother": home.public()})
     return True
+
+
+@hookimpl
+async def ovian_village_view(game: Game, conn: Any, village: VillageRow, view: dict[str, Any]) -> None:
+    if not cfg(game) or village.player_id is None:
+        return
+    view["settler_price"] = await price_factor(game, conn, village.player_id)
+
+
+module = Module("settlers")

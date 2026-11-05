@@ -145,6 +145,8 @@ export interface VillageView extends VillageRef {
   contentment?: ContentmentView;
   /** Citizens who take up arms when the city is attacked (civil servants), as units. */
   militia?: Record<string, number>;
+  /** What the next settler costs, as a multiple of its base price (it grows with every city and settler). */
+  settler_price?: number;
   government?: { id: string; label: string; anarchy_until: number };
   season?: SeasonNow;
   omen?: Omen;

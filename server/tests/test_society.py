@@ -144,6 +144,24 @@ async def test_settlers_turn_a_camp_into_a_colony(game: Game, client, register):
     assert kinds.count("battle") == 1 and "ver_sacrum" in kinds
     assert camp["id"] in [c["id"] for c in (await sam.get("/me")).json()["villages"]]
 
+async def test_settlers_cost_more_for_every_city_and_settler(game: Game, client, register):
+    from .test_realm import extensions
+
+    sam = await register("sam", "clans")
+    base = game.content.unit("clubman")["cost"]
+    await patch_state(game, sam.village_id, lambda s: (s.__setitem__("units", {}), s.__setitem__("resources", {r: 50_000 for r in s["resources"]}),
+                                                       give_buildings(s, barracks=10, warehouse=20, granary=20)))
+    with extensions(game, settlers={"unit": "clubman", "price_growth": 2}):
+        assert (await sam.village())["settler_price"] == 1
+        v = (await sam.post(f"/villages/{sam.village_id}/train", {"unit": "clubman", "count": 2})).json()
+        spent = {r: 50_000 - v["state"]["resources"][r] for r in base if base[r] > 0}
+        assert all(spent[r] > base[r] * 2.9 for r in spent), "the first at the base price, the second at twice it"
+        assert v["settler_price"] == 4, "two settlers in training: the next costs four times"
+        other = await register("tom", "clans")
+        await game.pool.execute("UPDATE villages SET player_id = $1 WHERE id = $2", sam.id, other.village_id)
+        assert (await sam.village())["settler_price"] == 8, "and twice again for a second city"
+
+
 async def test_barbarian_camps_and_quests(game: Game, client, register):
     alice = await register("alice", "clans")
     async with game.tx() as tx:

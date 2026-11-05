@@ -9,6 +9,7 @@ import { Labels } from '@core/labels';
 import { BuildingDef, CultureView, Plan, ResourceMap, UnitDef, VillageState } from '@core/models';
 import { demolishInfo } from '@core/demolish';
 import { foreignRole } from '@core/embassy';
+import { isSettler, scaleCost } from '@core/wiki';
 import { missingTechs, techOptions } from '@core/research';
 import { ArtService } from '../art/art.service';
 import { UI } from '../ui';
@@ -217,7 +218,8 @@ interface Option {
                   <span title="Loot carried">⚖ {{ u.def.carry }}</span>
                 </div>
                 @if (u.def.description) {<p class="small muted">{{ u.def.description }}</p>}
-                <dio-cost [cost]="u.def.cost" [have]="game.resources()" />
+                <dio-cost [cost]="u.cost" [have]="game.resources()" />
+                @if (u.factor > 1) {<p class="small muted">Settlers cost more for every city you hold and every settler you have: × {{ u.factor.toFixed(1) }}.</p>}
                 @if (u.locked) {
                   <p class="bad small">Needs {{ u.needs }}.</p>
                 } @else {
@@ -533,8 +535,10 @@ export class SelectionComponent {
         const techs = missingTechs(this.engine, live, def.id);
         const locked = Object.entries(def.requires).some(([k, l]) => (levels.get(k) ?? 0) < l) || techs.length > 0;
         const needs = [this.requiresText(def.requires), ...techs].filter(Boolean).join(', ');
-        const max = Math.max(0, Math.floor(Math.min(...Object.entries(def.cost).filter(([, v]) => v > 0).map(([r, v]) => (live.resources[r] ?? 0) / v))));
-        return { def, locked, needs, max: isFinite(max) ? max : 0, icon: this.art.unitIcon(def.id) };
+        const factor = isSettler(this.engine.pack(), def.id) ? (this.game.village()?.settler_price ?? 1) : 1;
+        const cost = scaleCost(def.cost, factor);
+        const max = Math.max(0, Math.floor(Math.min(...Object.entries(cost).filter(([, v]) => v > 0).map(([r, v]) => (live.resources[r] ?? 0) / v))));
+        return { def, cost, factor, locked, needs, max: isFinite(max) ? (factor > 1 ? Math.min(max, 1) : max) : 0, icon: this.art.unitIcon(def.id) };
       });
   });
   protected readonly unitInfo = computed(() => {

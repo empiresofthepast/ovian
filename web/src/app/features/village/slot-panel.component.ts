@@ -11,6 +11,7 @@ import { UI } from '../../shared/ui';
 import { missingTechs, techOptions } from '../../core/research';
 import { demolishInfo } from '../../core/demolish';
 import { foreignRole } from '../../core/embassy';
+import { isSettler, scaleCost } from '../../core/wiki';
 import { CultureView } from '../../core/models';
 import { DigSiteComponent } from './dig-site.component';
 
@@ -119,7 +120,8 @@ interface Option {
                   <ov-icon key="stat.speed" />{{ u.def.speed }} <ov-icon key="stat.carry" />{{ u.def.carry }}
                 </span>
               </div>
-              <ov-cost [cost]="u.def.cost" [have]="game.resources()" />
+              <ov-cost [cost]="u.cost" [have]="game.resources()" />
+              @if (u.dearer) {<p class="small muted">Settlers cost more for every city you hold and every settler you have: × {{ u.factor | number: '1.0-1' }}.</p>}
               @if (u.locked) {
                 <p class="small bad">{{ 'error.requirements' | label }} {{ u.requires }}</p>
               } @else {
@@ -232,11 +234,13 @@ export class SlotPanelComponent {
     return (this.engine.pack()?.units ?? [])
       .filter((u) => u.building === b.id && u.tribe === tribe)
       .map((def: UnitDef) => {
-        const max = Math.min(...Object.entries(def.cost).filter(([, c]) => c > 0).map(([r, c]) => Math.floor((have[r] ?? 0) / c)));
+        const factor = isSettler(this.engine.pack(), def.id) ? (this.game.village()?.settler_price ?? 1) : 1;
+        const cost = scaleCost(def.cost, factor);
+        const max = Math.min(...Object.entries(cost).filter(([, c]) => c > 0).map(([r, c]) => Math.floor((have[r] ?? 0) / c)));
         const plan = this.engine.planTraining(live, tribe!, def.id, 1);
         const techs = missingTechs(this.engine, live, def.id);
         const locked = (plan ? !plan.ok && (plan.error === 'requirements' || plan.error === 'tech_missing') : false) || techs.length > 0;
-        return { def, max: isFinite(max) ? max : 0, locked, requires: [this.requiresText(def.requires), ...techs].filter(Boolean).join(', ') };
+        return { def, cost, factor, dearer: factor > 1, max: isFinite(max) ? (factor > 1 ? Math.min(max, 1) : max) : 0, locked, requires: [this.requiresText(def.requires), ...techs].filter(Boolean).join(', ') };
       });
   });
 

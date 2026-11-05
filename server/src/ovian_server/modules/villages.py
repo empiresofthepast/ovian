@@ -296,6 +296,11 @@ async def train(village_id: int, order: TrainOrder, player_id: PlayerId, game: G
         await accrue(game, tx, v)
         player = await get_player(tx.conn, player_id)
         p = plan(game.engine.plan_training, v.state, player["tribe"], order.unit, order.count)
+        from .settlers import price
+
+        p["cost"] = await price(game, tx.conn, player_id, order.unit, order.count, p["cost"])
+        if any(v.state["resources"].get(r, 0) < c for r, c in p["cost"].items()):
+            raise rule("insufficient_resources", "settlers cost more for every city you hold and every settler you have")
         await game.emit("ovian_validate_order", game=game, tx=tx, player=player, village=v, order={"type": "train", **p})
         spend(v, p["cost"])
         building = game.content.unit(order.unit)["building"]
