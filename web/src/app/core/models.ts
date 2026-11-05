@@ -186,12 +186,14 @@ export interface Find {
   context: {
     world: string;
     pack: string;
-    site: { village_id: number; village: string; x: number; y: number; slot: number };
-    depth: number;
+    site: { village_id: number; village: string; x: number; y: number; slot?: number };
+    depth?: number;
     layer: {
       building?: string; building_name?: string; style?: string; style_name?: string; level?: number;
       from?: number | null; to?: number | null; built_by?: number | null; built_by_name?: string | null; end?: string;
       ancient?: string; people?: string; age?: string;
+      /** spoils of a barbarian camp of this level */
+      camp?: number;
     };
   };
 }

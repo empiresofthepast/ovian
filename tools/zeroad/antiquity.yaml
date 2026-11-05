@@ -586,7 +586,11 @@ extensions:
       - { id: neolithic, name: Neolithic village, age: c. 5000 BC, finds: [flint sickle, clay figurine, polished stone axe, impressed ware bowl, obsidian blade, loom weights] }
       - { id: bronze, name: Bronze Age settlement, age: c. 1600 BC, finds: [bronze dagger, stirrup jar, clay tablet, gold signet ring, boar's tusk helmet, faience beads] }
       - { id: iron, name: Early Iron Age hamlet, age: c. 900 BC, finds: [biconical urn, bronze fibula, bronze razor, spindle whorls, iron knife, painted krater] }
+    # Beating a barbarian camp: 5% per camp level (at most 30%) to bring home one of finds.camp.
+    camp_find_chance: 0.05
+    camp_find_max: 0.3
     finds:
+      camp: [gold torque, bronze war trumpet, looted silver cup, painted shield boss, amber necklace, chieftain's drinking horn, stolen temple offering, iron sword with a bent blade]
       embassy: [envoy's seal, inscribed treaty stele, gift amphora, diplomatic tablet]
       ruin: [envoy's seal, inscribed treaty stele, broken statue of a foreign king, gift amphora]
       exchange: [foreign coin hoard, bronze scale weights, merchant's seal]

@@ -3535,7 +3535,18 @@ extensions:
       - spindle whorls
       - iron knife
       - painted krater
+    camp_find_chance: 0.05
+    camp_find_max: 0.3
     finds:
+      camp:
+      - gold torque
+      - bronze war trumpet
+      - looted silver cup
+      - painted shield boss
+      - amber necklace
+      - chieftain's drinking horn
+      - stolen temple offering
+      - iron sword with a bent blade
       embassy:
       - envoy's seal
       - inscribed treaty stele

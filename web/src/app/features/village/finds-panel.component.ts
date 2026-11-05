@@ -11,6 +11,7 @@ import { layerEnd } from './dig-site.component';
 export function findContext(f: Find): string {
   const l = f.context?.layer ?? {};
   const found = `found by ${f.found_by} on ${new Date(f.found_at).toLocaleDateString()}`;
+  if (l.camp) return `spoils of a level ${l.camp} barbarian camp${f.context?.site?.village ? ' (' + f.context.site.village + ')' : ''}; taken by ${f.found_by} on ${new Date(f.found_at).toLocaleDateString()}`;
   if (l.ancient) return [l.people, l.age].filter(Boolean).join(', ') + `; ${found}`;
   const what = [l.style_name, l.building_name ?? l.building].filter(Boolean).join(' ');
   const article = /^[aeiou]/i.test(what) ? 'an' : 'a';

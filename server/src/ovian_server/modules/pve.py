@@ -150,6 +150,13 @@ async def ovian_battle_resolved(game: Game, tx: Tx, battle: dict[str, Any], resu
     if result["attacker_won"]:
         await bump_stat(tx.conn, attacker.player_id, "camps_beaten")
     report["camp"] = {"level": camp["level"]}
+    if result["attacker_won"]:
+        from .archaeology import camp_find
+
+        find = await camp_find(game, tx, attacker, defender, int(camp["level"]), battle.get("at") or game.clock.now())
+        if find:
+            report["camp"]["find"] = find
+            await save_village(game, tx, attacker)
     if not defender.meta.get("regen_at"):
         due = game.clock.now() + int(cfg(game)["regen"] / game.content.pack["world"]["speed"] * 1000)
         defender.meta["regen_at"] = due

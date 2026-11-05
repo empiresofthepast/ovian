@@ -55,6 +55,10 @@ import { UI } from '../../shared/ui';
               </table>
             }
             <p class="small">{{ 'report.loot' | label: 'Loot' }}: <ov-cost [cost]="d.loot" /></p>
+            @if (d.camp?.find; as f) {
+              <p class="small good">Among the spoils: <strong>{{ f.name }}</strong> <span [class]="'grade grade--' + f.grade">{{ f.grade }}</span>,
+                now kept in {{ f.kept_in?.name }} (+{{ f.culture }} culture when shown in a temple).</p>
+            }
             @if (d.culture?.attacker_bonus || d.culture?.defender_bonus) {
               <p class="small">{{ 'report.prestige' | label: 'Cultural prestige' }}:
                 @if (d.culture.attacker_bonus) {attacker +{{ (d.culture.attacker_bonus * 100).toFixed(0) }}%}

@@ -41,6 +41,9 @@ import { UI } from '../ui';
                 </div>
               }
               @if (r.data.loot) {<div class="small">Loot: <dio-cost [cost]="r.data.loot" /></div>}
+              @if (r.data.camp?.find; as f) {
+                <div class="small good">Among the spoils: <strong>{{ f.name }}</strong> ({{ f.grade }}), now kept in {{ f.kept_in?.name }}. Show it in a temple for +{{ f.culture }} culture.</div>
+              }
               @if (r.data.culture?.attacker_bonus || r.data.culture?.defender_bonus) {
                 <div class="small">Cultural prestige:
                   @if (r.data.culture.attacker_bonus) {attacker +{{ (r.data.culture.attacker_bonus * 100).toFixed(0) }}% attack}

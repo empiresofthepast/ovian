@@ -90,6 +90,9 @@ export class FindsComponent {
   protected context(f: Find): string {
     const l = f.context?.layer ?? {};
     let what: string;
+    if (l.camp) {
+      return `Spoils of a level ${l.camp} barbarian camp; taken by ${f.found_by}`;
+    }
     if (l.ancient) {
       what = [l.people ?? l.ancient, l.age].filter(Boolean).join(', ');
     } else {

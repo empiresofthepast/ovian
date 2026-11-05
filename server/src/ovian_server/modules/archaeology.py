@@ -17,6 +17,9 @@ people's list. A find is kept in a city of its finder; the best ``display.per_le
 own cities. Each one carries its full context, so it can travel to other games (a museum...):
 ``GET /api/v1/finds`` is the public catalogue of a world, ``GET /api/v1/finds/{id}`` one record.
 
+**Spoils.** Beating a barbarian camp may bring home a find too: ``camp_find_chance`` × the camp's level
+(at most ``camp_find_max``), named from ``finds.camp``; bigger camps give better grades more often.
+
     extensions:
       archaeology: { cost: {...}, hours: 2, ancient_chance: 0.4, display: { building: temple, per_level: 1 },
                      grades: { common: { chance: 0.65, culture: 1 }, ... }, ancient: [...], finds: {...} }
@@ -234,6 +237,47 @@ async def stop_digging(village_id: int, slot: int, player_id: PlayerId, game: Ga
         return await push_village(game, tx, v)
 
 
+async def keep_find(game: Game, tx: Tx, v: VillageRow, name: str, grade: str, culture: float, context: dict[str, Any],
+                    at: int, finder: str) -> dict[str, Any]:
+    """Store a new find in ``v`` (locked) and show it in its temples. Saves nothing."""
+    row = await tx.conn.fetchrow(
+        """INSERT INTO finds(player_id, village_id, name, grade, culture, context, found_at, found_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *""",
+        v.player_id, v.id, name, grade, culture, context, at, finder)
+    await sync_display(game, tx, v)
+    return find_view(game, row, finder, v.public())
+
+
+async def camp_find(game: Game, tx: Tx, home: VillageRow, camp: VillageRow, level: int, at: int) -> dict[str, Any] | None:
+    """Maybe a find among the spoils of a beaten barbarian camp: ``camp_find_chance`` × the camp's level
+    (capped by ``camp_find_max``), named from ``finds.camp``. It is kept in the city the troops came from."""
+    c = cfg(game)
+    if c is None or home.player_id is None:
+        return None
+    chance = min(float(c.get("camp_find_chance", 0.05)) * level, float(c.get("camp_find_max", 0.3)))
+    rnd = random.Random()
+    if rnd.random() >= chance:
+        return None
+    grade, culture = _grade(game, rnd)
+    for _ in range(max(0, level - 1) // 2):  # bigger camps hoard better things: a few more tries at a better grade
+        g, cu = _grade(game, rnd)
+        if cu > culture:
+            grade, culture = g, cu
+    pool = (c.get("finds") or {}).get("camp") or (c.get("finds") or {}).get("default") or ["barbarian torque"]
+    n = str(rnd.choice(pool))
+    finder = await tx.conn.fetchval("SELECT username FROM players WHERE id = $1", home.player_id) or "?"
+    context = {"world": game.settings.world_id, "pack": game.content.pack.get("id"),
+               "site": {"village_id": camp.id, "village": camp.name, "x": camp.x, "y": camp.y},
+               "layer": {"camp": level, "people": "Barbarians"}}
+    find = await keep_find(game, tx, home, n[:1].upper() + n[1:], grade, culture, context, at, finder)
+    if grade != "common":
+        from .chronicle import record
+
+        await record(game, tx, "find", f"{finder} took {find['name'].lower()} ({grade}) from a barbarian camp", village=home,
+                     data={"find_id": find["id"], "grade": grade})
+    return find
+
+
 async def on_dig(game: Game, tx: Tx, job: dict[str, Any]) -> None:
     from .chronicle import record
     from .villages import push_village
@@ -268,15 +312,10 @@ async def on_dig(game: Game, tx: Tx, job: dict[str, Any]) -> None:
     if layer is not None:
         grade, culture = _grade(game, rnd)
         context = await _layer_context(game, tx.conn, v, slot, layer, depth)
-        row = await tx.conn.fetchrow(
-            """INSERT INTO finds(player_id, village_id, name, grade, culture, context, found_at, found_by)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *""",
-            v.player_id, v.id, _name(game, layer, rnd), grade, culture, context, job["due_at"], finder)
-        find = find_view(game, row, finder, v.public())
-        await sync_display(game, tx, v)
+        find = await keep_find(game, tx, v, _name(game, layer, rnd), grade, culture, context, job["due_at"], finder)
         if grade != "common":
             await record(game, tx, "find", f"{finder} unearthed {find['name'].lower()} ({grade}) in {v.name}", village=v,
-                         data={"find_id": row["id"], "grade": grade})
+                         data={"find_id": find["id"], "grade": grade})
     await save_village(game, tx, v)
     title = f"Diggers in {v.name}: " + (f"{find['name']} ({find['grade']})" if find else "nothing but bare rock")
     await add_report(game, tx, v.player_id, "excavation", title, {"village": v.public(), "slot": slot, "find": find})

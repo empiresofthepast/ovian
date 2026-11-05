@@ -129,10 +129,17 @@ async def test_barbarian_camps_and_quests(game: Game, client, register):
     assert all(r["username"] != "Barbarians" for r in (await alice.get("/rankings")).json())
     await patch_state(game, alice.village_id, lambda s: s.__setitem__("units", {"axeman": 400}))
     v = (await alice.post(f"/villages/{alice.village_id}/send", {"kind": "raid", "x": camp["x"], "y": camp["y"], "units": {"axeman": 400}})).json()
-    await arrive(game, v)
+    from .test_realm import extensions
+
+    with extensions(game, archaeology=game.content.extensions["archaeology"] | {"camp_find_chance": 1, "finds": {"camp": ["gold torque"]}}):
+        await arrive(game, v)
     report = await last_report(alice)
     assert report["data"]["winner"] == "attacker" and report["data"]["camp"]
     assert "submission" not in report["data"], "camps are not submitted"
+    find = report["data"]["camp"]["find"]  # the spoils: a find, kept in the city the troops came from
+    assert find["name"] == "Gold torque" and find["kept_in"]["id"] == alice.village_id
+    assert find["context"]["layer"]["camp"] == camp["meta"]["camp"]["level"]
+    assert [f["id"] for f in (await alice.get("/me/finds")).json()] == [find["id"]]
 
     q = (await alice.get("/quests")).json()
     assert q["total"] >= 10 and len(q["quests"]) == 3
