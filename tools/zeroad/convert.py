@@ -275,6 +275,7 @@ def convert(z: ZeroAD, cfg: dict) -> dict:
         }
 
     buildings = [building_rules(z, b, civs) for b in cfg["buildings"]]
+    check_cultures(cfg.get("extensions", {}).get("cultures", {}), civs, {b["id"] for b in buildings})
     pk = cfg["pack"]
     pack = {
         "id": pk["id"],
@@ -333,6 +334,23 @@ def building_rules(z: ZeroAD, b: dict, civs: list[str]) -> dict:
         out["cost"]["speed_exponent"] = cost["speed_exponent"]
     order = ["id", "name", "description", "slot", "foreign", "max_level", "unique", "requires", "cost", "time", "population", "effects"]
     return {k: out[k] for k in order if k in out}
+
+
+def check_cultures(cultures: dict, civs: list[str], buildings: set[str]) -> None:
+    """``extensions.cultures``: every civ names every building and gives it a Wikipedia article."""
+    for civ, c in cultures.items():
+        if civ not in civs:
+            raise SystemExit(f"cultures: unknown civilization {civ!r}")
+        names = c.get("buildings", {})
+        for b, e in names.items():
+            if b not in buildings:
+                raise SystemExit(f"cultures.{civ}: unknown building {b!r}")
+            if not isinstance(e, dict) or not e.get("name") or not e.get("wikipedia"):
+                raise SystemExit(f"cultures.{civ}.{b}: needs a name and a wikipedia title")
+        if missing := sorted(buildings - set(names)):
+            raise SystemExit(f"cultures.{civ}: no name for {', '.join(missing)}")
+    if cultures and (left := sorted(set(civs) - set(cultures))):
+        raise SystemExit(f"cultures: no names for {', '.join(left)}")
 
 
 def first_sentences(text: str, limit: int) -> str:

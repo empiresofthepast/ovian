@@ -7,12 +7,33 @@ interface WikiRefs {
   units?: Record<string, string>;
 }
 
-/** The Wikipedia article the pack gives for a building or a unit (extensions.wikipedia), or null. */
-export function wikiRef(pack: unknown, kind: 'building' | 'unit', id: string): { title: string; url: string } | null {
-  const w = (pack as { extensions?: { wikipedia?: WikiRefs } } | null)?.extensions?.wikipedia;
-  const title = (kind === 'building' ? w?.buildings : w?.units)?.[id];
-  if (!w || !title) return null;
-  return { title, url: (w.base ?? 'https://en.wikipedia.org/wiki/') + encodeURIComponent(title.replace(/ /g, '_')) };
+/** What one civilization calls a building, and the Wikipedia article about it in that culture. */
+interface CultureEntry {
+  name?: string;
+  wikipedia?: string;
+}
+type Cultures = Record<string, { buildings?: Record<string, CultureEntry> }>;
+type WithExtensions = { extensions?: { wikipedia?: WikiRefs; cultures?: Cultures } } | null | undefined;
+
+function cultureEntry(pack: unknown, tribe: string | null | undefined, building: string): CultureEntry | undefined {
+  return tribe ? (pack as WithExtensions)?.extensions?.cultures?.[tribe]?.buildings?.[building] : undefined;
+}
+
+/** The name a culture gives a building (extensions.cultures), or null when the pack has none for it. */
+export function cultureName(pack: unknown, tribe: string | null | undefined, building: string | null | undefined): string | null {
+  return building ? (cultureEntry(pack, tribe, building)?.name ?? null) : null;
+}
+
+/**
+ * The Wikipedia article the pack gives for a building or a unit, or null: the culture's own article
+ * (extensions.cultures) when a tribe is given and has one, else the general one (extensions.wikipedia).
+ */
+export function wikiRef(pack: unknown, kind: 'building' | 'unit', id: string, tribe?: string | null): { title: string; url: string } | null {
+  const w = (pack as WithExtensions)?.extensions?.wikipedia;
+  const own = kind === 'building' ? cultureEntry(pack, tribe, id)?.wikipedia : undefined;
+  const title = own ?? (kind === 'building' ? w?.buildings : w?.units)?.[id];
+  if (!title) return null;
+  return { title, url: (w?.base ?? 'https://en.wikipedia.org/wiki/') + encodeURIComponent(title.replace(/ /g, '_')) };
 }
 
 /** A small link to the Wikipedia article about a building or a unit; nothing when the pack has none. */
@@ -25,9 +46,11 @@ export class WikiLinkComponent {
   private readonly engine = inject(EngineService);
   readonly kind = input.required<'building' | 'unit'>();
   readonly id = input.required<string>();
+  /** the culture whose article to prefer (buildings only) */
+  readonly tribe = input<string | null | undefined>(null);
   /** show the article's title, not just "W↗" */
   readonly label = input(false);
-  protected readonly ref = computed(() => wikiRef(this.engine.pack(), this.kind(), this.id()));
+  protected readonly ref = computed(() => wikiRef(this.engine.pack(), this.kind(), this.id(), this.tribe()));
 }
 
 /** Whether a unit is a settler (``extensions.settlers.unit``: the unit, or ``<tribe>_<unit>``). */

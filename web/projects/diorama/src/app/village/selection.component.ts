@@ -9,7 +9,7 @@ import { Labels } from '@core/labels';
 import { BuildingDef, CultureView, Plan, ResourceMap, UnitDef, VillageState } from '@core/models';
 import { demolishInfo } from '@core/demolish';
 import { foreignRole } from '@core/embassy';
-import { isSettler, scaleCost } from '@core/wiki';
+import { cultureName, isSettler, scaleCost } from '@core/wiki';
 import { missingTechs, techOptions } from '@core/research';
 import { ArtService } from '../art/art.service';
 import { UI } from '../ui';
@@ -40,7 +40,7 @@ interface Option {
       <div class="selection__body">
         @if (def(); as b) {
           @if (b.description) {<p class="muted">{{ b.description }}</p>}
-          <p class="small"><ov-wiki kind="building" [id]="b.id" [label]="true" /></p>
+          <p class="small"><ov-wiki kind="building" [id]="b.id" [tribe]="artTribe()" [label]="true" /></p>
           @if (b.unique === false && copies() > 1) {<p class="small muted">One of {{ copies() }} in this city: storage adds up and training runs in parallel.</p>}
           <dl class="effects">
             @for (e of effects(); track e.label) {
@@ -123,13 +123,13 @@ interface Option {
             </div>
           }
         } @else if (chosen(); as o) {
-          <h3 class="subhead">{{ o.def.name }} <ov-wiki kind="building" [id]="o.def.id" /></h3>
+          <h3 class="subhead">{{ nameOf(o.def.id) }}@if (nameOf(o.def.id) !== o.def.name) {<span class="muted small"> · {{ o.def.name }}</span>} <ov-wiki kind="building" [id]="o.def.id" [tribe]="artTribe()" /></h3>
           <p class="muted">{{ o.def.description }}</p>
           <p class="small muted">{{ o.def.unique === false ? (copiesOf(o.def.id) ? 'You can build several: you have ' + copiesOf(o.def.id) + ' already.' : 'You can build several of these.') : 'Only one per city.' }}</p>
           <dio-cost [cost]="o.cost" [have]="game.resources()" />
           @if (seconds(o); as secs) {<div class="small muted">⌛ {{ secs | dur }}</div>}
           @if (o.plan && !o.plan.ok) {<p class="bad small">{{ errorText(o.plan.error, o.def.requires) }}</p>}
-          <button class="btn btn--gold" [disabled]="(o.plan && !o.plan.ok) || busy()" (click)="build(o.def.id)">Build {{ o.def.name }}</button>
+          <button class="btn btn--gold" [disabled]="(o.plan && !o.plan.ok) || busy()" (click)="build(o.def.id)">Build {{ nameOf(o.def.id) }}</button>
         } @else {
           <p class="muted">Choose a building for this site.</p>
         }
@@ -241,7 +241,7 @@ interface Option {
                 <button class="btn btn--ghost btn--small" [disabled]="busy() || game.inspecting()" (click)="confirming.set(true)"
                         [title]="'Pull it down and get back ' + pct(d.share) + ' of what it cost'">Demolish…</button>
               } @else {
-                <div class="subhead">Pull down {{ b.name }} (level {{ level() }})?</div>
+                <div class="subhead">Pull down {{ title() }} (level {{ level() }})?</div>
                 <div class="small">You get back <dio-cost [cost]="d.refund" /> <span class="muted">({{ pct(d.share) }} of what it cost; what does not fit in your storage is lost).</span></div>
                 @if (d.blocked) {<p class="bad small">{{ d.blocked }}</p>}
                 <div class="btn-row">
@@ -255,8 +255,8 @@ interface Option {
           <div class="grid" role="list" aria-label="Buildings">
             @for (o of options(); track o.def.id) {
               <button class="cmd" role="listitem" [class.cmd--on]="choice() === o.def.id" [class.cmd--locked]="o.plan && !o.plan.ok"
-                      (click)="choice.set(o.def.id)" [title]="o.def.name">
-                <dio-portrait [src]="o.icon" [alt]="o.def.name" [small]="true" [locked]="!!o.plan && !o.plan.ok" />
+                      (click)="choice.set(o.def.id)" [title]="nameOf(o.def.id)">
+                <dio-portrait [src]="o.icon" [alt]="nameOf(o.def.id)" [small]="true" [locked]="!!o.plan && !o.plan.ok" />
               </button>
             } @empty {<p class="muted">Every building already stands in this village.</p>}
           </div>
@@ -362,7 +362,7 @@ export class SelectionComponent {
 
   async demolish(): Promise<void> {
     const v = this.game.village();
-    const name = this.def()?.name ?? '';
+    const name = this.title();
     if (!v) return;
     this.busy.set(true);
     if (await this.game.act(() => this.api.demolish(v.id, this.site()), `${name} pulled down`)) this.close.emit();
@@ -432,7 +432,7 @@ export class SelectionComponent {
     void this.router.navigate(['/map'], { queryParams: { colony: 1 } });
   }
   /** Each building keeps the style it was founded in; a new one in a vassal city follows the overlord. */
-  private readonly artTribe = computed(() => {
+  protected readonly artTribe = computed(() => {
     const c = this.current();
     if (c?.style) return c.style;
     if (c?.building && c.level > 0) return this.tribe();
@@ -461,10 +461,18 @@ export class SelectionComponent {
     const v = this.game.village();
     return v ? v.state.slots.filter((s) => s.building === id).length + v.build_queue.filter((q) => q.building === id && !v.state.slots[q.slot]?.building).length : 0;
   }
-  protected readonly title = computed(() => this.def()?.name ?? 'Building site');
+  /** What the building's own culture calls it (extensions.cultures), else the pack's name. */
+  protected nameOf(building: string | null | undefined): string {
+    return cultureName(this.engine.pack(), this.artTribe(), building) ?? this.engine.building(building)?.name ?? building ?? '';
+  }
+  protected readonly title = computed(() => (this.def() ? this.nameOf(this.def()!.id) : 'Building site'));
+  /** The subtitle: the pack's generic name under a cultural one, else 0 A.D.'s own name for the structure. */
   protected readonly specific = computed(() => {
-    const s = this.art.structure(this.artTribe(), this.def()?.id);
-    return s?.specific && s.specific !== this.def()?.name ? s.specific : '';
+    const b = this.def();
+    if (!b) return '';
+    if (cultureName(this.engine.pack(), this.artTribe(), b.id)) return this.title() !== b.name ? b.name : '';
+    const s = this.art.structure(this.artTribe(), b.id);
+    return s?.specific && s.specific !== b.name ? s.specific : '';
   });
   protected readonly portrait = computed(() => {
     const b = this.def();

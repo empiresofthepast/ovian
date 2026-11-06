@@ -223,6 +223,26 @@ wikipedia:
   units: { athen_infantry_spearman: Hoplite, rome_infantry_spearman: Triarii }
 ```
 
+### Cultural names
+
+`cultures` gives each tribe its own name for every building, and the Wikipedia article about that building in that
+culture. The clients show the name of the culture whose architecture the building wears (the slot's `style`, else the
+owner's tribe; a building about to rise in a vassal city follows the overlord) with the pack's generic name under it, and
+link the culture's article before the general one above. Buildings or tribes left out fall back to the generic name and
+`wikipedia.buildings`; the antiquity converter requires every tribe to name every building.
+
+```yaml
+cultures:
+  rome:
+    buildings:
+      house: { name: Domus, wikipedia: Domus }
+      storehouse: { name: Horreum, wikipedia: Horreum }
+  han:
+    buildings:
+      house: { name: Mín Jū, wikipedia: Siheyuan }
+      storehouse: { name: Cāngkù, wikipedia: Granary }
+```
+
 ### Settlers
 
 `settlers.unit` names a unit suffix (antiquity: `settler`, so `<tribe>_settler`, trained in the civic centre from level 10, at three times the cost of a ver sacrum; `roster.extra` in `tools/zeroad/antiquity.yaml` adds it to every people). Send settlers with an attack or a raid on a barbarian camp: if the attackers win and a settler lives, one stays and the camp becomes the attacker's city, a colony of the city it came from (bound like a ver sacrum colony). It starts as a new city does plus all the camp's stores, even beyond its storage; the troops carry no loot home. The battle report has `settled`, and a `ver_sacrum` report announces the colony.

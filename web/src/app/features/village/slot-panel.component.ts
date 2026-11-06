@@ -28,10 +28,11 @@ interface Option {
     <section class="panel slot-panel">
       <button class="btn btn--ghost btn--small slot-panel__close" (click)="close.emit()" aria-label="Close">✕</button>
       @if (def(); as b) {
-        <h2 class="panel__title"><ov-icon [key]="'building.' + b.id" /> {{ b.id | name: 'building' }}
+        <h2 class="panel__title"><ov-icon [key]="'building.' + b.id" /> {{ b.id | name: 'building' : tribe() }}
           <span class="muted">{{ 'level' | label: 'level' }} {{ level() }}</span></h2>
+        @if ((b.id | name: 'building' : tribe()) !== b.name) {<p class="muted small"><em>{{ b.name }}</em></p>}
         @if (b.description) {<p class="muted">{{ b.description }}</p>}
-        <p class="small"><ov-wiki kind="building" [id]="b.id" [label]="true" /></p>
+        <p class="small"><ov-wiki kind="building" [id]="b.id" [tribe]="tribe()" [label]="true" /></p>
         @for (e of effects(); track e.label) {
           <div class="row small"><span class="grow">{{ e.label }}</span><span>{{ e.now }}</span>
             @if (e.next !== null) {<span class="muted">→ {{ e.next }}</span>}</div>
@@ -61,7 +62,7 @@ interface Option {
             @if (!confirming()) {
               <button class="btn btn--ghost btn--small" [disabled]="busy() || game.inspecting()" (click)="confirming.set(true)">Demolish…</button>
             } @else {
-              <h3 class="subtitle">Pull down {{ b.id | name: 'building' }} (level {{ level() }})?</h3>
+              <h3 class="subtitle">Pull down {{ b.id | name: 'building' : tribe() }} (level {{ level() }})?</h3>
               <div class="small">You get back <ov-cost [cost]="d.refund" /></div>
               <p class="small muted">{{ d.share * 100 | number: '1.0-0' }}% of what it cost. Whatever does not fit in your storage is lost.</p>
               @if (d.blocked) {<p class="bad small">{{ d.blocked }}</p>}
@@ -142,7 +143,7 @@ interface Option {
           <div class="option" [class.option--locked]="o.plan && !o.plan.ok">
             <div class="row">
               <ov-icon [key]="'building.' + o.def.id" />
-              <strong class="grow">{{ o.def.id | name: 'building' }} <ov-wiki kind="building" [id]="o.def.id" /></strong>
+              <strong class="grow">{{ o.def.id | name: 'building' : tribe() }}@if ((o.def.id | name: 'building' : tribe()) !== o.def.name) {<span class="muted"> · {{ o.def.name }}</span>} <ov-wiki kind="building" [id]="o.def.id" [tribe]="tribe()" /></strong>
               <button class="btn btn--primary btn--small" [disabled]="(o.plan && !o.plan.ok) || busy()" (click)="build(o.def.id)">
                 {{ 'construct' | label: 'Build' }}
               </button>
@@ -177,6 +178,16 @@ export class SlotPanelComponent {
   private readonly queue = computed(() => this.game.village()?.build_queue.map(({ slot, building, level }) => ({ slot, building, level })) ?? []);
 
   private readonly current = computed(() => this.game.village()?.state.slots[this.slot()]);
+  /** The culture whose name a building bears: the style it was founded in, else the owner's; a new one in a vassal city follows the overlord. */
+  protected readonly tribe = computed(() => {
+    const c = this.current();
+    if (c?.style) return c.style;
+    const v = this.game.village();
+    const owner = v?.owner?.tribe ?? this.game.me()?.tribe ?? null;
+    if (c?.building && c.level > 0) return owner;
+    const s = v?.submission;
+    return s && !s.colony ? s.tribe : owner;
+  });
   protected readonly def = computed(() => {
     const queued = this.game.village()?.build_queue.find((q) => q.slot === this.slot());
     return this.engine.building(this.current()?.building ?? queued?.building);

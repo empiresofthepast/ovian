@@ -123,3 +123,9 @@ Totals are the sum over the four resources at speed 1. Run `tools/zeroad/convert
 ## Art mapping
 
 The pack's `extensions.zeroad` block records, for every civ, the 0 A.D. template, actor, icon and local name behind each building and unit. For example, Roman barracks are `structures/romans/barracks.xml` and are called *Castrum*. The [diorama front end](diorama.md) uses it to dress each player's city in their civilization's architecture.
+
+## Cultural names
+
+Every civilization calls its buildings by its own names, and each name links to the Wikipedia article about that building in that culture (`extensions.cultures` in [`antiquity.yaml`](../tools/zeroad/antiquity.yaml), see [content-packs.md](content-packs.md#cultural-names)). A Roman house is a *Domus* and links to Domus; a Carthaginian one is a *Bet* and links to Kerkouane, the best-preserved Punic town; a Han one is a *Mín Jū*. The university is Athens' *Akadēmeia* (the Platonic Academy), Alexandria's *Mouseion*, the Mauryas' *Takṣaśilā* (Taxila), the Han *Tàixué*, the Druids for the Gauls and Britons, the runes for the Germans. The 0 A.D. names are the starting point where a structure exists (Oikos, Castrum, Nemeton, Huvādā); the buildings 0 A.D. does not have, or that it only approximates with another structure (university, gardens, baths, amphitheatre, embassy, great buildings), get names of their own. All titles are checked against Wikipedia when they are written; the converter checks that every civilization names every building.
+
+The clients show the name of the culture whose architecture a building wears: its slot's style, so a building raised under a former overlord keeps its foreign name, and the pack's generic name stands under it.

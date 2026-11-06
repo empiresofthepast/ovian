@@ -1,4 +1,4 @@
-import { landChip } from '@core/wiki';
+import { cultureName, landChip } from '@core/wiki';
 import { Auxiliaries, EmbassyInfo, ResourceMap, vassalBenefits } from '@core/models';
 import { embassyRules, foreignRole } from '@core/embassy';
 import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
@@ -539,8 +539,8 @@ export class VillageComponent implements OnDestroy {
     return (v?.build_queue ?? []).map((q) => ({
       id: q.id,
       level: q.level,
-      name: this.engine.building(q.building)?.name ?? q.building,
-      icon: this.art.buildingIcon(this.artTribe(), q.building),
+      name: cultureName(this.engine.pack(), v?.state.slots[q.slot]?.style ?? this.artTribe(), q.building) ?? this.engine.building(q.building)?.name ?? q.building,
+      icon: this.art.buildingIcon(v?.state.slots[q.slot]?.style ?? this.artTribe(), q.building),
       left: Math.max(0, q.due_at - now),
       progress: Math.min(100, Math.max(0, ((now - q.started_at) / Math.max(1, q.due_at - q.started_at)) * 100)),
     }));

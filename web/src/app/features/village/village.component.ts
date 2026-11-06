@@ -76,9 +76,9 @@ import { embassyRules } from '../../core/embassy';
                   <button class="slot" [attr.id]="'slot-' + s.index" [class.slot--focus]="focusSlots().has(s.index)" [class.slot--empty]="!s.building" [class.slot--selected]="selected() === s.index"
                           [class.slot--busy]="s.queued" [class.slot--locked]="s.locked" [disabled]="s.locked" (click)="selected.set(s.index)"
                           [title]="s.locked ? ('error.site_locked' | label) : ''"
-                          [attr.aria-label]="(s.building ? (s.building | name: 'building') + ' level ' + s.level : ('empty_slot' | label))">
+                          [attr.aria-label]="(s.building ? (s.building | name: 'building' : s.tribe) + ' level ' + s.level : ('empty_slot' | label))">
                     <ov-icon [key]="s.building ? 'building.' + s.building : 'slot.empty'" />
-                    <span class="slot__name">{{ s.building ? (s.building | name: 'building') : s.locked ? ('locked_site' | label: 'Locked') : ('empty_slot' | label) }}</span>
+                    <span class="slot__name">{{ s.building ? (s.building | name: 'building' : s.tribe) : s.locked ? ('locked_site' | label: 'Locked') : ('empty_slot' | label) }}</span>
                     @if (s.style) {<span class="slot__style muted small">{{ s.style }}</span>}
                     @if (s.building) {<span class="slot__level">{{ s.level }}@if (s.queued) {<span class="slot__next">→{{ s.queued }}</span>}</span>}
                   </button>
@@ -100,7 +100,7 @@ import { embassyRules } from '../../core/embassy';
             @for (j of v.build_queue; track j.id) {
               <div class="row">
                 <ov-icon [key]="'building.' + j.building" />
-                <span class="grow">{{ j.building | name: 'building' }} → {{ j.level }}</span>
+                <span class="grow">{{ j.building | name: 'building' : (v.state.slots[j.slot]?.style ?? v.owner?.tribe ?? game.me()?.tribe) }} → {{ j.level }}</span>
                 <span class="timer">{{ j.due_at - game.now() | duration }}</span>
                 <button class="btn btn--ghost btn--small" (click)="cancel(j.id)" title="Cancel">✕</button>
               </div>
@@ -323,7 +323,7 @@ export class VillageComponent {
       const building = s.building ?? v.build_queue.find((q) => q.slot === index)?.building ?? null;
       const tribe = v.owner?.tribe ?? this.game.me()?.tribe;
       const style = s.style && s.style !== tribe ? (pack?.tribes.find((t) => t.id === s.style)?.name ?? s.style) : '';
-      return { index, building, level: s.level, queued, style, locked: index >= fields && !s.foreign && !building && index - fields >= open };
+      return { index, building, level: s.level, queued, style, tribe: s.style ?? tribe ?? null, locked: index >= fields && !s.foreign && !building && index - fields >= open };
     });
     const foreign = slots.filter((s) => v.state.slots[s.index].foreign);
     const phase = pack?.village.growth?.phases.find((p) => p.id === v.economy.phase);

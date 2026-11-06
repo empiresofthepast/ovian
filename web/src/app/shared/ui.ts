@@ -1,6 +1,6 @@
 import { Component, Pipe, PipeTransform, computed, inject, input } from '@angular/core';
 import { EngineService } from '../core/engine.service';
-import { WikiLinkComponent } from '../core/wiki';
+import { WikiLinkComponent, cultureName } from '../core/wiki';
 import { ResourceMap, Units } from '../core/models';
 import { SkinService, isImage } from '../core/skin.service';
 
@@ -98,14 +98,18 @@ export class ClockPipe implements PipeTransform {
   }
 }
 
-/** Named label lookup: `'building' | name: id`. */
+/** Named label lookup: `id | name: 'building'`; with a tribe, a building takes that culture's own name. */
 @Pipe({ name: 'name', pure: false })
 export class NamePipe implements PipeTransform {
   private readonly engine = inject(EngineService);
   private readonly skin = inject(SkinService);
-  transform(id: string | null | undefined, kind: 'building' | 'unit' | 'resource' | 'tribe'): string {
+  transform(id: string | null | undefined, kind: 'building' | 'unit' | 'resource' | 'tribe', tribe?: string | null): string {
     if (!id) return '';
     const pack = this.engine.pack();
+    if (kind === 'building') {
+      const own = cultureName(pack, tribe, id);
+      if (own) return own;
+    }
     const fallback =
       kind === 'building' ? this.engine.building(id)?.name
       : kind === 'unit' ? this.engine.unit(id)?.name

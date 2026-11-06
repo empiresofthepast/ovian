@@ -3782,7 +3782,7 @@ extensions:
       spart_cavalry_spearman: Hippeis
       spart_cavalry_javelineer: Prodromoi
       spart_champion_infantry_spear: Spartan army
-      mace_infantry_slinger: Slinger
+      mace_infantry_slinger: Sling (weapon)
       mace_infantry_archer: Cretan archers
       mace_infantry_pikeman: Pezhetairos
       mace_infantry_javelineer: Agrianes
@@ -3794,7 +3794,7 @@ extensions:
       ptol_infantry_swordsman_merc: Galatians (people)
       ptol_infantry_javelineer: Thyreophoroi
       ptol_infantry_pikeman: Macedonian phalanx
-      ptol_infantry_slinger: Slinger
+      ptol_infantry_slinger: Sling (weapon)
       ptol_cavalry_spearman_merc: Cleruchy
       ptol_cavalry_javelineer_merc: Ptolemaic army
       ptol_cavalry_archer: Camel cavalry
@@ -3834,14 +3834,14 @@ extensions:
       iber_champion_cavalry: Iberians
       gaul_infantry_spearman: Gauls
       gaul_infantry_javelineer: Gauls
-      gaul_infantry_slinger: Slinger
+      gaul_infantry_slinger: Sling (weapon)
       gaul_cavalry_swordsman: Gauls
       gaul_cavalry_javelineer: Gauls
       gaul_champion_infantry_swordsman: Soldurios
       gaul_champion_cavalry: Gauls
       brit_infantry_spearman: Celtic Britons
       brit_infantry_javelineer: Celtic Britons
-      brit_infantry_slinger: Slinger
+      brit_infantry_slinger: Sling (weapon)
       brit_cavalry_swordsman: Celtic Britons
       brit_cavalry_javelineer: Celtic Britons
       brit_champion_infantry_swordsman: Celtic Britons
@@ -3850,7 +3850,7 @@ extensions:
       germ_infantry_swordsman: Teutons
       germ_champion_infantry_maceman: Club (weapon)
       germ_infantry_javelineer: Ambrones
-      germ_infantry_slinger: Slinger
+      germ_infantry_slinger: Sling (weapon)
       germ_cavalry_spearman: Cimbri
       germ_cavalry_javelineer: Tigurini
       germ_champion_infantry_axeman: Cimbrian War
@@ -3903,6 +3903,1252 @@ extensions:
       maur_settler: Maurya Empire
       kush_settler: Kingdom of Kush
       han_settler: Tuntian
+  cultures:
+    athen:
+      buildings:
+        woodline:
+          name: Hylē
+          wikipedia: Logging
+        quarry:
+          name: Latomeion
+          wikipedia: Mount Pentelicus
+        mine:
+          name: Metalleion
+          wikipedia: Mines of Laurion
+        field:
+          name: Agros
+          wikipedia: Agriculture in ancient Greece
+        civic_centre:
+          name: Agora
+          wikipedia: Ancient Agora of Athens
+        storehouse:
+          name: Apothēkē
+          wikipedia: Granary
+        farmstead:
+          name: Epoikion
+          wikipedia: Farm
+        house:
+          name: Oikos
+          wikipedia: Oikos
+        rally_point:
+          name: Stratēgeion
+          wikipedia: Strategos
+        barracks:
+          name: Stratopedon
+          wikipedia: Ancient Greek warfare
+        stable:
+          name: Hippōn
+          wikipedia: Hippeis
+        fortress:
+          name: Phrourion
+          wikipedia: Acropolis of Athens
+        temple:
+          name: Naos
+          wikipedia: Ancient Greek temple
+        university:
+          name: Akadēmeia
+          wikipedia: Platonic Academy
+        market:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        gardens:
+          name: Kēpos
+          wikipedia: Greek garden
+        baths:
+          name: Balaneion
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Stadion
+          wikipedia: Panathenaic Stadium
+        embassy:
+          name: Prytaneion
+          wikipedia: Prytaneion
+        exchange:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Gymnasion
+          wikipedia: Hellenization
+        garrison:
+          name: Phrourā
+          wikipedia: Garrison
+        ruin:
+          name: Ereipia
+          wikipedia: Ruins
+        great_theatre:
+          name: Theatron
+          wikipedia: Theatre of Dionysus
+        great_forge:
+          name: Chalkeōn
+          wikipedia: Temple of Hephaestus
+        wonder:
+          name: Parthenōn
+          wikipedia: Parthenon
+        wall:
+          name: Teichos
+          wikipedia: Themistoclean Wall
+    spart:
+      buildings:
+        woodline:
+          name: Hylē
+          wikipedia: Logging
+        quarry:
+          name: Latomeion
+          wikipedia: Quarry
+        mine:
+          name: Metalleion
+          wikipedia: Mining
+        field:
+          name: Klēros
+          wikipedia: Helots
+        civic_centre:
+          name: Agora
+          wikipedia: Sparta
+        storehouse:
+          name: Apothēkē
+          wikipedia: Granary
+        farmstead:
+          name: Epoikion
+          wikipedia: Perioeci
+        house:
+          name: Oikos
+          wikipedia: Oikos
+        rally_point:
+          name: Stratēgeion
+          wikipedia: Spartan army
+        barracks:
+          name: Agōgē
+          wikipedia: Agoge
+        stable:
+          name: Hippōn
+          wikipedia: Hippeis
+        fortress:
+          name: Phrourion
+          wikipedia: Fortification
+        temple:
+          name: Naos
+          wikipedia: Menelaion
+        university:
+          name: Gymnasion
+          wikipedia: Gymnasium (ancient Greece)
+        market:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        gardens:
+          name: Platanistas
+          wikipedia: Sparta
+        baths:
+          name: Balaneion
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Stadion
+          wikipedia: Stadium
+        embassy:
+          name: Prytaneion
+          wikipedia: Prytaneion
+        exchange:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Syssition
+          wikipedia: Syssitia
+        garrison:
+          name: Phrourā
+          wikipedia: Garrison
+        ruin:
+          name: Ereipia
+          wikipedia: Ruins
+        great_theatre:
+          name: Theatron
+          wikipedia: Theatre of ancient Greece
+        great_forge:
+          name: Chalkeōn
+          wikipedia: Ferrous metallurgy
+        wonder:
+          name: Hieron tēs Artemidos Orthias
+          wikipedia: Sanctuary of Artemis Orthia
+        wall:
+          name: Teichos
+          wikipedia: Defensive wall
+    mace:
+      buildings:
+        woodline:
+          name: Hylē
+          wikipedia: Logging
+        quarry:
+          name: Latomeion
+          wikipedia: Quarry
+        mine:
+          name: Metalleion
+          wikipedia: Pangaion Hills
+        field:
+          name: Agros
+          wikipedia: Agriculture in ancient Greece
+        civic_centre:
+          name: Agora
+          wikipedia: Pella
+        storehouse:
+          name: Apothēkē
+          wikipedia: Granary
+        farmstead:
+          name: Epoikion
+          wikipedia: Farm
+        house:
+          name: Oikos
+          wikipedia: Oikos
+        rally_point:
+          name: Stratēgeion
+          wikipedia: Ancient Macedonian army
+        barracks:
+          name: Stratopedon
+          wikipedia: Phalanx
+        stable:
+          name: Hippōn
+          wikipedia: Companion cavalry
+        fortress:
+          name: Phrourion
+          wikipedia: Fortification
+        temple:
+          name: Naos
+          wikipedia: Dion, Pieria
+        university:
+          name: Lykeion
+          wikipedia: Lyceum (classical)
+        market:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        gardens:
+          name: Kēpos
+          wikipedia: Greek garden
+        baths:
+          name: Balaneion
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Stadion
+          wikipedia: Stadium
+        embassy:
+          name: Prytaneion
+          wikipedia: Prytaneion
+        exchange:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Bibliothēkē
+          wikipedia: Hellenistic period
+        garrison:
+          name: Phrourā
+          wikipedia: Garrison
+        ruin:
+          name: Ereipia
+          wikipedia: Ruins
+        great_theatre:
+          name: Theatron
+          wikipedia: Theatre of ancient Greece
+        great_forge:
+          name: Chalkeōn
+          wikipedia: Sarissa
+        wonder:
+          name: Anaktoron tōn Aigōn
+          wikipedia: Aegae (Macedonia)
+        wall:
+          name: Teichos
+          wikipedia: Defensive wall
+    ptol:
+      buildings:
+        woodline:
+          name: Hylē
+          wikipedia: Logging
+        quarry:
+          name: Latomeion
+          wikipedia: Gebel el-Silsila
+        mine:
+          name: Metalleion
+          wikipedia: Wadi Hammamat
+        field:
+          name: Agros
+          wikipedia: Ancient Egyptian agriculture
+        civic_centre:
+          name: Agora
+          wikipedia: Alexandria
+        storehouse:
+          name: Apothēkē
+          wikipedia: Granary
+        farmstead:
+          name: Epoikion
+          wikipedia: Faiyum
+        house:
+          name: Oikos
+          wikipedia: Oikos
+        rally_point:
+          name: Stratēgeion
+          wikipedia: Ptolemaic army
+        barracks:
+          name: Stratopedon
+          wikipedia: Ptolemaic army
+        stable:
+          name: Hippōn
+          wikipedia: Ptolemaic army
+        fortress:
+          name: Phrourion
+          wikipedia: Fortification
+        temple:
+          name: Naos
+          wikipedia: Egyptian temple
+        university:
+          name: Mouseion
+          wikipedia: Mouseion
+        market:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        gardens:
+          name: Paradeisos
+          wikipedia: Paradise garden
+        baths:
+          name: Balaneion
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Hippodromos
+          wikipedia: Hippodrome
+        embassy:
+          name: Prytaneion
+          wikipedia: Prytaneion
+        exchange:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Bibliothēkē
+          wikipedia: Library of Alexandria
+        garrison:
+          name: Phrourā
+          wikipedia: Garrison
+        ruin:
+          name: Ereipia
+          wikipedia: Ruins
+        great_theatre:
+          name: Theatron
+          wikipedia: Theatre of ancient Greece
+        great_forge:
+          name: Chalkeōn
+          wikipedia: Ferrous metallurgy
+        wonder:
+          name: Hieron tou Hōrou
+          wikipedia: Temple of Edfu
+        wall:
+          name: Teichos
+          wikipedia: Defensive wall
+    sele:
+      buildings:
+        woodline:
+          name: Hylē
+          wikipedia: Logging
+        quarry:
+          name: Latomeion
+          wikipedia: Quarry
+        mine:
+          name: Metalleion
+          wikipedia: Mining
+        field:
+          name: Agros
+          wikipedia: Agriculture in Mesopotamia
+        civic_centre:
+          name: Agora
+          wikipedia: Antioch
+        storehouse:
+          name: Apothēkē
+          wikipedia: Granary
+        farmstead:
+          name: Epoikion
+          wikipedia: Farm
+        house:
+          name: Oikos
+          wikipedia: Oikos
+        rally_point:
+          name: Stratēgeion
+          wikipedia: Seleucid army
+        barracks:
+          name: Stratopedon
+          wikipedia: Seleucid army
+        stable:
+          name: Hippōn
+          wikipedia: Cataphract
+        fortress:
+          name: Phrourion
+          wikipedia: Fortification
+        temple:
+          name: Naos
+          wikipedia: Ancient Greek temple
+        university:
+          name: Bibliothēkē
+          wikipedia: Library of Antioch
+        market:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        gardens:
+          name: Paradeisos
+          wikipedia: Paradise garden
+        baths:
+          name: Balaneion
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Hippodromos
+          wikipedia: Hippodrome
+        embassy:
+          name: Prytaneion
+          wikipedia: Prytaneion
+        exchange:
+          name: Emporion
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Bibliothēkē
+          wikipedia: Hellenistic period
+        garrison:
+          name: Phrourā
+          wikipedia: Garrison
+        ruin:
+          name: Ereipia
+          wikipedia: Ruins
+        great_theatre:
+          name: Theatron
+          wikipedia: Theatre of ancient Greece
+        great_forge:
+          name: Chalkeōn
+          wikipedia: Ferrous metallurgy
+        wonder:
+          name: Hieron tou Apollōnos Pythiou
+          wikipedia: Didyma
+        wall:
+          name: Teichos
+          wikipedia: Defensive wall
+    rome:
+      buildings:
+        woodline:
+          name: Silva
+          wikipedia: Deforestation during the Roman period
+        quarry:
+          name: Lapicīdīna
+          wikipedia: Carrara marble
+        mine:
+          name: Metallum
+          wikipedia: Las Médulas
+        field:
+          name: Ager
+          wikipedia: Agriculture in ancient Rome
+        civic_centre:
+          name: Forum
+          wikipedia: Forum (Roman)
+        storehouse:
+          name: Horreum
+          wikipedia: Horreum
+        farmstead:
+          name: Vīlla
+          wikipedia: Roman villa
+        house:
+          name: Domus
+          wikipedia: Domus
+        rally_point:
+          name: Campus
+          wikipedia: Campus Martius
+        barracks:
+          name: Castrum
+          wikipedia: Castra
+        stable:
+          name: Equīle
+          wikipedia: Equites
+        fortress:
+          name: Castellum
+          wikipedia: Castellum
+        temple:
+          name: Aedēs
+          wikipedia: Roman temple
+        university:
+          name: Athēnaeum
+          wikipedia: Athenaeum (ancient Rome)
+        market:
+          name: Macellum
+          wikipedia: Macellum
+        gardens:
+          name: Hortus
+          wikipedia: Roman gardens
+        baths:
+          name: Thermae
+          wikipedia: Thermae
+        amphitheatre:
+          name: Amphitheātrum
+          wikipedia: Roman amphitheatre
+        embassy:
+          name: Graecostasis
+          wikipedia: Graecostasis
+        exchange:
+          name: Emporium
+          wikipedia: Emporium (Rome)
+        cultural_exchange:
+          name: Collēgium
+          wikipedia: Romanization (cultural)
+        garrison:
+          name: Praesidium
+          wikipedia: Castra
+        ruin:
+          name: Ruīnae
+          wikipedia: Spolia
+        great_theatre:
+          name: Theātrum
+          wikipedia: Roman theatre (structure)
+        great_forge:
+          name: Fabrica
+          wikipedia: Roman metallurgy
+        wonder:
+          name: Aedēs Iovis Optimī Maximī
+          wikipedia: Temple of Jupiter Optimus Maximus
+        wall:
+          name: Mūrus
+          wikipedia: Servian Wall
+    cart:
+      buildings:
+        woodline:
+          name: Yaʿar
+          wikipedia: Cedrus libani
+        quarry:
+          name: Maḥṣēbāh
+          wikipedia: El Haouaria
+        mine:
+          name: Mikrāh
+          wikipedia: Rio Tinto (river)
+        field:
+          name: Šadd
+          wikipedia: Mago (agricultural writer)
+        civic_centre:
+          name: Merkāz
+          wikipedia: Carthage
+        storehouse:
+          name: Maḥṣabah
+          wikipedia: Warehouse
+        farmstead:
+          name: Aḥuzāh
+          wikipedia: Farm
+        house:
+          name: Bet
+          wikipedia: Kerkouane
+        rally_point:
+          name: Maḥaneh
+          wikipedia: Military of Carthage
+        barracks:
+          name: Maḥanēt
+          wikipedia: Military of Carthage
+        stable:
+          name: ʾUrwāh
+          wikipedia: Numidian cavalry
+        fortress:
+          name: Ḥamet
+          wikipedia: Byrsa
+        temple:
+          name: Maqdaš
+          wikipedia: Punic religion
+        university:
+          name: Bēt Sēfer
+          wikipedia: Punic language
+        market:
+          name: Šūq
+          wikipedia: Cothon
+        gardens:
+          name: Pardēs
+          wikipedia: Archaeological site of Carthage
+        baths:
+          name: Merḥāṣ
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Bēt Mišḥāq
+          wikipedia: Carthage amphitheatre
+        embassy:
+          name: Bēt Malʾāk
+          wikipedia: Treaties between Rome and Carthage
+        exchange:
+          name: Šūq
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Bēt ʿAm
+          wikipedia: Punic people
+        garrison:
+          name: Maḥanēt
+          wikipedia: Garrison
+        ruin:
+          name: Ḫorbāh
+          wikipedia: Ruins
+        great_theatre:
+          name: Bēt Šīr
+          wikipedia: Carthage
+        great_forge:
+          name: Bēt Ḥārāš
+          wikipedia: Ferrous metallurgy
+        wonder:
+          name: Maqdaš Baʿl Ḥammōn
+          wikipedia: Baal Hammon
+        wall:
+          name: Mijdil
+          wikipedia: Carthage
+    iber:
+      buildings:
+        woodline:
+          name: Basoa
+          wikipedia: Logging
+        quarry:
+          name: Harrobia
+          wikipedia: Quarry
+        mine:
+          name: Meatzea
+          wikipedia: Almadén
+        field:
+          name: Soro
+          wikipedia: Agriculture
+        civic_centre:
+          name: Iltun
+          wikipedia: Oppidum
+        storehouse:
+          name: Ola
+          wikipedia: Granary
+        farmstead:
+          name: Baserri
+          wikipedia: Baserri
+        house:
+          name: Etxe
+          wikipedia: Numantia
+        rally_point:
+          name: Bilgune
+          wikipedia: Iberians
+        barracks:
+          name: Kaserna
+          wikipedia: Iberians
+        stable:
+          name: Zalditegi
+          wikipedia: Iberian horse
+        fortress:
+          name: Castro
+          wikipedia: Castro culture
+        temple:
+          name: Loki
+          wikipedia: Iberians
+        university:
+          name: Ikastetxe
+          wikipedia: Iberian scripts
+        market:
+          name: Arruga
+          wikipedia: Empúries
+        gardens:
+          name: Lorategi
+          wikipedia: Garden
+        baths:
+          name: Bainuetxe
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Jokaleku
+          wikipedia: Amphitheatre
+        embassy:
+          name: Arrotz-etxe
+          wikipedia: Celtiberians
+        exchange:
+          name: Arruga
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Harrera
+          wikipedia: Romanization of Hispania
+        garrison:
+          name: Kaserna
+          wikipedia: Garrison
+        ruin:
+          name: Hondakinak
+          wikipedia: Ruins
+        great_theatre:
+          name: Antzokia
+          wikipedia: Theatre
+        great_forge:
+          name: Harotz
+          wikipedia: Falcata
+        wonder:
+          name: Cancho Roano
+          wikipedia: Cancho Roano
+        wall:
+          name: Dorre
+          wikipedia: Numantia
+    gaul:
+      buildings:
+        woodline:
+          name: Cēton
+          wikipedia: Logging
+        quarry:
+          name: Carrecā
+          wikipedia: Quarry
+        mine:
+          name: Meinis
+          wikipedia: Mining
+        field:
+          name: Olca
+          wikipedia: Celtic field
+        civic_centre:
+          name: Lissos
+          wikipedia: Oppidum
+        storehouse:
+          name: Capanon
+          wikipedia: Granary
+        farmstead:
+          name: Buta
+          wikipedia: Farm
+        house:
+          name: Tegia
+          wikipedia: Gauls
+        rally_point:
+          name: Corios
+          wikipedia: Ancient Celtic warfare
+        barracks:
+          name: Coriosedlon
+          wikipedia: Ancient Celtic warfare
+        stable:
+          name: Eposton
+          wikipedia: Epona
+        fortress:
+          name: Dunon
+          wikipedia: Dun (fortification)
+        temple:
+          name: Nemeton
+          wikipedia: Nemeton
+        university:
+          name: Druwides
+          wikipedia: Druid
+        market:
+          name: Magos
+          wikipedia: Marketplace
+        gardens:
+          name: Lubiā
+          wikipedia: Garden
+        baths:
+          name: Lautron
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Agron
+          wikipedia: Amphitheatre
+        embassy:
+          name: Oigitēs
+          wikipedia: Hospitium
+        exchange:
+          name: Magos
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Nemeton
+          wikipedia: Gallo-Roman culture
+        garrison:
+          name: Coriosedlon
+          wikipedia: Garrison
+        ruin:
+          name: Senodūnon
+          wikipedia: Ruins
+        great_theatre:
+          name: Cantlon
+          wikipedia: Bard
+        great_forge:
+          name: Gobanion
+          wikipedia: Gobannus
+        wonder:
+          name: Celicnon
+          wikipedia: Gournay-sur-Aronde
+        wall:
+          name: Uxelon
+          wikipedia: Murus gallicus
+    brit:
+      buildings:
+        woodline:
+          name: Cēton
+          wikipedia: Coppicing
+        quarry:
+          name: Carrecā
+          wikipedia: Quarry
+        mine:
+          name: Meinis
+          wikipedia: Great Orme
+        field:
+          name: Olca
+          wikipedia: Celtic field
+        civic_centre:
+          name: Tigernotreba
+          wikipedia: Hillfort
+        storehouse:
+          name: Capanon
+          wikipedia: Granary
+        farmstead:
+          name: Buta
+          wikipedia: Farm
+        house:
+          name: Tegia
+          wikipedia: Roundhouse (dwelling)
+        rally_point:
+          name: Corios
+          wikipedia: Ancient Celtic warfare
+        barracks:
+          name: Coriosessa
+          wikipedia: Ancient Celtic warfare
+        stable:
+          name: Eposton
+          wikipedia: Chariot
+        fortress:
+          name: Dunon
+          wikipedia: Dun (fortification)
+        temple:
+          name: Nemeton
+          wikipedia: Nemeton
+        university:
+          name: Druwides
+          wikipedia: Druid
+        market:
+          name: Magos
+          wikipedia: Celtic coinage
+        gardens:
+          name: Lubiā
+          wikipedia: Garden
+        baths:
+          name: Lautron
+          wikipedia: Roman Baths (Bath)
+        amphitheatre:
+          name: Agron
+          wikipedia: Amphitheatre
+        embassy:
+          name: Oigitēs
+          wikipedia: Hospitium
+        exchange:
+          name: Magos
+          wikipedia: Hengistbury Head
+        cultural_exchange:
+          name: Nemeton
+          wikipedia: Romano-British culture
+        garrison:
+          name: Coriosessa
+          wikipedia: Garrison
+        ruin:
+          name: Senodūnon
+          wikipedia: Ruins
+        great_theatre:
+          name: Cantlon
+          wikipedia: Bard
+        great_forge:
+          name: Gobanion
+          wikipedia: Battersea Shield
+        wonder:
+          name: Emain Macha
+          wikipedia: Navan Fort
+        wall:
+          name: Uxelon
+          wikipedia: Maiden Castle, Dorset
+    germ:
+      buildings:
+        woodline:
+          name: Widuz
+          wikipedia: Logging
+        quarry:
+          name: Stainaz
+          wikipedia: Quarry
+        mine:
+          name: Grōbō
+          wikipedia: Mining
+        field:
+          name: Fuldō
+          wikipedia: Agriculture
+        civic_centre:
+          name: Fulkasrēdaz
+          wikipedia: Thing (assembly)
+        storehouse:
+          name: Skattasfriþuz
+          wikipedia: Granary
+        farmstead:
+          name: Kurnahūsą
+          wikipedia: Farm
+        house:
+          name: Hūsą
+          wikipedia: Longhouse
+        rally_point:
+          name: Harjaz
+          wikipedia: Early Germanic warfare
+        barracks:
+          name: Druthislegra
+          wikipedia: Early Germanic warfare
+        stable:
+          name: Stallaz
+          wikipedia: Stable
+        fortress:
+          name: Burgz
+          wikipedia: Hillfort
+        temple:
+          name: Hailagastadiz
+          wikipedia: Germanic paganism
+        university:
+          name: Rūnō
+          wikipedia: Elder Futhark
+        market:
+          name: Kaupôsbōþlą
+          wikipedia: Amber Road
+        gardens:
+          name: Gardaz
+          wikipedia: Garden
+        baths:
+          name: Baþą
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Hulmagangaz
+          wikipedia: Holmgang
+        embassy:
+          name: Gastiz
+          wikipedia: Hospitium
+        exchange:
+          name: Kaupô
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Salaz
+          wikipedia: Germania (book)
+        garrison:
+          name: Druthislegra
+          wikipedia: Garrison
+        ruin:
+          name: Wōstijō
+          wikipedia: Ruins
+        great_theatre:
+          name: Þulaz
+          wikipedia: Thyle
+        great_forge:
+          name: Smiþjǭ
+          wikipedia: Wayland the Smith
+        wonder:
+          name: Irminsūl
+          wikipedia: Irminsul
+        wall:
+          name: Wallaz
+          wikipedia: Palisade
+    achae:
+      buildings:
+        woodline:
+          name: Vanā
+          wikipedia: Logging
+        quarry:
+          name: Aθangā
+          wikipedia: Quarry
+        mine:
+          name: Kāna
+          wikipedia: Mining
+        field:
+          name: Kaštrya
+          wikipedia: Qanat
+        civic_centre:
+          name: Xšaçapāvan
+          wikipedia: Satrap
+        storehouse:
+          name: Asiyah
+          wikipedia: Persepolis Administrative Archives
+        farmstead:
+          name: Kaštašta
+          wikipedia: Farm
+        house:
+          name: Huvādā
+          wikipedia: Achaemenid architecture
+        rally_point:
+          name: Spāda
+          wikipedia: Military of the Achaemenid Empire
+        barracks:
+          name: Padgan
+          wikipedia: Immortals (Achaemenid Empire)
+        stable:
+          name: Paraspa
+          wikipedia: Nisean horse
+        fortress:
+          name: Didā
+          wikipedia: Citadel
+        temple:
+          name: Āyadanam
+          wikipedia: Fire temple
+        university:
+          name: Dipī
+          wikipedia: Old Persian cuneiform
+        market:
+          name: Ardatašta
+          wikipedia: Royal Road
+        gardens:
+          name: Bāga
+          wikipedia: Persian gardens
+        baths:
+          name: Garmāba
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Paridaida
+          wikipedia: Paradise garden
+        embassy:
+          name: Dūtaka
+          wikipedia: Achaemenid Empire
+        exchange:
+          name: Ardatašta
+          wikipedia: Daric
+        cultural_exchange:
+          name: Vispazanā
+          wikipedia: Cyrus Cylinder
+        garrison:
+          name: Padgan
+          wikipedia: Garrison
+        ruin:
+          name: Vīrāna
+          wikipedia: Ruins
+        great_theatre:
+          name: Apadāna
+          wikipedia: Apadana
+        great_forge:
+          name: Arštišta
+          wikipedia: Acinaces
+        wonder:
+          name: Pārsa
+          wikipedia: Persepolis
+        wall:
+          name: Pāyaud
+          wikipedia: Walls of Babylon
+    maur:
+      buildings:
+        woodline:
+          name: Vanam
+          wikipedia: Logging
+        quarry:
+          name: Śilākhani
+          wikipedia: Chunar
+        mine:
+          name: Khani
+          wikipedia: Mining
+        field:
+          name: Kshetra
+          wikipedia: History of agriculture in the Indian subcontinent
+        civic_centre:
+          name: Rajadhanika
+          wikipedia: Pataliputra
+        storehouse:
+          name: Khalla
+          wikipedia: Granary
+        farmstead:
+          name: Kantu
+          wikipedia: Farm
+        house:
+          name: Griham
+          wikipedia: Architecture of India
+        rally_point:
+          name: Senā
+          wikipedia: Maurya Empire
+        barracks:
+          name: Sainyavasa
+          wikipedia: Maurya Empire
+        stable:
+          name: Aśvaśālā
+          wikipedia: Stable
+        fortress:
+          name: Durg
+          wikipedia: Forts in India
+        temple:
+          name: Devalaya
+          wikipedia: Chaitya
+        university:
+          name: Takṣaśilā
+          wikipedia: Taxila
+        market:
+          name: Vipana
+          wikipedia: Karshapana
+        gardens:
+          name: Udyāna
+          wikipedia: Garden
+        baths:
+          name: Snānāgāra
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Raṅgabhūmi
+          wikipedia: Malla-yuddha
+        embassy:
+          name: Dūtāvāsa
+          wikipedia: Megasthenes
+        exchange:
+          name: Paṭṭana
+          wikipedia: Indo-Roman trade relations
+        cultural_exchange:
+          name: Dharmaśālā
+          wikipedia: Edicts of Ashoka
+        garrison:
+          name: Sainyavasa
+          wikipedia: Garrison
+        ruin:
+          name: Khaṇḍahara
+          wikipedia: Ruins
+        great_theatre:
+          name: Nāṭyaśālā
+          wikipedia: Natya Shastra
+        great_forge:
+          name: Lohakāra
+          wikipedia: Wootz steel
+        wonder:
+          name: Sānchi Mahāstūpa
+          wikipedia: Sanchi Stupa
+        wall:
+          name: Prākāra
+          wikipedia: Rampart (fortification)
+    kush:
+      buildings:
+        woodline:
+          name: Ḫt
+          wikipedia: Logging
+        quarry:
+          name: Ỉnr
+          wikipedia: Quarry
+        mine:
+          name: Nbw
+          wikipedia: Wadi Allaqi
+        field:
+          name: Sht
+          wikipedia: Ancient Egyptian agriculture
+        civic_centre:
+          name: Pr-nsw
+          wikipedia: Meroë
+        storehouse:
+          name: Wdȝt
+          wikipedia: Granary
+        farmstead:
+          name: Snwt
+          wikipedia: Farm
+        house:
+          name: Pr
+          wikipedia: Nubian architecture
+        rally_point:
+          name: Mšʿ
+          wikipedia: Kingdom of Kush
+        barracks:
+          name: Pr-msʿyw
+          wikipedia: Kingdom of Kush
+        stable:
+          name: Ỉḥ Ssmt
+          wikipedia: Stable
+        fortress:
+          name: Htm
+          wikipedia: Buhen
+        temple:
+          name: Pr-ʿIprmk
+          wikipedia: Apedemak
+        university:
+          name: Pr-ʿnḫ
+          wikipedia: Meroitic script
+        market:
+          name: Pr-sbt
+          wikipedia: Marketplace
+        gardens:
+          name: Kȝm
+          wikipedia: Gardens of ancient Egypt
+        baths:
+          name: Pr-wʿb
+          wikipedia: Meroë
+        amphitheatre:
+          name: Wsḫt
+          wikipedia: Amphitheatre
+        embassy:
+          name: Pr-wpwty
+          wikipedia: Amanirenas
+        exchange:
+          name: Pr-sbt
+          wikipedia: Emporium (antiquity)
+        cultural_exchange:
+          name: Pr-ḫȝstyw
+          wikipedia: Twenty-fifth Dynasty of Egypt
+        garrison:
+          name: Pr-msʿyw
+          wikipedia: Garrison
+        ruin:
+          name: Wȝs
+          wikipedia: Ruins
+        great_theatre:
+          name: Pr-ḥsyw
+          wikipedia: Music of Egypt
+        great_forge:
+          name: Pr-ḥmww
+          wikipedia: Iron metallurgy in Africa
+        wonder:
+          name: Mnw nht
+          wikipedia: Nubian pyramids
+        wall:
+          name: Sȝwt
+          wikipedia: Defensive wall
+    han:
+      buildings:
+        woodline:
+          name: Línchǎng
+          wikipedia: Logging
+        quarry:
+          name: Shíchǎng
+          wikipedia: Quarry
+        mine:
+          name: Kuàngshān
+          wikipedia: Mining
+        field:
+          name: Dàotián
+          wikipedia: Paddy field
+        civic_centre:
+          name: Guān Shǔ
+          wikipedia: Government of the Han dynasty
+        storehouse:
+          name: Cāngkù
+          wikipedia: Granary
+        farmstead:
+          name: Nóng Shè
+          wikipedia: Farm
+        house:
+          name: Mín Jū
+          wikipedia: Siheyuan
+        rally_point:
+          name: Jiàochǎng
+          wikipedia: Military of the Han dynasty
+        barracks:
+          name: Jūn Yíng
+          wikipedia: Military of the Han dynasty
+        stable:
+          name: Mǎ Yuàn
+          wikipedia: Ferghana horse
+        fortress:
+          name: Bǎolěi
+          wikipedia: Yumen Pass
+        temple:
+          name: Sìmiào
+          wikipedia: Ancestral shrine
+        university:
+          name: Tàixué
+          wikipedia: Taixue
+        market:
+          name: Jíshì
+          wikipedia: Economy of the Han dynasty
+        gardens:
+          name: Yuánlín
+          wikipedia: Chinese garden
+        baths:
+          name: Yùtáng
+          wikipedia: Public bathing
+        amphitheatre:
+          name: Bǎixì
+          wikipedia: Chinese variety art
+        embassy:
+          name: Dàhónglǔ
+          wikipedia: Zhang Qian
+        exchange:
+          name: Hùshì
+          wikipedia: Silk Road
+        cultural_exchange:
+          name: Yì Guǎn
+          wikipedia: Heqin
+        garrison:
+          name: Túntián
+          wikipedia: Tuntian
+        ruin:
+          name: Fèixū
+          wikipedia: Ruins
+        great_theatre:
+          name: Yuèfǔ
+          wikipedia: Yuefu
+        great_forge:
+          name: Duànzào Chǎng
+          wikipedia: History of metallurgy in China
+        wonder:
+          name: Wèiyāng Gōng
+          wikipedia: Weiyang Palace
+        wall:
+          name: Chéng Lóu
+          wikipedia: Great Wall of China
   ver_sacrum:
     every: 10
     range_per_level: 0.5
