@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from .game import Game
     from .modules.base import MqttHandler
 
+MAX_PACKET = 1_048_000  # mosquitto max_packet_size is 1 MiB (broker/mosquitto.conf.template), headers included
 log = logging.getLogger("ovian.realtime")
 
 
@@ -133,6 +134,11 @@ class Realtime:
         while True:
             while self.queue:
                 topic, payload = self.queue[0]
+                if len(payload) + len(topic) > MAX_PACKET:
+                    # the broker drops the connection on an oversize packet; retrying it would wedge the queue
+                    log.error("dropping %d-byte message on %s: over the broker's packet limit", len(payload), topic)
+                    self.queue.popleft()
+                    continue
                 await client.publish(topic, payload, qos=1)
                 self.queue.popleft()
             self.wakeup.clear()

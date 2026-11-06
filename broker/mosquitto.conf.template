@@ -7,7 +7,7 @@ log_type error
 log_type warning
 log_type notice
 connection_messages true
-max_packet_size 65536
+max_packet_size 1048576
 
 # Server (and other trusted backends) - keep this port private.
 listener 1883
