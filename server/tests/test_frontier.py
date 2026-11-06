@@ -199,5 +199,33 @@ async def test_titles_at_the_end_of_a_round(game: Game, client, register):
     assert r.status_code == 200, r.text
     names = [x["id"] for x in r.json()["archived"]["titles"]]
     assert "battles" not in names and "conquest" in names, "the race that won the world gives no title"
+    g = await client.get("/hall-of-fame/1/atlas.geojson")
+    assert g.status_code == 200, g.text
+    feats = g.json()["features"]
+    assert {f["properties"]["layer"] for f in feats} >= {"world", "terrain", "city", "event"}, "the map as the round ended"
+    cities = [f for f in feats if f["properties"]["layer"] == "city"]
+    assert sum(1 for f in cities if f["properties"]["ruler"] == "alice") == 4 and all(f["geometry"]["type"] == "Point" for f in cities)
+    assert feats[0]["properties"]["fictional"] is True and feats[0]["geometry"]["type"] == "Polygon"
+    assert (await client.get("/hall-of-fame/7/atlas.geojson")).status_code == 404
+    assert [f for f in (await client.get("/atlas.geojson")).json()["features"] if f["properties"]["layer"] == "city"], "the new round's map"
     titles = (await client.get(f"/players/{alice.id}")).json()["titles"]
     assert {x["id"] for x in titles} >= {"sprawling", "compact", "conquest"} and all(x["round"] == 1 for x in titles)
+
+
+async def test_a_commissioned_statue_joins_the_finds(game: Game, register):
+    alice = await register("alice")
+    await patch_state(game, alice.village_id, lambda st: st.__setitem__("resources", {r: 50_000 for r in st["resources"]}))
+    far = game.clock.now() + 10 * 3_600_000
+    await game.pool.execute("UPDATE villages SET meta = meta || $2 WHERE id = $1", alice.village_id, {"omen": {"id": "artist", "at": game.clock.now(), "expires_at": far}})
+    r = await alice.post(f"/villages/{alice.village_id}/omen/commission")
+    assert r.status_code == 200, r.text
+    v = r.json()
+    finds = v["archaeology"]["finds"]
+    assert len(finds) == 1 and finds[0]["name"].startswith("Statue of ") and " by " in finds[0]["name"]
+    art = finds[0]["context"]["artwork"]
+    assert art["kind"] == "statue" and art["artist"] in finds[0]["name"] and art["commissioned_by"] == "alice" and finds[0]["found_by"] == "alice"
+    assert finds[0]["grade"] in ("fine", "exceptional", "masterpiece") and finds[0]["culture"] >= 3
+    assert v["archaeology"]["display"]["room"] == 0, "no temple"
+    assert v["archaeology"]["display"]["shown"] == [finds[0]["id"]] and v["archaeology"]["display"]["culture"] == finds[0]["culture"], "statues need no temple"
+    assert any(f["context"].get("artwork") for f in (await alice.get("/me/finds")).json())
+    assert "Statue of" in (await alice.get("/reports")).json()[0]["title"]

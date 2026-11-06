@@ -14,7 +14,7 @@ import { UI } from '../ui';
   template: `
     <section class="hud-panel dialog finds" role="dialog" aria-label="Finds">
       <button class="close" (click)="close()" aria-label="Close" title="Close (Esc)">✕</button>
-      <h2 class="selection__title">Finds</h2>
+      <h2 class="selection__title">Finds and artworks</h2>
       @if (arch(); as a) {
         <p class="small">Shown in {{ templeName() }}s: <strong>{{ a.display.shown.length }}</strong> of {{ a.display.room }} room,
           <span class="good">+{{ a.display.culture | n }} culture</span>.
@@ -90,6 +90,10 @@ export class FindsComponent {
   protected context(f: Find): string {
     const l = f.context?.layer ?? {};
     let what: string;
+    const art = f.context?.artwork;
+    if (art) {
+      return `${(art.kind ?? 'statue').charAt(0).toUpperCase()}${(art.kind ?? 'statue').slice(1)} of ${art.subject} carved by ${art.artist}${art.tradition ? ' (' + art.tradition + ' tradition)' : ''}; commissioned by ${art.commissioned_by ?? f.found_by}. It stands in the square and needs no temple.`;
+    }
     if (l.camp) {
       return `Spoils of a level ${l.camp} barbarian camp; taken by ${f.found_by}`;
     }

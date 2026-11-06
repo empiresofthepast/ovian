@@ -4259,6 +4259,32 @@ extensions:
       hills: { stone: 0.02 }
       forest: { wood: 0.05 }
     max: { stone: 0.4, wood: 0.4 }
+  artworks:
+    default: greek
+    by_tribe: { athen: greek, spart: greek, mace: greek, ptol: greek, sele: greek, achae: greek, rome: roman, cart: punic, maur: punic, iber: northern, gaul: northern, brit: northern, germ: northern, kush: kushite, han: han }
+    grades:
+      fine: { chance: 0.55, culture: 3 }
+      exceptional: { chance: 0.35, culture: 8 }
+      masterpiece: { chance: 0.1, culture: 15 }
+    traditions:
+      greek:
+        artists: [Phidias, Praxiteles, Polykleitos, Myron, Lysippos, Scopas, Kresilas, Alkamenes, Leochares, Boethus of Chalcedon]
+        subjects: [Athena, Zeus, Apollo, Aphrodite, Hermes, Heracles, Nike, a discus thrower, a spear-bearer, a wounded Amazon, a charioteer, a boxer at rest, a sleeping satyr]
+      roman:
+        artists: [Pasiteles, Arcesilaus, Stephanos, Zenodorus, Coponius, Menelaos, Diogenes of Athens, Apollodorus of Damascus]
+        subjects: [Jupiter, Mars, Venus, Roma, the she-wolf and the twins, a general on horseback, a togate senator, a dying Gaul, Fortuna, an orator, the river Tiber]
+      punic:
+        artists: [Boethus of Carthage, the mask-maker of Kerkouane, the Tanit carver of Byrsa, the ivory-worker of Motya, the goldsmith of Tharros, the stele-cutter of the tophet]
+        subjects: [Tanit, Baal Hammon, Melqart, a grinning mask, the youth of Motya, a merchant prince, a war elephant, Astarte]
+      northern:
+        artists: [the master of the Gundestrup cauldron, the Hochdorf goldsmith, the Hallstatt sword-smith, the Snettisham torc-maker, the Battersea shield-maker, the Vix bronze-caster, the Glauberg stone-carver, the sculptor of the Lady of Elche, the Osuna carver, the Hirschlanden master]
+        subjects: [a warrior with a torc, the horned god, the Lady of Elche, the horse of the sun, a boar standard, a hero's head, a chieftain on his mound, the three mothers, a wild bull, the Lady of Baza]
+      kushite:
+        artists: [the sculptor of Meroë, the goldsmith of Amanishakheto, the Napatan stone-carver, the master of the lion temple]
+        subjects: [Apedemak the lion-god, Amun as a ram, a kandake on her throne, a winged lion, a pharaoh of Napata]
+      han:
+        artists: [the bronze-caster of the Flying Horse, the terracotta master of Xi'an, Lu Ban, the jade-carver of Mancheng, the lacquerer of Mawangdui]
+        subjects: [the flying horse, a kneeling archer, a bronze dragon, a jade suit, a bell of the ancestors, a scholar official, the Queen Mother of the West]
   victory:
     conditions:
       wonder: { name: Wonder }

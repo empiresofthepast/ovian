@@ -132,6 +132,8 @@ export class Api {
   }
   /** Absolute URL of the chronicle as GeoJSON (public, for downloads and map tools). */
   chronicleGeojsonUrl(round?: number) { return `${this.base}/chronicle.geojson${round ? '?round=' + round : ''}`; }
+  /** Absolute URL of the world as GeoJSON: the map now, or as it was when a past round ended (for OpenFantasyMap). */
+  atlasGeojsonUrl(round?: number) { return round ? `${this.base}/hall-of-fame/${round}/atlas.geojson` : `${this.base}/atlas.geojson`; }
   newRound(speed?: number) { return this.request<{ round: number; speed: number; players: number }>('POST', '/admin/world/new-round', { speed }); }
   ban(playerId: number, days: number, reason: string) { return this.request<any>('POST', `/admin/players/${playerId}/ban`, { days, reason }); }
   unban(playerId: number) { return this.request<any>('POST', `/admin/players/${playerId}/unban`); }

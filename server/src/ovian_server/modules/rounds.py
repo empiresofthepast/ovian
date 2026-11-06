@@ -111,8 +111,11 @@ async def new_round(body: NewRound, admin: AdminId, game: GameDep) -> dict[str, 
             entry = {"round": rnd, "id": t["id"], "name": t["name"], "value": t["value"], "unit": t["unit"]}
             await c.execute("""UPDATE players SET meta = jsonb_set(meta, '{titles}', coalesce(meta->'titles', '[]'::jsonb) || $2::jsonb)
                                WHERE id = $1""", t["player"]["id"], [entry])
-        await c.execute("INSERT INTO hall_of_fame(round, ended_at, data) VALUES ($1, $2, $3) ON CONFLICT (round) DO UPDATE SET data = $3, ended_at = $2",
-                        rnd, game.clock.now(), data)
+        from .atlas import build
+
+        atlas = await build(game, c, rnd)  # the world as it ends, for OpenFantasyMap and other map tools
+        await c.execute("""INSERT INTO hall_of_fame(round, ended_at, data, atlas) VALUES ($1, $2, $3, $4)
+                           ON CONFLICT (round) DO UPDATE SET data = $3, ended_at = $2, atlas = $4""", rnd, game.clock.now(), data, atlas)
         for sql in WIPE:
             await c.execute(sql)
         await c.execute("INSERT INTO world_state(key, value) VALUES ('round', to_jsonb($1::int)) ON CONFLICT (key) DO UPDATE SET value = to_jsonb($1::int)",

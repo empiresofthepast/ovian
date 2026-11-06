@@ -65,7 +65,7 @@ EVENTS: list[dict[str, Any]] = [
         {"id": "ignore", "label": "Explain it away", "contentment": -10, "hours": 12}]},
     {"id": "artist", "title": "A famous sculptor", "text": "A renowned sculptor offers to adorn the city, for a price.", "default": "decline",
      "choices": [
-        {"id": "commission", "label": "Commission a statue", "cost": {"all": 3}, "contentment": 10, "hours": 48},
+        {"id": "commission", "label": "Commission a statue", "cost": {"all": 3}, "contentment": 10, "hours": 48, "artwork": "statue"},
         {"id": "decline", "label": "Decline politely"}]},
     {"id": "fire", "title": "Fire in the timber yard", "text": "Flames leap from the stacks of timber by the walls.", "default": "burn",
      "choices": [
@@ -174,14 +174,20 @@ async def apply(game: Game, tx: Tx, v: VillageRow, ev: dict[str, Any], choice: d
         ends.append(add_effect(game, v.meta, "boost", ev["title"], float(choice["boost"]), hours))
     if choice.get("unrest"):
         await add_unrest(game, tx, v, float(choice["unrest"]))
+    artwork = None
+    if choice.get("artwork"):
+        from .artworks import commission
+
+        artwork = await commission(game, tx, v, str(choice["artwork"]))  # the sculptor's work joins the city's finds
     v.meta.pop("omen", None)
     await refresh_boost(game, tx, v)
     await save_village(game, tx, v)
     for until in set(ends):
         await schedule_end(game, tx, until, village_id=v.id)
     outcome = {"event": ev["id"], "title": ev["title"], "choice": choice["id"], "label": choice["label"], "cost": cost, "gain": gain,
-               "forced": forced, "village": v.public()}
-    await add_report(game, tx, v.player_id, "omen", f"{ev['title']}: {choice['label'].lower()}" + (" (no answer came)" if forced else ""), outcome)
+               "forced": forced, "village": v.public(), "artwork": artwork}
+    title = f"{ev['title']}: {choice['label'].lower()}" + (f" – {artwork['name']}" if artwork else "") + (" (no answer came)" if forced else "")
+    await add_report(game, tx, v.player_id, "omen", title, outcome)
     return outcome
 
 

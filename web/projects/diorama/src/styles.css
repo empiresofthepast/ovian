@@ -509,6 +509,8 @@ input {
 .tag.grade--fine { border-color: #a9d4ff; }
 .grade--exceptional { color: var(--gold); text-shadow: 0 0 6px rgba(233, 196, 106, .45); }
 .tag.grade--exceptional { border-color: var(--gold); background: rgba(233, 196, 106, .14); }
+.grade--masterpiece { color: #ffb3f0; text-shadow: 0 0 8px rgba(255, 140, 230, .55); }
+.tag.grade--masterpiece { border-color: #ffb3f0; background: rgba(255, 140, 230, .14); }
 .find select { max-width: 160px; }
 .aux { display: flex; flex-direction: column; gap: 3px; padding-top: 3px; }
 .aux select { max-width: 100%; min-width: 0; flex: 1; font-size: 12px; }

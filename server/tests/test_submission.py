@@ -6,6 +6,7 @@ from ovian_server.game import Game
 
 from .conftest import give_buildings, patch_state
 from .test_culture import set_culture
+from .test_realm import extensions
 
 
 async def raid(game: Game, attacker, target: dict, units: dict, kind: str = "raid") -> dict:
@@ -17,69 +18,72 @@ async def raid(game: Game, attacker, target: dict, units: dict, kind: str = "rai
 
 
 async def test_five_wins_submit_a_city(game: Game, client, register):
-    alice = await register("alice", "clans")
-    bob = await register("bob", "legion")
-    await game.pool.execute("UPDATE players SET protected_until = 0")
-    target = await bob.village()
-    await game.pool.execute("UPDATE villages SET x = $2, y = $3 WHERE id = $1", alice.village_id, target["x"] + 2, target["y"])
-    await patch_state(game, alice.village_id, lambda s: s.__setitem__("units", {"clubman": 500}))
-    await patch_state(game, bob.village_id, lambda s: give_buildings(s, temple=5))
-    await set_culture(game, bob.village_id)
-    free = (await bob.village())["economy"]
-    lord_before = (await alice.village())["economy"]
+    # seasons and omens change production too; keep them out so only the vassal's +5% is measured
+    with extensions(game, seasons={}, omens={"chance": 0}):
+        alice = await register("alice", "clans")
+        bob = await register("bob", "legion")
+        await game.pool.execute("UPDATE players SET protected_until = 0")
+        target = await bob.village()
+        await game.pool.execute("UPDATE villages SET x = $2, y = $3 WHERE id = $1", alice.village_id, target["x"] + 2, target["y"])
+        await patch_state(game, alice.village_id, lambda s: s.__setitem__("units", {"clubman": 500}))
+        await patch_state(game, bob.village_id, lambda s: give_buildings(s, temple=5))
+        await set_culture(game, bob.village_id)
+        free_v = await bob.village()
+        free, free_state = free_v["economy"], free_v["state"]
+        lord_before = (await alice.village())["economy"]
 
-    for n in range(1, 5):
+        for n in range(1, 5):
+            report = await raid(game, alice, target, {"clubman": 20})
+            assert report["winner"] == "attacker"
+            assert report["submission"] == {"needed": 5, "wins": n}
+        v = await bob.village()
+        assert v["submission"] is None and v["dominance"]["threats"][0]["wins"] == 4
+        assert (await alice.village())["dominance"]["conquests"][0]["wins"] == 4
+
         report = await raid(game, alice, target, {"clubman": 20})
-        assert report["winner"] == "attacker"
-        assert report["submission"] == {"needed": 5, "wins": n}
-    v = await bob.village()
-    assert v["submission"] is None and v["dominance"]["threats"][0]["wins"] == 4
-    assert (await alice.village())["dominance"]["conquests"][0]["wins"] == 4
+        assert report["submission"]["submitted"] and report["submission"]["tribute"] == 0.1
+        assert any(e["type"] == "village.submitted" for e in game.realtime.to(game.topics.player(bob.id)))
 
-    report = await raid(game, alice, target, {"clubman": 20})
-    assert report["submission"]["submitted"] and report["submission"]["tribute"] == 0.1
-    assert any(e["type"] == "village.submitted" for e in game.realtime.to(game.topics.player(bob.id)))
+        # the vassal pays 10% of its gross production, the overlord receives it; it produces 5% more under protection
+        v = await bob.village()
+        assert v["submission"]["village"]["id"] == alice.village_id and v["submission"]["tribe"] == "clans"
+        eco = v["economy"]
+        for r, gross in eco["gross"].items():
+            assert abs(eco["tribute_out"][r] - gross * 0.1) < 1e-6
+            upkeep = free["gross"][r] - free["production"][r]
+            assert abs(gross - free["gross"][r] * 1.05) < 1e-6
+            assert abs(eco["production"][r] - (gross * 0.9 - upkeep)) < 1e-6
+        lord = await alice.village()
+        assert lord["vassals"][0]["village"]["id"] == bob.village_id
+        assert lord["economy"]["tribute_in"] == eco["tribute_out"]
+        assert lord["economy"]["production"]["wood"] > lord_before["production"]["wood"]
 
-    # the vassal pays 10% of its gross production, the overlord receives it; it produces 5% more under protection
-    v = await bob.village()
-    assert v["submission"]["village"]["id"] == alice.village_id and v["submission"]["tribe"] == "clans"
-    eco = v["economy"]
-    for r, gross in eco["gross"].items():
-        assert abs(eco["tribute_out"][r] - gross * 0.1) < 1e-6
-        upkeep = free["gross"][r] - free["production"][r]
-        assert abs(gross - free["gross"][r] * 1.05) < 1e-6
-        assert abs(eco["production"][r] - (gross * 0.9 - upkeep)) < 1e-6
-    lord = await alice.village()
-    assert lord["vassals"][0]["village"]["id"] == bob.village_id
-    assert lord["economy"]["tribute_in"] == eco["tribute_out"]
-    assert lord["economy"]["production"]["wood"] > lord_before["production"]["wood"]
+        # tribute follows the vassal's growth
+        await patch_state(game, bob.village_id, lambda s: s.__setitem__("resources", {r: 5_000 for r in s["resources"]}))
+        v = (await bob.post(f"/villages/{bob.village_id}/build", {"slot": 0})).json()
+        game.clock.value = v["build_queue"][0]["due_at"]
+        await game.run_due()
+        v, lord = await bob.village(), await alice.village()
+        assert lord["economy"]["tribute_in"]["wood"] == v["economy"]["tribute_out"]["wood"] > eco["tribute_out"]["wood"]
 
-    # tribute follows the vassal's growth
-    await patch_state(game, bob.village_id, lambda s: s.__setitem__("resources", {r: 5_000 for r in s["resources"]}))
-    v = (await bob.post(f"/villages/{bob.village_id}/build", {"slot": 0})).json()
-    game.clock.value = v["build_queue"][0]["due_at"]
-    await game.run_due()
-    v, lord = await bob.village(), await alice.village()
-    assert lord["economy"]["tribute_in"]["wood"] == v["economy"]["tribute_out"]["wood"] > eco["tribute_out"]["wood"]
+        # the vassal's culture now radiates for the overlord
+        culture = (await alice.get(f"/villages/{alice.village_id}/culture")).json()
+        near = next(n for n in culture["neighbours"] if n["village"]["id"] == bob.village_id)
+        assert near["your_influence"] > 0 and near["their_influence"] == 0
+        area = (await alice.get("/map", params={"x": target["x"] - 3, "y": target["y"] - 3, "w": 8, "h": 8})).json()
+        tile = next(m for m in area["villages"] if m["id"] == bob.village_id)
+        assert tile["overlord_id"] == alice.village_id and tile["overlord_tribe"] == "clans"
+        assert next(r for r in (await alice.get("/rankings")).json() if r["id"] == alice.id)["vassals"] == 1
 
-    # the vassal's culture now radiates for the overlord
-    culture = (await alice.get(f"/villages/{alice.village_id}/culture")).json()
-    near = next(n for n in culture["neighbours"] if n["village"]["id"] == bob.village_id)
-    assert near["your_influence"] > 0 and near["their_influence"] == 0
-    area = (await alice.get("/map", params={"x": target["x"] - 3, "y": target["y"] - 3, "w": 8, "h": 8})).json()
-    tile = next(m for m in area["villages"] if m["id"] == bob.village_id)
-    assert tile["overlord_id"] == alice.village_id and tile["overlord_tribe"] == "clans"
-    assert next(r for r in (await alice.get("/rankings")).json() if r["id"] == alice.id)["vassals"] == 1
-
-    # the vassal rebels: one win against its overlord sets it free
-    await patch_state(game, bob.village_id, lambda s: s.__setitem__("units", {"legionary": 200}))
-    await patch_state(game, alice.village_id, lambda s: s.__setitem__("units", {}))
-    me = await alice.village()
-    report = await raid(game, bob, me, {"legionary": 50})
-    assert report["submission"]["freed"]
-    v, lord = await bob.village(), await alice.village()
-    assert v["submission"] is None and "tribute" not in v["state"] and v["economy"]["tribute_out"] == {}
-    assert lord["vassals"] == [] and lord["economy"]["tribute_in"] == {}
+        # the vassal rebels: one win against its overlord sets it free
+        await patch_state(game, bob.village_id, lambda s: s.__setitem__("units", {"legionary": 200}))
+        await patch_state(game, alice.village_id, lambda s: s.__setitem__("units", {}))
+        me = await alice.village()
+        report = await raid(game, bob, me, {"legionary": 50})
+        assert report["submission"]["freed"]
+        v, lord = await bob.village(), await alice.village()
+        assert v["submission"] is None and "tribute" not in v["state"] and v["economy"]["tribute_out"] == {}
+        assert lord["vassals"] == [] and lord["economy"]["tribute_in"] == {}
 
 
 async def test_a_successful_defence_resets_the_count(game: Game, client, register):

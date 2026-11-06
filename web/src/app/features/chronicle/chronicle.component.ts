@@ -18,6 +18,7 @@ const KINDS: Record<string, string> = { horde: 'barbarian horde', abandoned: 'ab
     <div class="page-head">
       <h1 class="page-title">{{ 'nav.chronicle' | label }}</h1>
       <a class="btn btn--small" [href]="geojson" target="_blank" rel="noopener">⬇ {{ 'chronicle.geojson' | label: 'Download GeoJSON' }}</a>
+      <a class="btn btn--small" [href]="atlas" target="_blank" rel="noopener" title="The whole world as GeoJSON: terrain, cities, roads and events, for OpenFantasyMap">🗺 {{ 'chronicle.atlas' | label: 'World map (GeoJSON)' }}</a>
     </div>
     <section class="panel">
       <p class="small muted">{{ 'chronicle.about' | label: 'Foundings, conquests, wars, festivals and wonders, as the world remembers them. The GeoJSON places events on the game grid: fictional geography, not real places.' }}</p>
@@ -50,6 +51,7 @@ export class ChronicleComponent {
   private readonly api = inject(Api);
   private readonly game = inject(GameStore);
   protected readonly geojson = this.api.chronicleGeojsonUrl();
+  protected readonly atlas = this.api.atlasGeojsonUrl();
   protected readonly entries = signal<ChronicleEntry[]>([]);
   protected readonly kinds = signal<string[]>([]);
   protected readonly kind = signal('');

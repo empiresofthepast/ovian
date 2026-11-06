@@ -2,6 +2,21 @@
 
 Status: **idea, nothing built yet.** This note sketches how an Ovian world could live on a map from [FantasyMaps / OpenFantasyMaps](https://www.fantasymaps.org). FantasyMaps' own stated aim is "a shared, persistent world where what players do leaves traces — a slow-paced MMRPG built on top of the maps", and Ovian is a slow-paced MMO strategy game.
 
+## What exists today: the atlas export
+
+Every Ovian world can be exported as GeoJSON, to import into OpenFantasyMap or any GIS:
+
+- `GET /api/v1/atlas.geojson`: the world as it is now;
+- `GET /api/v1/hall-of-fame/{round}/atlas.geojson`: the world as it was when that round ended. The snapshot is taken
+  when the admin starts a new round, before the map is wiped, and linked from the hall of fame in both clients.
+
+One FeatureCollection; every feature has a `layer`: `world` (the boundary), `terrain` (a polygon per tile that isn't
+plain: water, beach, forest, hills, mountain), `city` (a point per city: ruler, people, population, culture, wonder
+level, alliance, overlord; camps and ruins carry `camp_level` and `abandoned_by`), `road` (a line per road) and
+`event` (the round's chronicle entries with a place, with `start_date`). The grid is projected with
+`extensions.chronicle.geo` (`lon`, `lat` of the corner of tile 0,0, `deg_per_tile`; defaults 12, 42, 0.05°), and the
+features say `fictional: true` unless the pack sets `real`. See `server/src/ovian_server/modules/atlas.py`.
+
 ## What OFM already has
 
 | Piece | What it gives us |

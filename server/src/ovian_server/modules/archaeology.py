@@ -165,8 +165,11 @@ async def sync_display(game: Game, tx: Tx, v: VillageRow) -> None:
         return
     d = c.get("display") or {}
     room = sum(int(s.get("level") or 0) for s in v.state["slots"] if s.get("building") == d.get("building", "temple")) * int(d.get("per_level", 1))
-    rows = await tx.conn.fetch("SELECT culture FROM finds WHERE village_id = $1 ORDER BY culture DESC, id LIMIT $2", v.id, room) if room else []
-    total = round(sum(float(r["culture"]) for r in rows), 3)
+    rows = await tx.conn.fetch("SELECT culture FROM finds WHERE village_id = $1 AND NOT (context ? 'artwork') ORDER BY culture DESC, id LIMIT $2",
+                               v.id, room) if room else []
+    # artworks stand in the square: they always count, whatever the temples' room
+    art = await tx.conn.fetchval("SELECT coalesce(sum(culture), 0) FROM finds WHERE village_id = $1 AND context ? 'artwork'", v.id)
+    total = round(sum(float(r["culture"]) for r in rows) + float(art), 3)
     if abs(float(v.state.get("culture_relics", 0.0)) - total) < 1e-9:
         return
     await accrue(game, tx, v)
@@ -442,7 +445,8 @@ async def ovian_village_view(game: Game, conn: asyncpg.Connection, village: Vill
     finds = await _finds(game, conn, "f.village_id = $1", village.id, limit=500)
     d = c.get("display") or {}
     room = sum(int(s.get("level") or 0) for s in village.state["slots"] if s.get("building") == d.get("building", "temple")) * int(d.get("per_level", 1))
-    shown = sorted(finds, key=lambda f: (-f["culture"], f["id"]))[:room]
+    art = [f for f in finds if (f["context"] or {}).get("artwork")]
+    shown = art + sorted((f for f in finds if f not in art), key=lambda f: (-f["culture"], f["id"]))[:room]
     view["archaeology"] = {"cost": c.get("cost") or {}, "hours": float(c.get("hours", 2)), "sites": sites, "digs": digs,
                            "finds": finds, "display": {"building": d.get("building", "temple"), "room": room,
                                                        "shown": [f["id"] for f in shown],

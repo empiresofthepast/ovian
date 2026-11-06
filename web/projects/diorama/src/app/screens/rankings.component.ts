@@ -64,6 +64,7 @@ interface Row { rank: number; id: number; username: string; tribe: string; bot?:
               @for (t of r.data.titles ?? []; track t.id) {<div class="small"><span>{{ titleIcon(t.id) }}</span> <strong>{{ t.player.name }}</strong> · {{ t.name }} <span class="muted">({{ t.value | n }} {{ t.unit }})</span></div>}
               <div class="small">@for (p of r.data.players.slice(0, 5); track p.id; let i = $index) {<span>{{ i + 1 }}. <strong>{{ p.username }}</strong> <span class="muted">{{ p.population | n }}</span>&nbsp;&nbsp;</span>}</div>
               @if (r.data.alliances.length) {<div class="small muted">Alliances: @for (a of r.data.alliances; track a.id) {[{{ a.tag }}] {{ a.name }}&nbsp;&nbsp;}</div>}
+              @if (r.atlas) {<div class="small"><a [href]="atlasUrl(r.round)" target="_blank" rel="noopener" title="Terrain, cities, roads and events of the round, for OpenFantasyMap">🗺 World map as the round ended (GeoJSON)</a></div>}
             </div>
           } @empty {<p class="muted">No round has ended yet.</p>}
           <h3 class="subhead">All-time medals</h3>
@@ -150,6 +151,12 @@ export class RankingsComponent {
     api.victory().then((r) => this.victory.set(r)).catch(() => undefined);
     api.medals().then((r) => this.medals.set(r)).catch(() => undefined);
     api.hallOfFame().then((r) => this.fame.set(r)).catch(() => undefined);
+  }
+
+  private readonly api = inject(Api);
+
+  protected atlasUrl(round: number): string {
+    return this.api.atlasGeojsonUrl(round);
   }
 
   protected unit(id: string): string {

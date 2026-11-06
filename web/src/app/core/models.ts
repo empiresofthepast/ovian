@@ -180,7 +180,7 @@ export interface Find {
   format: string;
   uri: string;
   name: string;
-  /** common | fine | exceptional */
+  /** common | fine | exceptional; artworks: fine | exceptional | masterpiece */
   grade: string;
   culture: number;
   found_at: number;
@@ -199,6 +199,8 @@ export interface Find {
       /** spoils of a barbarian camp of this level */
       camp?: number;
     };
+    /** A commissioned work of art (no layer): it stands in the square and always counts for the city's culture. */
+    artwork?: { kind: string; artist: string; tradition?: string; subject: string; commissioned_by?: string };
   };
 }
 
@@ -351,7 +353,7 @@ export interface MedalsView {
 
 export interface HallOfFame {
   current_round: number;
-  rounds: { round: number; ended_at: number; data: {
+  rounds: { round: number; ended_at: number; /** A GeoJSON map of the world as the round ended is kept (atlasGeojsonUrl). */ atlas?: boolean; data: {
     winner: Victory['winner']; started_at: number | null; speed: number; chronicle_entries: number;
     titles?: WorldTitle[];
     players: { id: number; username: string; tribe: string; cities: number; population: number; culture: number }[];

@@ -101,6 +101,7 @@ type Tab = 'players' | 'victory' | 'medals' | 'fame';
               <h2 class="panel__title">{{ 'round' | label: 'Round' }} {{ r.round }} <span class="muted small">{{ r.data.started_at ? (r.data.started_at | date: 'mediumDate') + ' – ' : '' }}{{ r.ended_at | date: 'mediumDate' }} · ×{{ r.data.speed }}</span></h2>
               @if (r.data.winner; as w) {<p>🏆 <strong>{{ w.text ?? (w.player.name + ' built the wonder of ' + (w.village?.name ?? '')) }}</strong>@if (w.condition) { <span class="muted small">· {{ w.condition.name }}</span>}</p>}
               @else {<p class="muted small">{{ 'fame.no_winner' | label: 'Nobody won the world.' }}</p>}
+              @if (r.atlas) {<p class="small"><a [href]="atlasUrl(r.round)" target="_blank" rel="noopener" title="Terrain, cities, roads and events of the round, for OpenFantasyMap">🗺 {{ 'fame.atlas' | label: 'World map as the round ended (GeoJSON)' }}</a></p>}
               @if (r.data.titles?.length) {<div class="fame-titles">@for (t of r.data.titles!; track t.id) {<div class="row small"><span>{{ titleIcon(t.id) }}</span><span class="grow"><strong>{{ t.player.name }}</strong> · {{ t.name }}</span><span class="muted num">{{ t.value | number: '1.0-1' }} {{ t.unit }}</span></div>}</div>}
               <div class="realm">
                 <div>
@@ -180,6 +181,10 @@ export class RankingsComponent {
     if (t === 'fame' && !this.fame()) {
       this.api.hallOfFame().then((f) => this.fame.set(f)).catch((e) => this.game.toast(this.game.errorText(e), 'bad'));
     }
+  }
+
+  protected atlasUrl(round: number): string {
+    return this.api.atlasGeojsonUrl(round);
   }
 
   protected unit(id: string): string {

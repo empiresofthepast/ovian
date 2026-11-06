@@ -243,6 +243,14 @@ auxiliaries: { cost: 1.25, mood_per_100: -3, mood_max: -15, mood_hours: 24 }
 
 ## Frontier
 
+### Artworks
+
+`artworks`: when a city answers the *A famous sculptor* omen with *Commission a statue*, a sculptor of its people's
+tradition carves a statue, kept among the city's finds ("Statue of Athena by Phidias"). `traditions` lists each
+age's `artists` and `subjects`; `by_tribe` maps a people to a tradition (`default` for the rest); `grades` gives the
+chances and culture of a fine, exceptional or masterpiece statue. Statues stand in the square: they count for the
+city's culture whatever room its temples have, and can be moved like other finds.
+
 ### Ways to win
 
 `victory.conditions`: the first player to reach any of them wins the world (the admin then starts a new round, and

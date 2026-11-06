@@ -191,7 +191,7 @@ async def player_medals(pid: int, game: GameDep) -> list[dict[str, Any]]:
 async def hall_of_fame(game: GameDep) -> dict[str, Any]:
     """Finished rounds, newest first, and the all-time medal table."""
     async with game.pool.acquire() as conn:
-        rounds = await conn.fetch("SELECT round, ended_at, data FROM hall_of_fame ORDER BY round DESC")
+        rounds = await conn.fetch("SELECT round, ended_at, data, atlas IS NOT NULL AS atlas FROM hall_of_fame ORDER BY round DESC")
         from .chronicle import current_round
 
         return {"current_round": await current_round(conn), "rounds": [dict(r) for r in rounds], "all_time": await _table(conn, None, 50)}

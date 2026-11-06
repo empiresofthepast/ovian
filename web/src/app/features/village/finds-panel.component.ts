@@ -11,6 +11,8 @@ import { layerEnd } from './dig-site.component';
 export function findContext(f: Find): string {
   const l = f.context?.layer ?? {};
   const found = `found by ${f.found_by} on ${new Date(f.found_at).toLocaleDateString()}`;
+  const art = f.context?.artwork;
+  if (art) return `${art.kind ?? 'statue'} of ${art.subject} carved by ${art.artist}${art.tradition ? ' (' + art.tradition + ' tradition)' : ''}; commissioned by ${art.commissioned_by ?? f.found_by} on ${new Date(f.found_at).toLocaleDateString()}. It stands in the square and needs no temple.`;
   if (l.camp) return `spoils of a level ${l.camp} barbarian camp${f.context?.site?.village ? ' (' + f.context.site.village + ')' : ''}; taken by ${f.found_by} on ${new Date(f.found_at).toLocaleDateString()}`;
   if (l.ancient) return [l.people, l.age].filter(Boolean).join(', ') + `; ${found}`;
   const what = [l.style_name, l.building_name ?? l.building].filter(Boolean).join(' ');
@@ -27,7 +29,7 @@ export function findContext(f: Find): string {
     @if (game.village()?.archaeology; as a) {
       @if (a.finds.length || a.digs.length) {
         <section class="panel">
-          <h2 class="panel__title">{{ 'section.finds' | label: 'Finds' }} <span class="muted">{{ a.finds.length }}</span></h2>
+          <h2 class="panel__title">{{ 'section.finds' | label: 'Finds and artworks' }} <span class="muted">{{ a.finds.length }}</span></h2>
           <p class="small">Shown in {{ a.display.building | name: 'building' }}s: <strong>{{ a.display.shown.length }}</strong> of {{ a.display.room }} room,
             <span class="good">+{{ a.display.culture | number: '1.0-1' }} culture</span></p>
           @for (d of a.digs; track d.id) {
@@ -69,6 +71,7 @@ export function findContext(f: Find): string {
              padding: 0.02rem 0.4rem; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
     .grade--fine { color: var(--focus); border-color: var(--focus); }
     .grade--exceptional { color: #fff; background: var(--gold, #b8901c); border-color: var(--gold, #b8901c); }
+    .grade--masterpiece { color: #fff; background: #a3338f; border-color: #a3338f; }
   `,
 })
 export class FindsPanelComponent {
