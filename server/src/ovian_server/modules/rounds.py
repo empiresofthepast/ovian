@@ -98,10 +98,19 @@ async def new_round(body: NewRound, admin: AdminId, game: GameDep) -> dict[str, 
                GROUP BY a.id ORDER BY population DESC LIMIT 5""")
         entries = await c.fetchval("SELECT count(*) FROM chronicle WHERE round = $1", rnd)
         started = await c.fetchval("SELECT min(at) FROM chronicle WHERE round = $1", rnd)
-        data = {"round": rnd, "winner": winner, "players": [dict(r) for r in top], "alliances": [dict(r) for r in alliances],
+        from .victory import titles
+
+        honours = await titles(c, winner)
+        data = {"round": rnd, "winner": winner, "titles": honours, "players": [dict(r) for r in top], "alliances": [dict(r) for r in alliances],
                 "medals": await _table(c, rnd, 10), "chronicle_entries": entries, "started_at": started,
                 "speed": game.content.pack["world"]["speed"]}
-        await record(game, tx, "round", f"Round {rnd} ended" + (f": {winner['player']['name']} built the wonder" if winner else ""), data={"round": rnd})
+        await record(game, tx, "round", f"Round {rnd} ended" + (f": {winner.get('text') or winner['player']['name'] + ' built the wonder'}" if winner else ""), data={"round": rnd})
+        for t in honours:
+            await record(game, tx, "title", f"{t['player']['name']}: {t['name']} ({t['value']:g} {t['unit']})", player_id=t["player"]["id"],
+                         data={"round": rnd, "title": t})
+            entry = {"round": rnd, "id": t["id"], "name": t["name"], "value": t["value"], "unit": t["unit"]}
+            await c.execute("""UPDATE players SET meta = jsonb_set(meta, '{titles}', coalesce(meta->'titles', '[]'::jsonb) || $2::jsonb)
+                               WHERE id = $1""", t["player"]["id"], [entry])
         await c.execute("INSERT INTO hall_of_fame(round, ended_at, data) VALUES ($1, $2, $3) ON CONFLICT (round) DO UPDATE SET data = $3, ended_at = $2",
                         rnd, game.clock.now(), data)
         for sql in WIPE:

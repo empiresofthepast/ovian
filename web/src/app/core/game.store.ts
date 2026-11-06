@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Api, ApiError } from './api.service';
 import { EngineService } from './engine.service';
-import { ChatMessage, GameEvent, Me, VillageView, WorldInfo } from './models';
+import { ChatMessage, GameEvent, Me, VillageView, WorldInfo, Victory } from './models';
 import { RealtimeMessage, RealtimeService } from './realtime.service';
 import { Labels } from './labels';
 
@@ -34,8 +34,8 @@ export class GameStore {
   readonly serverEvents = new Subject<GameEvent>();
   /** Events on the player's own topic (treaties and the rest). */
   readonly playerEvents = new Subject<GameEvent>();
-  /** Set when someone has won the world with a wonder. */
-  readonly winner = signal<{ player: { id: number; name: string }; village: { name: string }; at: number } | null>(null);
+  /** Set when someone has won the world: with the wonder, by conquest, battles or culture. */
+  readonly winner = signal<Victory['winner']>(null);
 
   /** Estimated server time, ticking every second. */
   readonly now = signal(Date.now());
@@ -209,7 +209,7 @@ export class GameStore {
     if (path === 'server') {
       if (event.type === 'world.won') {
         this.winner.set(d);
-        this.toast(`${d.player.name} ${this.skin.label('won_world', 'has finished the wonder and won the world!')}`, 'good');
+        this.toast(d.text ? `🏆 ${d.text} ${this.skin.label('won_world_by', 'and won the world!')}` : `${d.player.name} ${this.skin.label('won_world', 'has finished the wonder and won the world!')}`, 'good');
       } else if (event.type === 'season.changed') {
         this.toast(`${d.name} ${this.skin.label('season_begins', 'begins')}, ${this.skin.label('year', 'year')} ${d.year}`, 'info');
       } else if (event.type === 'festival.opened') {

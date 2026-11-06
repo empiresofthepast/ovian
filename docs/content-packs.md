@@ -243,6 +243,25 @@ auxiliaries: { cost: 1.25, mood_per_100: -3, mood_max: -15, mood_hours: 24 }
 
 ## Frontier
 
+### Ways to win
+
+`victory.conditions`: the first player to reach any of them wins the world (the admin then starts a new round, and
+the round goes to the hall of fame). `false` turns a condition off.
+
+| condition | target | default |
+|---|---|---|
+| `wonder` | finish the last level of the wonder | on |
+| `conquest` | `cities` held at once | 20 |
+| `battles` | `wins` against other players, attacking or defending (camps and the horde don't count) | 1000 |
+| `culture` | `points` of culture of all one's cities together | 3000 |
+
+AI rulers never win. `GET /world/victory` lists the conditions with the five leaders of each.
+
+When a round ends, the hall of fame also gives **titles**: the most spread-out and the most compact empire (average
+distance of the cities from their centre, players with three cities or more), the most cities, the most cultured and
+the most warfaring, except the one for the race that won the world. Titles stay on the player's profile
+(`titles: [{round, id, name, value, unit}]`).
+
 ### The lie of the land
 
 `terrain`: a city quarries more stone next to mountains (and hills) and cuts more wood next to forests. Every tile within `radius` (default 2, a square around the city) adds its `per_tile` bonus: mountain +5% stone, hills +2% stone, forest +5% wood by default, capped by `max` (+40% each). The village view shows it as `terrain {radius, around, bonus}`.

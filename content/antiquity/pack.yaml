@@ -4259,6 +4259,12 @@ extensions:
       hills: { stone: 0.02 }
       forest: { wood: 0.05 }
     max: { stone: 0.4, wood: 0.4 }
+  victory:
+    conditions:
+      wonder: { name: Wonder }
+      conquest: { name: Conquest, cities: 20 }
+      battles: { name: Warlord, wins: 1000 }
+      culture: { name: Cultural hegemony, points: 3000 }
   cities:
     min_distance: 3
   camps:

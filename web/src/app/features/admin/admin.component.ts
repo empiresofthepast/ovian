@@ -31,7 +31,7 @@ import { UI } from '../../shared/ui';
       @if (d.world; as w) {
         <section class="panel">
           <h2 class="panel__title">World <span class="muted small">round {{ w.round }} · speed ×{{ w.speed }}</span></h2>
-          @if (w.winner; as win) {<p class="small">🏆 {{ win.player.name }} won with {{ win.village.name }}.</p>}
+          @if (w.winner; as win) {<p class="small">🏆 {{ win.text ?? (win.player.name + ' won with ' + (win.village?.name ?? 'the wonder')) }}.</p>}
           @if (roundStep() === 0) {
             <button class="btn btn--small" (click)="roundStep.set(1)">New round…</button>
           } @else {

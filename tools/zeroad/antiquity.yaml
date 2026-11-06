@@ -843,6 +843,7 @@ extensions:
   heroes: { xp_base: 100, attack_per_point: 0.03, defense_per_point: 0.03, production_per_point: 0.02, revive: 14400, speed: 10 }
   # Barbarian camps to raid: troops grow back after `regen` seconds; heroes gain extra experience there.
   terrain: { radius: 2, per_tile: { mountain: { stone: 0.05 }, hills: { stone: 0.02 }, forest: { wood: 0.05 } }, max: { stone: 0.4, wood: 0.4 } }  # quarries by the mountains, sawmills by the forests
+  victory: { conditions: { wonder: { name: Wonder }, conquest: { name: Conquest, cities: 20 }, battles: { name: Warlord, wins: 1000 }, culture: { name: Cultural hegemony, points: 3000 } } }  # the first to reach any wins
   cities: { min_distance: 3 }  # tiles between cities, so the names can be read
   camps: { count: 12, min_distance: 4, max_distance: 16, max_level: 5, troops_per_level: 12, regen: 3600, loot_per_level: 1500 }
   # The first player to finish the last level of the wonder wins the world.

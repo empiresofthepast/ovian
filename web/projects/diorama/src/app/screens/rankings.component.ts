@@ -60,7 +60,8 @@ interface Row { rank: number; id: number; username: string; tribe: string; bot?:
           @for (r of f.rounds; track r.round) {
             <div class="fame">
               <h3 class="subhead">Round {{ r.round }} <span class="muted small">· ended {{ r.ended_at | clock }}@if (r.data.speed) { · speed {{ r.data.speed }}}</span></h3>
-              @if (r.data.winner; as w) {<p class="good small">🏛 {{ w.player.name }} built the wonder in {{ w.village.name }}.</p>}
+              @if (r.data.winner; as w) {<p class="good small">🏆 {{ w.text ?? (w.player.name + ' built the wonder in ' + (w.village?.name ?? '')) }}@if (w.condition) { <span class="muted">· {{ w.condition.name }}</span>}</p>}
+              @for (t of r.data.titles ?? []; track t.id) {<div class="small"><span>{{ titleIcon(t.id) }}</span> <strong>{{ t.player.name }}</strong> · {{ t.name }} <span class="muted">({{ t.value | n }} {{ t.unit }})</span></div>}
               <div class="small">@for (p of r.data.players.slice(0, 5); track p.id; let i = $index) {<span>{{ i + 1 }}. <strong>{{ p.username }}</strong> <span class="muted">{{ p.population | n }}</span>&nbsp;&nbsp;</span>}</div>
               @if (r.data.alliances.length) {<div class="small muted">Alliances: @for (a of r.data.alliances; track a.id) {[{{ a.tag }}] {{ a.name }}&nbsp;&nbsp;}</div>}
             </div>
@@ -76,15 +77,25 @@ interface Row { rank: number; id: number; username: string; tribe: string; bot?:
         }
       } @else if (tab() === 'wonder') {
         @if (victory(); as w) {
-          @if (w.winner) {<p class="good">🏛 {{ w.winner.player.name }} finished the wonder in {{ w.winner.village.name }} and won this world.</p>}
-          <p class="small muted">The first to finish level {{ w.max_level }} of the wonder wins the world.</p>
-          <div class="table-wrap"><table class="table">
-            <thead><tr><th>City</th><th>Player</th><th class="num">Wonder level</th></tr></thead>
-            <tbody>
-              @for (r of w.race; track r.id) {<tr><td>{{ r.name }} <span class="muted">({{ r.x }}|{{ r.y }})</span></td><td>{{ r.username }}</td><td class="num">{{ r.level }} / {{ w.max_level }}</td></tr>}
-              @empty {<tr><td colspan="3" class="muted">No one has begun a wonder yet.</td></tr>}
-            </tbody>
-          </table></div>
+          @if (w.winner; as win) {<p class="good">🏆 {{ win.text ?? (win.player.name + ' finished the wonder in ' + (win.village?.name ?? '')) }} and won this world.</p>}
+          <p class="small muted">The first player to reach any of these wins the world; the round then goes to the hall of fame.</p>
+          @for (c of w.conditions ?? []; track c.id) {
+            <h3 class="subhead">{{ c.name }} <span class="muted small">@if (c.target) {· first to {{ c.target | n }} {{ unit(c.id) }}} @else {· first to finish level {{ w.max_level }} of the wonder}</span></h3>
+            <div class="table-wrap"><table class="table">
+              <tbody>
+                @if (c.id === 'wonder') {
+                  @for (r of w.race.slice(0, 5); track r.id) {<tr><td>{{ r.username }} <span class="muted">· {{ r.name }} ({{ r.x }}|{{ r.y }})</span></td><td class="num">{{ r.level }} / {{ w.max_level }}</td></tr>}
+                  @empty {<tr><td colspan="2" class="muted">No one has begun a wonder yet.</td></tr>}
+                } @else {
+                  @for (l of c.leaders ?? []; track l.player.id) {<tr><td>{{ l.player.name }}</td><td class="num">{{ l.value | n }} / {{ c.target | n }}</td></tr>}
+                  @empty {<tr><td colspan="2" class="muted">Nobody yet.</td></tr>}
+                }
+              </tbody>
+            </table></div>
+          }
+          <h3 class="subhead">Titles <span class="muted small">· who would hold them if the round ended now</span></h3>
+          @for (t of w.titles ?? []; track t.id) {<div class="small"><span>{{ titleIcon(t.id) }}</span> <strong>{{ t.player.name }}</strong> · {{ t.name }} <span class="muted">({{ t.value | n }} {{ t.unit }})</span></div>}
+          @if (!w.titles?.length) {<p class="muted small">No titles yet: they need players with three cities, battles won or culture.</p>}
         }
       } @else {
       <div class="table-wrap">
@@ -117,7 +128,7 @@ export class RankingsComponent {
   private readonly rows = signal<Row[]>([]);
   protected readonly tabs = [
     { id: 'players', label: 'Players' }, { id: 'alliances', label: 'Alliances' }, { id: 'medals', label: 'Medals' },
-    { id: 'wonder', label: 'Wonder race' }, { id: 'fame', label: 'Hall of fame' },
+    { id: 'wonder', label: 'Ways to win' }, { id: 'fame', label: 'Hall of fame' },
   ];
   protected readonly medals = signal<MedalsView | null>(null);
   protected readonly fame = signal<HallOfFame | null>(null);
@@ -139,6 +150,14 @@ export class RankingsComponent {
     api.victory().then((r) => this.victory.set(r)).catch(() => undefined);
     api.medals().then((r) => this.medals.set(r)).catch(() => undefined);
     api.hallOfFame().then((r) => this.fame.set(r)).catch(() => undefined);
+  }
+
+  protected unit(id: string): string {
+    return { conquest: 'cities', battles: 'battles won', culture: 'culture' }[id] ?? '';
+  }
+
+  protected titleIcon(id: string): string {
+    return { sprawling: '🗺', compact: '🏘', conquest: '👑', culture: '🎭', battles: '⚔' }[id] ?? '🏅';
   }
 
   protected latestOf(m: MedalsView, category: string) {

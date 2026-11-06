@@ -353,6 +353,7 @@ export interface HallOfFame {
   current_round: number;
   rounds: { round: number; ended_at: number; data: {
     winner: Victory['winner']; started_at: number | null; speed: number; chronicle_entries: number;
+    titles?: WorldTitle[];
     players: { id: number; username: string; tribe: string; cities: number; population: number; culture: number }[];
     alliances: { id: number; tag: string; name: string; members: number; population: number }[];
     medals: MedalTableRow[];
@@ -514,11 +515,33 @@ export interface Quest {
 
 export interface Achievement { id: string; name: string; description: string; value: number; progress: number; unlocked_at: number | null }
 
+/** An end-of-round title: the most spread-out or compact empire, the most cities, culture or battles won. */
+export interface WorldTitle { id: string; name: string; unit: string; player: { id: number; name: string }; value: number; /** On a player's profile: the round it was won in. */ round?: number }
+
+export interface VictoryCondition {
+  id: 'wonder' | 'conquest' | 'battles' | 'culture' | string;
+  name: string;
+  /** Cities, battles won or culture points to reach (not for the wonder). */
+  target?: number;
+  leaders?: { player: { id: number; name: string }; value: number }[];
+}
+
 export interface Victory {
-  winner: { player: { id: number; name: string }; village: VillageRef; at: number } | null;
+  winner: {
+    player: { id: number; name: string };
+    /** The wonder's city; null for the other ways to win. */
+    village: VillageRef | null;
+    at: number;
+    condition?: { id: string; name: string; value?: number; target?: number };
+    /** "sirmmonta rules 20 cities" */
+    text?: string;
+  } | null;
   building: string;
   max_level: number | null;
   race: { id: number; name: string; x: number; y: number; username: string; level: number }[];
+  conditions?: VictoryCondition[];
+  /** Who would get each title if the round ended now. */
+  titles?: WorldTitle[];
 }
 
 export interface VerSacrum {

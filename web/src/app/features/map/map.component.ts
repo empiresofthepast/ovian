@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Api } from '../../core/api.service';
 import { EngineService } from '../../core/engine.service';
 import { GameStore } from '../../core/game.store';
-import { MapVillage, Tile } from '../../core/models';
+import { MapVillage, Tile, WorldTitle } from '../../core/models';
 import { SkinService } from '../../core/skin.service';
 import { UI } from '../../shared/ui';
 import { BadgesComponent } from '../../shared/badges';
@@ -47,6 +47,7 @@ const DEFAULT_TERRAIN: Record<string, string> = {
             @if (v.abandoned_by) {<p class="small muted">🏚 Ruins of a city abandoned by {{ v.abandoned_by }}; barbarians hold it now@if (v.camp_level) { (camp level {{ v.camp_level }})}.</p>}
             @if (v.treacherous) {<p class="small bad" title="This ruler attacked a pact partner: their word is worth little">⚠ {{ 'map.treacherous' | label: 'Oath-breaker: broke a pact recently' }}</p>}
             <p class="small">{{ v.player_name }}@if (v.bot) { <span title="AI ruler">🤖</span>}@if (owner(); as o) {@if (o.id === v.player_id && o.badges.length) { <ov-badges [badges]="o.badges" [founderNo]="o.founder_no" />}} · {{ v.tribe | name: 'tribe' }} · <ov-icon key="stat.population" /> {{ v.population }}</p>
+            @if (owner(); as o) {@if (o.id === v.player_id && o.titles.length) {<p class="small muted" title="Titles from past rounds">@for (t of o.titles; track $index) {🏅 {{ t.name }}@if (t.round) { <span class="muted">(round {{ t.round }})</span>} }</p>}}
             @if (v.overlord_id) {<p class="small">⛓ Vassal of {{ v.overlord_name }} ({{ v.overlord_player_name }})</p>}
             @if (v.vassals) {<p class="small">Overlord of {{ v.vassals }} {{ v.vassals === 1 ? 'city' : 'cities' }}</p>}
             @if (distance() !== null) {<p class="small muted">{{ distance()!.toFixed(1) }} tiles away</p>}
@@ -137,8 +138,8 @@ export class MapComponent implements AfterViewInit {
     return t ? this.villages().get(`${t.x},${t.y}`) : undefined;
   });
   /** The selected city's ruler: badges (founder, patron, awards), fetched once per player. */
-  protected readonly owner = signal<{ id: number; badges: Badge[]; founder_no: number | null } | null>(null);
-  private readonly owners = new Map<number, Promise<{ id: number; badges: Badge[]; founder_no: number | null }>>();
+  protected readonly owner = signal<{ id: number; badges: Badge[]; founder_no: number | null; titles: WorldTitle[] } | null>(null);
+  private readonly owners = new Map<number, Promise<{ id: number; badges: Badge[]; founder_no: number | null; titles: WorldTitle[] }>>();
   protected readonly distance = computed(() => {
     const t = this.selected();
     const v = this.game.village();
@@ -161,8 +162,8 @@ export class MapComponent implements AfterViewInit {
       let p = this.owners.get(id);
       if (!p) {
         p = this.api.player(id).then(
-          (r) => ({ id, badges: (r?.badges ?? []) as Badge[], founder_no: r?.founder_no ?? null }),
-          () => ({ id, badges: [], founder_no: null }),
+          (r) => ({ id, badges: (r?.badges ?? []) as Badge[], founder_no: r?.founder_no ?? null, titles: (r?.titles ?? []) as WorldTitle[] }),
+          () => ({ id, badges: [], founder_no: null, titles: [] }),
         );
         this.owners.set(id, p);
       }

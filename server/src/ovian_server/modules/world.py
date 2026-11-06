@@ -65,7 +65,8 @@ async def map_area(
 async def player(player_id: int, game: GameDep) -> dict[str, Any]:
     assert game.pool is not None
     p = await game.pool.fetchrow("""SELECT id, username, tribe, created_at, protected_until, bot, badges, founder_no, meta->'government'->>'id' AS government,
-                                 (meta->>'treacherous_until')::bigint AS treacherous_until FROM players WHERE id = $1""",
+                                 (meta->>'treacherous_until')::bigint AS treacherous_until,
+                                 coalesce(meta->'titles', '[]'::jsonb) AS titles FROM players WHERE id = $1""",
                                  player_id)
     if p is None:
         raise not_found("player_not_found")

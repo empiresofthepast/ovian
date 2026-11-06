@@ -106,7 +106,7 @@ interface LevyDraft { unit: string; count: number; from: number }
       </div>
     }
     @if (game.winner(); as w) {
-      <div class="winner hud-panel" role="status">🏛 {{ w.player.name }} finished the wonder in {{ w.village.name }} and has won this world.</div>
+      <div class="winner hud-panel" role="status">🏆 {{ w.text ?? (w.player.name + ' finished the wonder in ' + (w.village?.name ?? '')) }} and has won this world.</div>
     }
     <aside class="side side--left" [hidden]="!!overlay()">
       @if (!game.inspecting()) {

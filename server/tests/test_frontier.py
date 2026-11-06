@@ -150,9 +150,54 @@ async def test_mountains_and_forests_around_a_city(game: Game, register):
     await game.pool.execute("UPDATE villages SET x = $2, y = $3 WHERE id = $1", alice.village_id, *spot)
     from ovian_server.repo import refresh_all
 
-    await refresh_all(game)
-    v = await alice.village()
+    with extensions(game, terrain=terrain.DEFAULTS):
+        await refresh_all(game)
+        v = await alice.village()
+        on = terrain.bonus(game, *spot)
     assert v["state"]["boost_by"].get("wood") == round(0.05 * near(*spot, "forest"), 4), v["state"].get("boost_by")
     assert v["terrain"]["around"]["forest"] == near(*spot, "forest")
     assert v["terrain"]["bonus"] == {"wood": round(0.05 * near(*spot, "forest"), 4)}
-    assert terrain.bonus(game, *spot) == v["terrain"]["bonus"]
+    assert on == v["terrain"]["bonus"]
+
+
+async def test_other_ways_to_win(game: Game, register):
+    from ovian_server.modules import victory
+
+    alice, bob, target = await neighbours(game, register)
+    with extensions(game, victory={"conditions": {"battles": {"wins": 2}, "culture": False}}):
+        assert [c["id"] for c in (await alice.get("/world/victory")).json()["conditions"]] == ["wonder", "conquest", "battles"]
+        await game.pool.execute("INSERT INTO player_stats(player_id, stat, value) VALUES ($1, 'pvp_wins', 1)", alice.id)
+        async with game.tx() as tx:
+            assert not await victory.check(game, tx)
+        await game.pool.execute("UPDATE player_stats SET value = 2 WHERE player_id = $1 AND stat = 'pvp_wins'", alice.id)
+        async with game.tx() as tx:
+            assert await victory.check(game, tx)
+        v = (await bob.get("/world/victory")).json()
+        assert v["winner"]["player"]["name"] == "alice" and v["winner"]["condition"] == {"id": "battles", "name": "Warlord", "value": 2.0, "target": 2}
+        assert v["conditions"][2]["leaders"][0] == {"player": {"id": alice.id, "name": "alice"}, "value": 2.0}
+        async with game.tx() as tx:
+            assert not await victory.declare(game, tx, bob.id, "conquest", 99), "one winner a world"
+
+
+async def test_titles_at_the_end_of_a_round(game: Game, client, register):
+    alice, bob, target = await neighbours(game, register)
+    for i, (dx, dy) in enumerate(((10, 0), (0, 10), (-10, 0))):
+        await game.pool.execute("INSERT INTO villages(player_id, name, x, y, state, created_at) SELECT player_id, $2, x + $3, y + $4, state, 0 FROM villages WHERE id = $1",
+                                alice.village_id, f"far{i}", dx, dy)
+    await game.pool.execute("INSERT INTO player_stats(player_id, stat, value) VALUES ($1, 'pvp_wins', 7)", bob.id)
+    t = {x["id"]: x for x in (await alice.get("/world/victory")).json()["titles"]}
+    assert t["sprawling"]["player"]["name"] == "alice" and t["compact"]["player"]["name"] == "alice", "only alice has three cities"
+    assert t["conquest"]["player"]["name"] == "alice" and t["conquest"]["value"] == 4
+    assert t["battles"]["player"]["name"] == "bob" and t["battles"]["value"] == 7
+
+    await game.pool.execute("UPDATE players SET is_admin = true WHERE id = $1", alice.id)
+    async with game.tx() as tx:
+        from ovian_server.modules import victory
+
+        assert await victory.declare(game, tx, bob.id, "battles", 7)
+    r = await alice.post("/admin/world/new-round", {})
+    assert r.status_code == 200, r.text
+    names = [x["id"] for x in r.json()["archived"]["titles"]]
+    assert "battles" not in names and "conquest" in names, "the race that won the world gives no title"
+    titles = (await client.get(f"/players/{alice.id}")).json()["titles"]
+    assert {x["id"] for x in titles} >= {"sprawling", "compact", "conquest"} and all(x["round"] == 1 for x in titles)

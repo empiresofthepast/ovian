@@ -235,12 +235,9 @@ async def ovian_build_completed(game: Game, tx: Tx, village: VillageRow, buildin
     b = game.content.building(building)
     if building != wb or b is None or level < b["max_level"]:
         return
-    if await tx.conn.fetchval("SELECT 1 FROM world_state WHERE key = 'winner'"):
-        return
-    name = await tx.conn.fetchval("SELECT username FROM players WHERE id = $1", village.player_id)
-    win = {"player": {"id": village.player_id, "name": name}, "village": village.public(), "at": game.clock.now()}
-    await tx.conn.execute("INSERT INTO world_state(key, value) VALUES ('winner', $1)", win)
-    tx.publish(game.topics.server, {"type": "world.won", "at": game.clock.now(), "data": win})
+    from .victory import declare
+
+    await declare(game, tx, village.player_id, "wonder", village=village)
 
 
 @router.get("/world/victory")
@@ -254,7 +251,12 @@ async def victory(game: GameDep) -> dict[str, Any]:
             """SELECT v.id, v.name, v.x, v.y, p.username, max((s->>'level')::int) AS level
                FROM villages v JOIN players p ON p.id = v.player_id, jsonb_array_elements(v.state->'slots') s
                WHERE s->>'building' = $1 AND (s->>'level')::int > 0 GROUP BY v.id, p.username ORDER BY level DESC LIMIT 10""", wb)
-        return {"winner": winner, "building": wb, "max_level": b["max_level"] if b else None, "race": [dict(r) for r in race]}
+        from .victory import TARGET, conditions, standings, titles
+
+        conds = [{"id": k, "name": c["name"], **({"target": c[TARGET[k]], "leaders": await standings(conn, k)} if k in TARGET else {})}
+                 for k, c in conditions(game).items()]
+        return {"winner": winner, "building": wb, "max_level": b["max_level"] if b else None, "race": [dict(r) for r in race],
+                "conditions": conds, "titles": await titles(conn, winner)}
 
 
 module = Module("player_rules", router=router)

@@ -2,11 +2,11 @@ import { Component, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Api } from '../../core/api.service';
 import { GameStore } from '../../core/game.store';
-import { HallOfFame, Medal, MedalsView } from '../../core/models';
+import { HallOfFame, Medal, MedalsView, Victory } from '../../core/models';
 import { UI } from '../../shared/ui';
 import { BadgesComponent } from '../../shared/badges';
 
-type Tab = 'players' | 'medals' | 'fame';
+type Tab = 'players' | 'victory' | 'medals' | 'fame';
 
 @Component({
   selector: 'ov-rankings',
@@ -69,13 +69,39 @@ type Tab = 'players' | 'medals' | 'fame';
           </section>
         } @else {<p class="muted">Loading…</p>}
       }
+      @case ('victory') {
+        @if (victory(); as v) {
+          @if (v.winner; as w) {<section class="panel"><p>🏆 <strong>{{ w.text ?? (w.player.name + ' built the wonder') }}</strong> {{ 'victory.won' | label: 'and won this world.' }}</p></section>}
+          <p class="muted small">{{ 'victory.intro' | label: 'The first player to reach any of these wins the world; the round then goes to the hall of fame.' }}</p>
+          <div class="realm">
+            @for (c of v.conditions ?? []; track c.id) {
+              <section class="panel">
+                <h2 class="panel__title">{{ c.name }} @if (c.target) {<span class="muted small">{{ 'victory.first_to' | label: 'first to' }} {{ c.target | number }} {{ unit(c.id) }}</span>} @else {<span class="muted small">{{ 'victory.wonder_level' | label: 'first to finish level' }} {{ v.max_level }}</span>}</h2>
+                @if (c.id === 'wonder') {
+                  @for (r of v.race.slice(0, 5); track r.id) {<div class="row small"><span class="grow">{{ r.username }} <span class="muted">· {{ r.name }}</span></span><span class="num">{{ r.level }} / {{ v.max_level }}</span></div>}
+                  @empty {<p class="muted small">{{ 'victory.no_wonder' | label: 'No one has begun a wonder yet.' }}</p>}
+                } @else {
+                  @for (l of c.leaders ?? []; track l.player.id) {<div class="row small"><span class="grow">{{ l.player.name }}</span><span class="num">{{ l.value | number: '1.0-0' }} / {{ c.target | number }}</span></div>}
+                  @empty {<p class="muted small">{{ 'victory.nobody' | label: 'Nobody yet.' }}</p>}
+                }
+              </section>
+            }
+          </div>
+          <section class="panel">
+            <h2 class="panel__title">{{ 'victory.titles' | label: 'Titles' }} <span class="muted small">{{ 'victory.titles_now' | label: 'who would hold them if the round ended now; the race that wins the world gives none' }}</span></h2>
+            @for (t of v.titles ?? []; track t.id) {<div class="row small"><span>{{ titleIcon(t.id) }}</span><span class="grow"><strong>{{ t.player.name }}</strong> · {{ t.name }}</span><span class="muted num">{{ t.value | number: '1.0-1' }} {{ t.unit }}</span></div>}
+            @if (!v.titles?.length) {<p class="muted small">{{ 'victory.no_titles' | label: 'No titles yet: they need players with three cities, battles won or culture.' }}</p>}
+          </section>
+        } @else {<p class="muted">Loading…</p>}
+      }
       @case ('fame') {
         @if (fame(); as f) {
           @for (r of f.rounds; track r.round) {
             <section class="panel">
               <h2 class="panel__title">{{ 'round' | label: 'Round' }} {{ r.round }} <span class="muted small">{{ r.data.started_at ? (r.data.started_at | date: 'mediumDate') + ' – ' : '' }}{{ r.ended_at | date: 'mediumDate' }} · ×{{ r.data.speed }}</span></h2>
-              @if (r.data.winner; as w) {<p>🏆 <strong>{{ w.player.name }}</strong> {{ 'fame.won_with' | label: 'won with the wonder of' }} {{ w.village.name }}.</p>}
-              @else {<p class="muted small">{{ 'fame.no_winner' | label: 'No wonder was finished.' }}</p>}
+              @if (r.data.winner; as w) {<p>🏆 <strong>{{ w.text ?? (w.player.name + ' built the wonder of ' + (w.village?.name ?? '')) }}</strong>@if (w.condition) { <span class="muted small">· {{ w.condition.name }}</span>}</p>}
+              @else {<p class="muted small">{{ 'fame.no_winner' | label: 'Nobody won the world.' }}</p>}
+              @if (r.data.titles?.length) {<div class="fame-titles">@for (t of r.data.titles!; track t.id) {<div class="row small"><span>{{ titleIcon(t.id) }}</span><span class="grow"><strong>{{ t.player.name }}</strong> · {{ t.name }}</span><span class="muted num">{{ t.value | number: '1.0-1' }} {{ t.unit }}</span></div>}</div>}
               <div class="realm">
                 <div>
                   <h3 class="subtitle">{{ 'fame.players' | label: 'Top players' }}</h3>
@@ -125,12 +151,13 @@ export class RankingsComponent {
   protected readonly game = inject(GameStore);
   private readonly api = inject(Api);
   protected readonly tabs: { id: Tab; label: string }[] = [
-    { id: 'players', label: 'Players' }, { id: 'medals', label: 'Medals' }, { id: 'fame', label: 'Hall of fame' },
+    { id: 'players', label: 'Players' }, { id: 'victory', label: 'Ways to win' }, { id: 'medals', label: 'Medals' }, { id: 'fame', label: 'Hall of fame' },
   ];
   protected readonly tab = signal<Tab>('players');
   protected readonly rows = signal<any[]>([]);
   protected readonly medals = signal<MedalsView | null>(null);
   protected readonly fame = signal<HallOfFame | null>(null);
+  protected readonly victory = signal<Victory | null>(null);
   protected readonly latest = signal<{ name: string; medals: Medal[] }[]>([]);
 
   constructor() {
@@ -147,9 +174,20 @@ export class RankingsComponent {
         this.latest.set([...groups].map(([name, medals]) => ({ name, medals })));
       }).catch((e) => this.game.toast(this.game.errorText(e), 'bad'));
     }
+    if (t === 'victory' && !this.victory()) {
+      this.api.victory().then((v) => this.victory.set(v)).catch((e) => this.game.toast(this.game.errorText(e), 'bad'));
+    }
     if (t === 'fame' && !this.fame()) {
       this.api.hallOfFame().then((f) => this.fame.set(f)).catch((e) => this.game.toast(this.game.errorText(e), 'bad'));
     }
+  }
+
+  protected unit(id: string): string {
+    return { conquest: 'cities', battles: 'battles won', culture: 'culture' }[id] ?? '';
+  }
+
+  protected titleIcon(id: string): string {
+    return { sprawling: '🗺', compact: '🏘', conquest: '👑', culture: '🎭', battles: '⚔' }[id] ?? '🏅';
   }
 
   protected icon(rank: number): string {

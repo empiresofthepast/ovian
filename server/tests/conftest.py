@@ -42,6 +42,7 @@ def settings() -> Settings:
 async def game(settings: Settings) -> AsyncIterator[Game]:
     g = Game(settings, clock=ManualClock())
     g.realtime = RecordingRealtime(g)
+    g.content.extensions["terrain"] = {"per_tile": {}}  # no terrain bonus: spawns are random (test_frontier turns it on)
     for m in g.modules:
         for f, h in m.mqtt.items():
             g.realtime.subscribe(f, h)

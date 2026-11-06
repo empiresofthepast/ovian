@@ -5,7 +5,7 @@ import { Api } from '@core/api.service';
 import { EngineService } from '@core/engine.service';
 import { GameStore } from '@core/game.store';
 import { Badge } from '@core/hub';
-import { GreatBuilding, MapVillage, Road, Tile } from '@core/models';
+import { GreatBuilding, MapVillage, Road, Tile, WorldTitle } from '@core/models';
 import { ArtService } from '../art/art.service';
 import { UI } from '../ui';
 import { Labels } from '@core/labels';
@@ -62,6 +62,7 @@ const label = (v: MapVillage) => (v.alliance_tag ? `[${v.alliance_tag}] ` : '') 
                   <div class="small">{{ v.player_name }}@if (ownerBadges(); as ob) {&nbsp;<dio-badges [badges]="ob.badges" [founderNo]="ob.founder_no" />}@if (v.bot) { 🤖 <span class="muted">(an AI ruler)</span>} · {{ tribeName(v.tribe) }}</div>
                 }
                 <div class="small muted">Population {{ v.population }}@if (v.culture) { · culture {{ v.culture | n }}}@if (distance() !== null) { · {{ distance()!.toFixed(1) }} tiles}</div>
+                @if (ownerBadges()?.titles?.length) {<div class="small muted" title="Titles from past rounds">@for (t of ownerBadges()!.titles; track $index) {🏅 {{ t.name }}@if (t.round) { <span class="muted">(round {{ t.round }})</span>} }</div>}
                 @if (v.treacherous) {<div class="small bad" title="Its ruler attacked a pact partner: trust them at your peril">⚠ Oath-breaker: {{ v.player_name }} broke a pact recently</div>}
                 @if (v.overlord_id) {<div class="small bad">⛓ Vassal of {{ v.overlord_name }} ({{ v.overlord_player_name }}), {{ tribeName(v.overlord_tribe!) }} in culture</div>}
                 @if (v.vassals) {<div class="small">♛ Overlord of {{ v.vassals }} {{ v.vassals === 1 ? 'city' : 'cities' }}</div>}
@@ -254,7 +255,7 @@ export class MapComponent implements AfterViewInit {
   });
 
   /** Hub badges of the players whose cities were selected, by player id. */
-  private readonly badgeCache = signal(new Map<number, { badges: Badge[]; founder_no: number | null }>());
+  private readonly badgeCache = signal(new Map<number, { badges: Badge[]; founder_no: number | null; titles: WorldTitle[] }>());
   protected readonly ownerBadges = computed(() => {
     const v = this.selectedVillage();
     const b = v && !v.npc ? this.badgeCache().get(v.player_id) : undefined;
@@ -265,7 +266,7 @@ export class MapComponent implements AfterViewInit {
     if (!v || v.npc || v.bot || !v.player_id || this.badgeCache().has(v.player_id)) return;
     const id = v.player_id;
     this.api.player(id).then((p) => {
-      this.badgeCache.update((m) => new Map(m).set(id, { badges: Array.isArray(p?.badges) ? p.badges : [], founder_no: p?.founder_no ?? null }));
+      this.badgeCache.update((m) => new Map(m).set(id, { badges: Array.isArray(p?.badges) ? p.badges : [], founder_no: p?.founder_no ?? null, titles: Array.isArray(p?.titles) ? p.titles : [] }));
     }).catch(() => undefined);
   }
 
