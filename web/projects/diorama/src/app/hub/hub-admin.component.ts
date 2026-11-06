@@ -3,10 +3,17 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GameStore } from '@core/game.store';
-import { AdminAccount, BadgeDef, Hub, HubWorld, WorldStatus } from '@core/hub';
+import { AdminAccount, BadgeDef, Hub, HubWorld, WorldStatus, SpawnedWorld, SpawnerSchema } from '@core/hub';
 import { UI } from '../ui';
 
 type Tab = 'accounts' | 'badges' | 'worlds';
+
+interface SpawnForm {
+  id: string; name: string; description: string; pack: string; speed: number; mode: string; status: 'upcoming' | 'open';
+  founders_only: boolean; patrons_early: boolean; local_registration: boolean;
+  /** JSON text */
+  overrides: string;
+}
 type AdminWorld = HubWorld & { internal_url: string };
 
 interface BadgeEdit { id: string; name: string; description: string; icon: string; color: string; kind: 'founder' | 'patron' | 'award'; patreon_tier: string; sort: number; isNew: boolean }
@@ -165,7 +172,60 @@ function fromLocal(v: string): number | null {
             </tbody>
           </table>
         </div>
-        <div class="btn-row"><button type="button" class="btn btn--small" (click)="editWorld(null)">+ New world</button></div>
+        <div class="btn-row"><button type="button" class="btn btn--small" (click)="editWorld(null)">+ New world</button>
+          <button type="button" class="btn btn--small btn--gold" (click)="openSpawn()">⚙ Spawn a world here</button></div>
+        <h3 class="subhead">Worlds on this machine <span class="muted small">· run by the spawner</span></h3>
+        @if (schema()?.enabled === false) {<p class="muted small">This hub has no spawner (OVIAN_HUB_SPAWNER_URL).</p>}
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Id</th><th>Pack</th><th class="num">Speed</th><th>State</th><th>Containers</th><th></th></tr></thead>
+            <tbody>
+              @for (sw of spawned(); track sw.id) {
+                <tr>
+                  <td><code>{{ sw.id }}</code></td><td>{{ sw.pack }}</td><td class="num">×{{ sw.speed }}</td>
+                  <td [class.good]="sw.state === 'running'" [class.bad]="sw.state !== 'running'">{{ sw.state }}</td>
+                  <td class="small muted">@for (c of sw.containers; track c.service) {<div>{{ c.service }}: {{ c.status }}</div>}</td>
+                  <td class="actions">
+                    @if (sw.state === 'running') {<button type="button" class="btn btn--small" [disabled]="busy()" (click)="stopSpawned(sw.id)">Stop</button>}
+                    @else {<button type="button" class="btn btn--small" [disabled]="busy()" (click)="startSpawned(sw.id)">Start</button>}
+                  </td>
+                </tr>
+              } @empty {<tr><td colspan="6" class="muted">No spawned worlds.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted">Stop keeps the database and marks the world closed on the list. Removing containers and databases is done by hand.</p>
+        @if (spawn(); as sp) {
+          <form class="hub-form" (submit)="$event.preventDefault(); doSpawn()">
+            <h3 class="subhead">Spawn a world here</h3>
+            <label>Id <input name="sid" [(ngModel)]="sp.id" required pattern="[a-z][a-z0-9_\\-]{0,30}" placeholder="w3" /></label>
+            <label>Name <input name="sname" [(ngModel)]="sp.name" required maxlength="60" /></label>
+            <label class="hub-form__wide">Description <textarea name="sdesc" [(ngModel)]="sp.description" rows="2" maxlength="1000"></textarea></label>
+            <label>Content pack <input name="spack" [(ngModel)]="sp.pack" placeholder="antiquity" /></label>
+            <label>Speed <input name="sspeed" type="number" min="0.1" step="0.1" [(ngModel)]="sp.speed" /></label>
+            <label>Mode
+              <select name="smode" [(ngModel)]="sp.mode" (ngModelChange)="modeChanged($event)">@for (m of modeList(); track m.id) {<option [value]="m.id">{{ m.name }}</option>}</select></label>
+            <label>Status on the list
+              <select name="sstatus" [(ngModel)]="sp.status"><option value="upcoming">upcoming</option><option value="open">open</option></select></label>
+            <label class="hub-form__check"><input name="sfo" type="checkbox" [(ngModel)]="sp.founders_only" /> Founders only (early access)</label>
+            <label class="hub-form__check"><input name="spe" type="checkbox" [(ngModel)]="sp.patrons_early" [disabled]="!sp.founders_only" /> Patrons too</label>
+            <label class="hub-form__check"><input name="slr" type="checkbox" [(ngModel)]="sp.local_registration" /> Its own sign-up page too</label>
+            @if (modeDoc(); as d) {<p class="small muted hub-form__wide">{{ d }}</p>}
+            <label class="hub-form__wide">Overrides, as JSON with "world" and "extensions" (the mode's preset is filled in; null removes a group and switches that feature off)
+              <textarea name="sover" [(ngModel)]="sp.overrides" rows="10" style="font-family: monospace"></textarea></label>
+            <details class="small hub-form__wide">
+              <summary>Every setting with its default ({{ schema()?.groups?.length ?? 0 }} groups) — ⏻ marks groups that switch off when removed</summary>
+              @if (schema(); as sc) {
+                <p class="muted"><strong>world</strong> · {{ sc.world.doc }} <code>{{ json(sc.world.defaults) }}</code></p>
+                @for (g of sc.groups; track g.key) {<p class="muted"><strong>{{ g.key }}</strong>@if (g.off_when_absent) { ⏻} · {{ g.doc }} <code>{{ json(g.defaults) }}</code></p>}
+              }
+            </details>
+            <div class="btn-row hub-form__wide">
+              <button class="btn btn--small btn--gold" [disabled]="busy() || !sp.id || !sp.name">Create and start</button>
+              <button type="button" class="btn btn--small" (click)="spawn.set(null)">Cancel</button>
+            </div>
+          </form>
+        }
         <p class="small muted">Removing a world only takes it off the list: its server and database are untouched.</p>
         @if (world(); as f) {
           <form class="hub-form" (submit)="$event.preventDefault(); saveWorld()">
@@ -228,6 +288,7 @@ export class HubAdminComponent implements OnInit {
       const [badges, worlds, accounts] = await Promise.all([this.hub.badges(), this.hub.adminWorlds(), this.hub.adminAccounts('')]);
       this.catalogue.set(badges);
       this.adminWorlds.set(worlds);
+      void this.loadSpawner();
       this.accounts.set(accounts);
     });
   }
@@ -338,6 +399,73 @@ export class HubAdminComponent implements OnInit {
       this.catalogue.update((l) => l.filter((b) => b.id !== id));
       if (this.badge()?.id === id) this.badge.set(null);
     }
+  }
+
+  // ---- the spawner
+  protected readonly spawned = signal<SpawnedWorld[]>([]);
+  protected readonly schema = signal<SpawnerSchema | null>(null);
+  protected readonly spawn = signal<SpawnForm | null>(null);
+  protected readonly modeList = computed(() => Object.entries(this.schema()?.modes ?? {}).map(([id, m]) => ({ id, name: m.name, doc: m.doc })));
+  protected readonly modeDoc = computed(() => this.schema()?.modes?.[this.spawn()?.mode ?? '']?.doc ?? '');
+
+  private async loadSpawner(): Promise<void> {
+    try {
+      const sc = await this.hub.spawnerSchema();
+      this.schema.set(sc);
+      if (sc.enabled) this.spawned.set(await this.hub.spawnedWorlds());
+    } catch {
+      this.schema.set({ enabled: false, world: { doc: '', defaults: {} }, groups: [], modes: {} });
+    }
+  }
+
+  protected openSpawn(): void {
+    const preset = this.schema()?.modes?.['hybrid']?.overrides ?? {};
+    this.spawn.set({ id: '', name: '', description: '', pack: 'antiquity', speed: 1, mode: 'hybrid', status: 'upcoming', founders_only: false,
+                     patrons_early: false, local_registration: false, overrides: JSON.stringify(preset, null, 2) });
+  }
+
+  protected modeChanged(mode: string): void {
+    const sp = this.spawn();
+    if (sp) this.spawn.set({ ...sp, mode, overrides: JSON.stringify(this.schema()?.modes?.[mode]?.overrides ?? {}, null, 2) });
+  }
+
+  protected async doSpawn(): Promise<void> {
+    const sp = this.spawn();
+    if (!sp) return;
+    let overrides: Record<string, unknown> = {};
+    try {
+      overrides = sp.overrides.trim() ? JSON.parse(sp.overrides) : {};
+    } catch {
+      this.game.toast('The overrides are not valid JSON.', 'bad');
+      return;
+    }
+    const ok = await this.run(async () => {
+      await this.hub.spawnWorld({ id: sp.id.trim(), name: sp.name.trim(), description: sp.description.trim(), pack: sp.pack.trim() || 'antiquity',
+                                  speed: +sp.speed || 1, mode: sp.mode, overrides, status: sp.status, founders_only: sp.founders_only,
+                                  patrons_early: sp.patrons_early, local_registration: sp.local_registration });
+      this.adminWorlds.set(await this.hub.adminWorlds());
+      this.spawned.set(await this.hub.spawnedWorlds());
+    }, `World ${sp.id} is up at /w/${sp.id}/`);
+    if (ok) this.spawn.set(null);
+  }
+
+  protected async stopSpawned(id: string): Promise<void> {
+    await this.run(async () => {
+      await this.hub.stopSpawned(id);
+      this.spawned.set(await this.hub.spawnedWorlds());
+      this.adminWorlds.set(await this.hub.adminWorlds());
+    }, `World ${id} stopped`);
+  }
+
+  protected async startSpawned(id: string): Promise<void> {
+    await this.run(async () => {
+      await this.hub.startSpawned(id);
+      this.spawned.set(await this.hub.spawnedWorlds());
+    }, `World ${id} started`);
+  }
+
+  protected json(v: unknown): string {
+    return JSON.stringify(v);
   }
 
   // ---- worlds

@@ -139,6 +139,33 @@ reachable directly over `wss://` (its `OVIAN_MQTT_PUBLIC_URL`).
 `OVIAN_LOCAL_REGISTRATION=false` closes a world's own sign-up page, so new players come only through the hub.
 The AI rulers and personal access tokens keep working with world accounts.
 
+## Spawning worlds from the hub
+
+With the `hub` profile the stack also runs the **spawner**, the one service with write access to Docker. Hub
+administrators create worlds from *Admin → Hub → Worlds → Spawn a world here*: id, name, pack, speed, a **mode** and
+any **overrides**. The spawner writes `worlds/<id>.env` (fresh secrets) and `worlds/<id>.yaml` (the overrides), creates
+the database, and runs `docker-compose.world.yml` with the images the main stack built. The world appears on the hub's
+list at once and is reachable at `/w/<id>/` with no restart: the front ends look `server-<id>` and `broker-<id>` up
+live. *Stop* stops its containers (the database stays) and marks it closed; *Start* brings them back.
+
+Modes are presets of overrides (`GET /api/v1/settings/modes` on any world):
+
+| mode | in short |
+|---|---|
+| `hybrid` | the pack as it is |
+| `pve` | no war between players (`pvp.enabled: false`); more camps, a stronger horde, a week of protection; no battle victory |
+| `pvp` | no camps or horde; a day of protection; abandoned cities fall in three days; battles and conquest count |
+
+**Overrides** are a `{world: {...}, extensions: {...}}` document merged onto the pack when the world's server starts
+(`OVIAN_OVERRIDES_FILE`): nested keys merge, `null` removes a group, which switches features that need their group
+off (`GET /api/v1/settings/schema` lists every group, its code defaults and whether leaving it out turns it off).
+A world made by hand uses the same file: point `OVIAN_OVERRIDES_FILE` at it.
+
+Settings: `OVIAN_SPAWNER_KEY` (shared by the hub and the spawner), `OVIAN_REPO_DIR` (this checkout's path on the
+host, default `/srv/ovian`; the spawner mounts it at the same path), and the hub's `OVIAN_HUB_SPAWNER_URL`
+(`http://spawner:8000`). The spawner only creates and stops: removing a world's containers and database is done by hand
+(`docker compose -p ovian-<id> down`, `dropdb`).
+
 ## The hub API
 
 `/hub/docs` lists it. In short:

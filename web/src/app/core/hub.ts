@@ -62,6 +62,49 @@ export interface HubWorld {
   blocked?: string | null;
 }
 
+/** A world the spawner runs on this machine (server + broker containers, its own database). */
+export interface SpawnedWorld {
+  id: string;
+  pack: string;
+  speed: number;
+  database: string;
+  api_url: string;
+  internal_url: string;
+  mqtt_url: string;
+  /** running | stopped | partial | absent */
+  state: string;
+  containers: { service: string; state: string; status: string; image: string }[];
+  overrides: Record<string, unknown>;
+}
+
+/** One tunable group of a content pack: its code defaults and whether leaving it out switches the feature off. */
+export interface SettingsGroup { key: string; doc: string; off_when_absent: boolean; defaults: unknown; current?: unknown; present?: boolean }
+
+export interface SpawnerSchema {
+  /** False: this hub has no spawner configured. */
+  enabled: boolean;
+  world: { doc: string; defaults: Record<string, unknown> };
+  groups: SettingsGroup[];
+  modes: Record<string, { name: string; doc: string; overrides: Record<string, unknown> }>;
+}
+
+export interface SpawnRequest {
+  id: string;
+  name: string;
+  description?: string;
+  pack?: string;
+  speed?: number;
+  mode?: string;
+  /** {world: {...}, extensions: {...}}, merged after the mode's preset; null removes a group. */
+  overrides?: Record<string, unknown>;
+  status?: 'upcoming' | 'open' | 'closed';
+  founders_only?: boolean;
+  patrons_early?: boolean;
+  starts_at?: number | null;
+  ends_at?: number | null;
+  local_registration?: boolean;
+}
+
 export interface AdminAccount {
   id: number;
   username: string;
@@ -238,4 +281,10 @@ export class Hub {
   adminWorlds() { return this.call<(HubWorld & { internal_url: string })[]>('GET', '/admin/worlds'); }
   putWorld(id: string, w: WorldForm) { return this.call<HubWorld>('PUT', `/admin/worlds/${id}`, w); }
   deleteWorld(id: string) { return this.call<{ deleted: boolean }>('DELETE', `/admin/worlds/${id}`); }
+  // the world spawner (docs/worlds.md)
+  spawnerSchema() { return this.call<SpawnerSchema>('GET', '/admin/spawner/schema'); }
+  spawnedWorlds() { return this.call<SpawnedWorld[]>('GET', '/admin/spawner/worlds'); }
+  spawnWorld(body: SpawnRequest) { return this.call<{ world: HubWorld; spawned: SpawnedWorld; mode: string; overrides: Record<string, unknown> }>('POST', '/admin/spawner/worlds', body); }
+  stopSpawned(id: string) { return this.call<SpawnedWorld>('POST', `/admin/spawner/worlds/${id}/stop`); }
+  startSpawned(id: string) { return this.call<SpawnedWorld>('POST', `/admin/spawner/worlds/${id}/start`); }
 }

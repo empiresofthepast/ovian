@@ -229,3 +229,44 @@ async def test_a_commissioned_statue_joins_the_finds(game: Game, register):
     assert v["archaeology"]["display"]["shown"] == [finds[0]["id"]] and v["archaeology"]["display"]["culture"] == finds[0]["culture"], "statues need no temple"
     assert any(f["context"].get("artwork") for f in (await alice.get("/me/finds")).json())
     assert "Statue of" in (await alice.get("/reports")).json()[0]["title"]
+
+
+def test_overrides_merge_onto_the_pack(tmp_path):
+    from ovian_server.content import deep_merge, load_overrides
+
+    base = {"world": {"width": 121, "speed": 1}, "extensions": {"horde": {"every_hours": 24, "ratio": 1.0}, "camps": {"count": 12}}}
+    deep_merge(base, {"world": {"speed": 3}, "extensions": {"horde": None, "camps": {"count": 0}, "pvp": {"enabled": False}}})
+    assert base == {"world": {"width": 121, "speed": 3}, "extensions": {"camps": {"count": 0}, "pvp": {"enabled": False}}}, "null removes, dicts merge"
+    f = tmp_path / "w9.yaml"
+    f.write_text("extensions:\n  camps: {count: 3}\n")
+    assert load_overrides(str(f)) == {"extensions": {"camps": {"count": 3}}}
+    f.write_text("units: []\n")
+    import pytest
+
+    with pytest.raises(ValueError):
+        load_overrides(str(f))
+
+
+async def test_settings_schema_and_modes(game: Game, client):
+    sc = (await client.get("/settings/schema")).json()
+    keys = {g["key"] for g in sc["groups"]}
+    assert {"horde", "camps", "victory", "pvp", "treaties", "terrain"} <= keys and len(keys) >= 40
+    horde = next(g for g in sc["groups"] if g["key"] == "horde")
+    assert horde["off_when_absent"] and horde["defaults"]["every_hours"] == 24 and "present" in horde
+    assert sc["world"]["current"]["width"] == game.content.pack["world"]["width"]
+    modes = (await client.get("/settings/modes")).json()
+    assert set(modes) == {"hybrid", "pve", "pvp"} and modes["pve"]["overrides"]["extensions"]["pvp"] == {"enabled": False}
+    assert modes["pvp"]["overrides"]["extensions"]["horde"] is None, "null switches the horde off"
+
+
+async def test_a_pve_world_knows_no_war_between_players(game: Game, register):
+    alice, bob, target = await neighbours(game, register)
+    await patch_state(game, alice.village_id, lambda st: st.__setitem__("units", {"clubman": 50}))
+    order = {"kind": "attack", "x": target["x"], "y": target["y"], "units": {"clubman": 10}}
+    with extensions(game, pvp={"enabled": False}):
+        r = await alice.post(f"/villages/{alice.village_id}/send", order)
+        assert r.status_code == 409 and r.json()["error"] == "pve_world", r.text
+        camp = await game.pool.fetchrow("SELECT v.x, v.y FROM villages v JOIN players p ON p.id = v.player_id WHERE p.npc LIMIT 1")
+        if camp:
+            assert (await alice.post(f"/villages/{alice.village_id}/send", {**order, "x": camp["x"], "y": camp["y"]})).status_code == 200, "camps are fair game"
+    assert (await alice.post(f"/villages/{alice.village_id}/send", order)).status_code == 200, "back to normal"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any
 
@@ -385,6 +386,91 @@ async def put_world(world_id: str, body: World, _: AdminId, hub: HubDep) -> dict
 async def admin_worlds(_: AdminId, hub: HubDep) -> list[dict[str, Any]]:
     rows = await hub.pool.fetch(f"SELECT {WORLD_FIELDS}, internal_url FROM worlds ORDER BY sort, created_at")
     return [dict(r) for r in rows]
+
+
+# ------------------------------------------------------------- the spawner
+
+class SpawnWorld(BaseModel):
+    """A world to create on this machine through the spawner, and list on the hub."""
+
+    id: str = Field(pattern=r"^[a-z][a-z0-9_-]{0,30}$")
+    name: str = Field(min_length=1, max_length=60)
+    description: str = Field(default="", max_length=1000)
+    pack: str = Field(default="antiquity", pattern=r"^[a-z][a-z0-9_-]{0,40}$")
+    speed: float = Field(default=1.0, gt=0, le=1000)
+    mode: str = Field(default="hybrid", pattern=r"^[a-z_]{1,20}$")
+    # Merged after the mode's preset: {world: {...}, extensions: {...}}
+    overrides: dict[str, Any] = Field(default_factory=dict)
+    status: str = Field(default="upcoming", pattern="^(upcoming|open|closed)$")
+    founders_only: bool = False
+    patrons_early: bool = False
+    starts_at: int | None = None
+    ends_at: int | None = None
+    local_registration: bool = False
+
+
+async def _spawner(hub: Any, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
+    import httpx
+
+    if not hub.settings.spawner_url:
+        raise GameError(503, "no_spawner", "this hub has no world spawner (OVIAN_HUB_SPAWNER_URL)")
+    async with httpx.AsyncClient(base_url=hub.settings.spawner_url, timeout=620) as http:
+        try:
+            r = await http.request(method, path, json=body, headers={"X-Spawner-Key": hub.settings.spawner_key})
+        except httpx.HTTPError as e:
+            raise GameError(502, "spawner_unreachable", f"cannot reach the spawner: {e}") from e
+    if r.status_code >= 400:
+        detail = r.json().get("detail") if r.headers.get("content-type", "").startswith("application/json") else r.text
+        raise GameError(502 if r.status_code >= 500 else r.status_code, "spawner_error", str(detail)[:2000])
+    return r.json()
+
+
+@router.get("/admin/spawner/schema")
+async def spawner_schema(_: AdminId, hub: HubDep) -> dict[str, Any]:
+    """What a new world can be tuned with (code defaults) and the mode presets."""
+    from ovian_server.modules.settings import MODES, schema
+
+    return {**schema(), "modes": MODES, "enabled": bool(hub.settings.spawner_url)}
+
+
+@router.get("/admin/spawner/worlds")
+async def spawned_worlds(_: AdminId, hub: HubDep) -> list[dict[str, Any]]:
+    """The worlds the spawner runs on this machine, with the state of their containers."""
+    return await _spawner(hub, "GET", "/worlds")
+
+
+@router.post("/admin/spawner/worlds", status_code=201)
+async def spawn_world(body: SpawnWorld, _: AdminId, hub: HubDep) -> dict[str, Any]:
+    """Create a world here (database, server, broker) and list it on the hub."""
+    from ovian_server.content import deep_merge
+    from ovian_server.modules.settings import MODES
+
+    if body.mode not in MODES:
+        raise GameError(422, "unknown_mode", f"modes: {', '.join(MODES)}")
+    overrides = deep_merge(copy.deepcopy(MODES[body.mode]["overrides"]), body.overrides)
+    if await hub.pool.fetchval("SELECT 1 FROM worlds WHERE id = $1", body.id):
+        raise GameError(409, "world_exists", "a world with that id is already listed")
+    spawned = await _spawner(hub, "POST", "/worlds", {"id": body.id, "pack": body.pack, "speed": body.speed, "overrides": overrides,
+                                                       "local_registration": body.local_registration})
+    world = await upsert_world(hub, body.id, World(
+        name=body.name, description=body.description, pack=body.pack, speed=body.speed, api_url=spawned["api_url"],
+        internal_url=spawned["internal_url"], status=body.status, founders_only=body.founders_only, patrons_early=body.patrons_early,
+        starts_at=body.starts_at, ends_at=body.ends_at, sort=await hub.pool.fetchval("SELECT coalesce(max(sort), 0) + 1 FROM worlds")))
+    return {"world": world, "spawned": spawned, "mode": body.mode, "overrides": overrides}
+
+
+@router.post("/admin/spawner/worlds/{world_id}/stop")
+async def stop_spawned(world_id: str, _: AdminId, hub: HubDep) -> dict[str, Any]:
+    """Stop a world's containers (its database stays) and mark it closed on the hub."""
+    out = await _spawner(hub, "POST", f"/worlds/{world_id}/stop")
+    await hub.pool.execute("UPDATE worlds SET status = 'closed' WHERE id = $1 AND status IN ('upcoming', 'open')", world_id)
+    return out
+
+
+@router.post("/admin/spawner/worlds/{world_id}/start")
+async def start_spawned(world_id: str, _: AdminId, hub: HubDep) -> dict[str, Any]:
+    """Start a stopped world's containers again (its status on the hub is left for the admin to set)."""
+    return await _spawner(hub, "POST", f"/worlds/{world_id}/start")
 
 
 @router.delete("/admin/worlds/{world_id}")

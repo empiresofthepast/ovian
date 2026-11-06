@@ -18,8 +18,8 @@ async def raid(game: Game, attacker, target: dict, units: dict, kind: str = "rai
 
 
 async def test_five_wins_submit_a_city(game: Game, client, register):
-    # seasons and omens change production too; keep them out so only the vassal's +5% is measured
-    with extensions(game, seasons={}, omens={"chance": 0}):
+    # seasons, omens and contentment change production too (boosts add up): keep them out so only the vassal's +5% is measured
+    with extensions(game, seasons={}, omens={"chance": 0}, contentment={"bonus_per_point": 0, "penalty_per_point": 0}):
         alice = await register("alice", "clans")
         bob = await register("bob", "legion")
         await game.pool.execute("UPDATE players SET protected_until = 0")

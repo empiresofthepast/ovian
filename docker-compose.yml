@@ -15,6 +15,7 @@ services:
     restart: unless-stopped
 
   server:
+    image: ovian-server
     build: { context: ., dockerfile: docker/server.Dockerfile, target: runtime }
     environment:
       <<: *secrets
@@ -65,10 +66,36 @@ services:
       OVIAN_HUB_PATREON_CLIENT_SECRET: ${OVIAN_HUB_PATREON_CLIENT_SECRET:-}
       OVIAN_HUB_PATREON_WEBHOOK_SECRET: ${OVIAN_HUB_PATREON_WEBHOOK_SECRET:-}
       OVIAN_HUB_PATREON_CAMPAIGN_ID: ${OVIAN_HUB_PATREON_CAMPAIGN_ID:-}
+      # The world spawner (below): the hub's admins create and stop worlds on this machine through it.
+      OVIAN_HUB_SPAWNER_URL: ${OVIAN_HUB_SPAWNER_URL:-http://spawner:8000}
+      OVIAN_HUB_SPAWNER_KEY: ${OVIAN_SPAWNER_KEY:-dev-spawner-key-change-me}
+    depends_on: { db: { condition: service_healthy } }
+    restart: unless-stopped
+
+  # The world spawner: the one service with write access to Docker. It only runs docker-compose.world.yml for a
+  # validated world config (server/src/ovian_spawner), on the hub's behalf; it is not published and needs the shared key.
+  # The checkout is mounted at its own host path so the compose file's relative paths mean the same inside and outside.
+  spawner:
+    profiles: [hub]
+    build: { context: ., dockerfile: docker/spawner.Dockerfile }
+    environment:
+      OVIAN_SPAWNER_KEY: ${OVIAN_SPAWNER_KEY:-dev-spawner-key-change-me}
+      OVIAN_SPAWNER_DATABASE_URL: postgresql://ovian:ovian@db:5432/postgres
+      OVIAN_REPO_DIR: ${OVIAN_REPO_DIR:-/srv/ovian}
+      OVIAN_MAIN_NETWORK: ${COMPOSE_PROJECT_NAME:-ovian}_default
+      OVIAN_HUB_WORLD_SECRET: ${OVIAN_HUB_WORLD_SECRET:-}
+      OVIAN_HUB_INTERNAL_URL: ${OVIAN_HUB_INTERNAL_URL:-http://hub:8000}
+      OVIAN_SPAWNER_PUBLIC_ORIGIN: ${OVIAN_HUB_PUBLIC_URL:-http://localhost:47174}
+      OVIAN_SPAWNER_ADMIN_USERS: ${OVIAN_HUB_ADMIN_USERS:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${OVIAN_REPO_DIR:-/srv/ovian}:${OVIAN_REPO_DIR:-/srv/ovian}
+    working_dir: ${OVIAN_REPO_DIR:-/srv/ovian}
     depends_on: { db: { condition: service_healthy } }
     restart: unless-stopped
 
   broker:
+    image: ovian-broker
     build: { context: broker }
     environment:
       OVIAN_INTERNAL_KEY: ${OVIAN_INTERNAL_KEY:-dev-internal-key-change-me}

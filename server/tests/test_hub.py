@@ -263,3 +263,42 @@ def test_membership_counts_only_our_campaign(campaign: str, expected: str | None
     from ovian_hub.patreon import membership
 
     assert membership(_identity("u", "active_patron", ["t"], campaign), "camp")["patron_status"] == expected
+
+
+async def test_spawning_a_world_from_the_hub(hub, monkeypatch) -> None:
+    import ovian_hub.api as api
+
+    boss = await account(hub, "boss")
+    ann = await account(hub, "ann")
+    calls: list[tuple[str, str]] = []
+
+    async def fake_spawner(_hub, method: str, path: str, body: dict | None = None):
+        calls.append((method, path))
+        if method == "POST" and path == "/worlds":
+            assert body is not None
+            return {"id": body["id"], "pack": body["pack"], "speed": body["speed"], "database": f"ovian_{body['id']}", "api_url": f"/w/{body['id']}",
+                    "internal_url": f"http://server-{body['id']}:8000", "mqtt_url": "", "state": "running", "containers": [], "overrides": body["overrides"]}
+        if method == "GET":
+            return []
+        return {"id": path.split("/")[2], "state": "stopped", "containers": []}
+
+    monkeypatch.setattr(api, "_spawner", fake_spawner)
+    sc = (await hub.get("/admin/spawner/schema", headers=boss)).json()
+    assert set(sc["modes"]) == {"hybrid", "pve", "pvp"} and len(sc["groups"]) >= 40 and sc["enabled"] is False
+    assert (await hub.get("/admin/spawner/schema", headers=ann)).status_code == 403
+
+    body = {"id": "w7", "name": "Seven", "mode": "pve", "speed": 5, "overrides": {"extensions": {"camps": {"count": 30}}}, "status": "open"}
+    r = await hub.post("/admin/spawner/worlds", json=body, headers=boss)
+    assert r.status_code == 201, r.text
+    d = r.json()
+    ext = d["overrides"]["extensions"]
+    assert ext["pvp"] == {"enabled": False} and ext["camps"]["count"] == 30 and ext["treaties"] is None, "the preset, then the admin's overrides"
+    assert d["world"]["api_url"] == "/w/w7" and d["world"]["status"] == "open" and d["world"]["speed"] == 5
+    assert any(w["id"] == "w7" for w in (await hub.get("/worlds")).json()), "listed on the hub at once"
+    assert (await hub.post("/admin/spawner/worlds", json=body, headers=boss)).status_code == 409
+    assert (await hub.post("/admin/spawner/worlds", json=body | {"id": "w8", "mode": "nope"}, headers=boss)).status_code == 422
+
+    assert (await hub.post("/admin/spawner/worlds/w7/stop", headers=boss)).status_code == 200
+    assert next(w for w in (await hub.get("/admin/worlds", headers=boss)).json() if w["id"] == "w7")["status"] == "closed", "a stopped world is closed"
+    assert (await hub.post("/admin/spawner/worlds/w7/start", headers=ann)).status_code == 403
+    assert ("POST", "/worlds/w7/stop") in calls

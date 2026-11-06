@@ -75,7 +75,7 @@ class NewRound(BaseModel):
 
 async def apply_speed(game: Game, speed: float | None) -> None:
     if speed and speed != game.content.pack["world"]["speed"]:
-        game.content = load_content(game.settings.content_dir, game.pm, speed)
+        game.content = load_content(game.settings.content_dir, game.pm, speed, game.settings.overrides_file or None)
         log.info("world speed is now %s", speed)
 
 

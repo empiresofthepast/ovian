@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     world_id: str = "w1"
     # Overrides the pack's world.speed (handy for development).
     world_speed: float | None = None
+    # A YAML file merged onto the pack at load: {world: {...}, extensions: {...}}. How a spawned world differs from
+    # its pack (docs/worlds.md). Empty: the pack as it is.
+    overrides_file: str = ""
 
     jwt_secret: str = "dev-secret-change-me"
     jwt_ttl_hours: int = 72

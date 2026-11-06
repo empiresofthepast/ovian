@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminAccount, Badge, BadgeDef, BadgeForm, HubProfile, HubWorld, WorldForm, WorldStatus } from '../../core/hub';
+import { AdminAccount, SpawnedWorld, SpawnerSchema, Badge, BadgeDef, BadgeForm, HubProfile, HubWorld, WorldForm, WorldStatus } from '../../core/hub';
 import { GameStore } from '../../core/game.store';
 import { BadgesComponent } from '../../shared/badges';
 import { UI } from '../../shared/ui';
@@ -14,6 +14,13 @@ interface BadgeEdit extends Required<Omit<BadgeForm, 'patreon_tier'>> {
   id: string;
   patreon_tier: string;
   isNew: boolean;
+}
+
+interface SpawnForm {
+  id: string; name: string; description: string; pack: string; speed: number; mode: string; status: 'upcoming' | 'open';
+  founders_only: boolean; patrons_early: boolean; local_registration: boolean;
+  /** JSON text */
+  overrides: string;
 }
 
 interface WorldEdit extends Required<Omit<WorldForm, 'starts_at' | 'ends_at'>> {
@@ -186,7 +193,70 @@ interface WorldEdit extends Required<Omit<WorldForm, 'starts_at' | 'ends_at'>> {
             </div>
             <p class="small muted">Removing a world only takes it off the hub's list; its server and database are untouched.</p>
             <button class="btn btn--small" (click)="editWorld(null)">+ New world</button>
+            <button class="btn btn--small btn--primary" (click)="openSpawn()">⚙ Spawn a world here</button>
           </section>
+          <section class="panel">
+            <h2 class="panel__title">Worlds on this machine <span class="muted small">run by the spawner</span></h2>
+            @if (schema()?.enabled === false) {<p class="muted small">This hub has no spawner (OVIAN_HUB_SPAWNER_URL).</p>}
+            <div class="table-wrap">
+              <table class="table small">
+                <thead><tr><th>Id</th><th>Pack</th><th>Speed</th><th>State</th><th>Containers</th><th></th></tr></thead>
+                <tbody>
+                  @for (sw of spawned(); track sw.id) {
+                    <tr>
+                      <td><code>{{ sw.id }}</code></td><td>{{ sw.pack }}</td><td>×{{ sw.speed }}</td>
+                      <td [class.good]="sw.state === 'running'" [class.bad]="sw.state !== 'running'">{{ sw.state }}</td>
+                      <td class="small muted">@for (c of sw.containers; track c.service) {<div>{{ c.service }}: {{ c.status }}</div>}</td>
+                      <td class="nowrap">
+                        @if (sw.state === 'running') {<button class="btn btn--small" [disabled]="busy()" (click)="stopSpawned(sw.id)">Stop</button>}
+                        @else {<button class="btn btn--small" [disabled]="busy()" (click)="startSpawned(sw.id)">Start</button>}
+                      </td>
+                    </tr>
+                  } @empty {<tr><td colspan="6" class="muted">No spawned worlds.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+            <p class="small muted">Stop keeps the database and marks the world closed on the list. Removing containers and databases is done by hand.</p>
+          </section>
+          @if (spawn(); as sp) {
+            <section class="panel">
+              <h2 class="panel__title">Spawn a world here</h2>
+              <form class="form" (ngSubmit)="doSpawn()">
+                <div class="form__row">
+                  <label class="field"><span>Id</span><input name="sid" [(ngModel)]="sp.id" placeholder="w3" required pattern="[a-z][a-z0-9_-]{0,30}" /></label>
+                  <label class="field grow"><span>Name</span><input name="sname" [(ngModel)]="sp.name" maxlength="60" required /></label>
+                  <label class="field"><span>Pack</span><input name="spack" [(ngModel)]="sp.pack" placeholder="antiquity" /></label>
+                  <label class="field field--short"><span>Speed</span><input name="sspeed" type="number" min="0.1" step="0.1" [(ngModel)]="sp.speed" /></label>
+                </div>
+                <label class="field"><span>Description</span><textarea name="sdesc" rows="2" [(ngModel)]="sp.description" maxlength="1000"></textarea></label>
+                <div class="form__row">
+                  <label class="field"><span>Mode</span>
+                    <select name="smode" [(ngModel)]="sp.mode" (ngModelChange)="modeChanged($event)">
+                      @for (m of modeList(); track m.id) {<option [value]="m.id">{{ m.name }}</option>}
+                    </select></label>
+                  <label class="field"><span>Status on the list</span>
+                    <select name="sstatus" [(ngModel)]="sp.status"><option value="upcoming">upcoming</option><option value="open">open</option></select></label>
+                  <label class="small"><input type="checkbox" name="sfo" [(ngModel)]="sp.founders_only" /> Founders only</label>
+                  <label class="small"><input type="checkbox" name="spe" [(ngModel)]="sp.patrons_early" [disabled]="!sp.founders_only" /> Patrons too</label>
+                  <label class="small"><input type="checkbox" name="slr" [(ngModel)]="sp.local_registration" /> Its own sign-up page too</label>
+                </div>
+                @if (modeDoc(); as d) {<p class="small muted">{{ d }}</p>}
+                <label class="field"><span>Overrides, as JSON with "world" and "extensions" (the mode's preset is filled in; null removes a group and switches that feature off)</span>
+                  <textarea name="sover" rows="10" style="font-family: monospace" [(ngModel)]="sp.overrides"></textarea></label>
+                <details class="small">
+                  <summary>Every setting with its default ({{ schema()?.groups?.length ?? 0 }} groups) — ⏻ marks groups that switch off when removed</summary>
+                  @if (schema(); as sc) {
+                    <p class="muted"><strong>world</strong> · {{ sc.world.doc }} <code>{{ json(sc.world.defaults) }}</code></p>
+                    @for (g of sc.groups; track g.key) {<p class="muted"><strong>{{ g.key }}</strong>@if (g.off_when_absent) { ⏻} · {{ g.doc }} <code>{{ json(g.defaults) }}</code></p>}
+                  }
+                </details>
+                <div class="btn-row">
+                  <button class="btn btn--primary" [disabled]="busy() || !sp.id || !sp.name">Create and start</button>
+                  <button class="btn btn--ghost" type="button" (click)="spawn.set(null)">Cancel</button>
+                </div>
+              </form>
+            </section>
+          }
           @if (world(); as w) {
             <section class="panel">
               <h2 class="panel__title">{{ w.isNew ? 'New world' : 'Edit ' + w.id }}</h2>
@@ -243,6 +313,12 @@ export class HubAdminComponent implements OnInit {
   protected readonly managing = signal<AdminAccount | null>(null);
   protected readonly badge = signal<BadgeEdit | null>(null);
   protected readonly world = signal<WorldEdit | null>(null);
+  // the spawner
+  protected readonly spawned = signal<SpawnedWorld[]>([]);
+  protected readonly schema = signal<SpawnerSchema | null>(null);
+  protected readonly spawn = signal<SpawnForm | null>(null);
+  protected readonly modeList = computed(() => Object.entries(this.schema()?.modes ?? {}).map(([id, m]) => ({ id, name: m.name, doc: m.doc })));
+  protected readonly modeDoc = computed(() => this.schema()?.modes?.[this.spawn()?.mode ?? '']?.doc ?? '');
   protected readonly founderBadges = computed(() => this.catalogue().filter((b) => b.kind === 'founder'));
   protected query = '';
   protected founder: { on: boolean; number: number | null; badges: string[] } = { on: false, number: null, badges: [] };
@@ -259,6 +335,7 @@ export class HubAdminComponent implements OnInit {
       this.accounts.set(accounts);
       this.catalogue.set(badges);
       this.worlds.set(worlds);
+      void this.loadSpawner();
     });
   }
 
@@ -370,6 +447,68 @@ export class HubAdminComponent implements OnInit {
       this.catalogue.update((l) => l.filter((b) => b.id !== id));
       this.accounts.update((l) => l.map((a) => ({ ...a, badges: a.badges.filter((x) => x !== id) })));
     }, 'Badge deleted.');
+  }
+
+  // ---- the spawner
+  private async loadSpawner(): Promise<void> {
+    try {
+      const sc = await this.hub.spawnerSchema();
+      this.schema.set(sc);
+      if (sc.enabled) this.spawned.set(await this.hub.spawnedWorlds());
+    } catch {
+      this.schema.set({ enabled: false, world: { doc: '', defaults: {} }, groups: [], modes: {} });
+    }
+  }
+
+  protected openSpawn(): void {
+    const preset = this.schema()?.modes?.['hybrid']?.overrides ?? {};
+    this.spawn.set({ id: '', name: '', description: '', pack: 'antiquity', speed: 1, mode: 'hybrid', status: 'upcoming', founders_only: false,
+                     patrons_early: false, local_registration: false, overrides: JSON.stringify(preset, null, 2) });
+  }
+
+  protected modeChanged(mode: string): void {
+    const sp = this.spawn();
+    if (!sp) return;
+    this.spawn.set({ ...sp, mode, overrides: JSON.stringify(this.schema()?.modes?.[mode]?.overrides ?? {}, null, 2) });
+  }
+
+  protected async doSpawn(): Promise<void> {
+    const sp = this.spawn();
+    if (!sp) return;
+    let overrides: Record<string, unknown> = {};
+    try {
+      overrides = sp.overrides.trim() ? JSON.parse(sp.overrides) : {};
+    } catch {
+      this.game.toast('The overrides are not valid JSON.', 'bad');
+      return;
+    }
+    await this.run(async () => {
+      await this.hub.spawnWorld({ id: sp.id.trim(), name: sp.name.trim(), description: sp.description.trim(), pack: sp.pack.trim() || 'antiquity',
+                                  speed: +sp.speed || 1, mode: sp.mode, overrides, status: sp.status, founders_only: sp.founders_only,
+                                  patrons_early: sp.patrons_early, local_registration: sp.local_registration });
+      this.worlds.set(await this.hub.adminWorlds());
+      this.spawned.set(await this.hub.spawnedWorlds());
+      this.spawn.set(null);
+    }, `World ${sp.id} is up at /w/${sp.id}/.`);
+  }
+
+  protected async stopSpawned(id: string): Promise<void> {
+    await this.run(async () => {
+      await this.hub.stopSpawned(id);
+      this.spawned.set(await this.hub.spawnedWorlds());
+      this.worlds.set(await this.hub.adminWorlds());
+    }, `World ${id} stopped.`);
+  }
+
+  protected async startSpawned(id: string): Promise<void> {
+    await this.run(async () => {
+      await this.hub.startSpawned(id);
+      this.spawned.set(await this.hub.spawnedWorlds());
+    }, `World ${id} started.`);
+  }
+
+  protected json(v: unknown): string {
+    return JSON.stringify(v);
   }
 
   // ---- worlds

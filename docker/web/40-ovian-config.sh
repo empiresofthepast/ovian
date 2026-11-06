@@ -21,19 +21,21 @@ JSON
 mkdir -p /etc/nginx/ovian
 conf=/etc/nginx/ovian/routes.conf
 : > "$conf"
-proxy='proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme;'
+proxy='proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme;'
+# Upstreams are kept in variables so nginx looks their names up on every request (the resolver in nginx.conf.template):
+# a recreated hub or world gets a new address, and an old address may be reused by another container.
+# With a variable, proxy_pass needs the full URI: regex locations capture the rest of the path.
 if [ -n "${OVIAN_HUB_UPSTREAM:-}" ]; then
-  echo "location /hub/ { proxy_pass ${OVIAN_HUB_UPSTREAM%/}/; $proxy }" >> "$conf"
-  echo "location /hub/api/v1/internal/ { return 404; }" >> "$conf"
+  echo "location ~ ^/hub/(?:internal/|api/v1/internal/) { return 404; }" >> "$conf"
+  echo "location ~ ^/hub/(?<hrest>.*)\$ { set \$up ${OVIAN_HUB_UPSTREAM%/}; proxy_pass \$up/\$hrest\$is_args\$args; $proxy }" >> "$conf"
 fi
 for w in $(printf '%s' "${OVIAN_WORLDS:-}" | tr ',;' '  '); do
   id=${w%%=*}; rest=${w#*=}
   api=${rest%%|*}; mqtt=""
   case "$rest" in *"|"*) mqtt=${rest#*|} ;; esac
-  echo "location /w/$id/ { proxy_pass ${api%/}/; $proxy }" >> "$conf"
-  echo "location /w/$id/internal/ { return 404; }" >> "$conf"
-  echo "location /w/$id/api/v1/internal/ { return 404; }" >> "$conf"
+  echo "location ~ ^/w/$id/(?:internal/|api/v1/internal/) { return 404; }" >> "$conf"
   if [ -n "$mqtt" ]; then
-    echo "location = /w/$id/mqtt { proxy_pass ${mqtt%/}/mqtt; proxy_http_version 1.1; proxy_set_header Upgrade \$http_upgrade; proxy_set_header Connection \$connection_upgrade; proxy_read_timeout 1h; }" >> "$conf"
+    echo "location = /w/$id/mqtt { set \$up ${mqtt%/}; proxy_pass \$up/mqtt; proxy_http_version 1.1; proxy_set_header Upgrade \$http_upgrade; proxy_set_header Connection \$connection_upgrade; proxy_read_timeout 1h; }" >> "$conf"
   fi
+  echo "location ~ ^/w/$id/(?<wrest>.*)\$ { set \$up ${api%/}; proxy_pass \$up/\$wrest\$is_args\$args; $proxy }" >> "$conf"
 done

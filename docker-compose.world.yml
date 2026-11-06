@@ -1,6 +1,7 @@
 # A further world next to the main stack: its own server and broker, sharing the main database server, the hub
 # and the web front ends. One env file per world (see worlds/example.env and docs/worlds.md):
-#   docker compose -p ovian-w3 --env-file worlds/w3.env -f docker-compose.world.yml up -d --build
+#   docker compose -p ovian-w3 --env-file worlds/w3.env -f docker-compose.world.yml up -d   (--build to rebuild the images)
+# The hub's world spawner runs exactly this (server/src/ovian_spawner), writing worlds/<id>.env and worlds/<id>.yaml.
 # then list it in the main .env: OVIAN_WORLDS="w3=http://server-w3:8000|http://broker-w3:9001" and restart web/diorama.
 # The world's database must exist: docker compose exec db createdb -U ovian ovian_w3
 name: ovian-${OVIAN_WORLD_ID:?set OVIAN_WORLD_ID}
@@ -12,10 +13,14 @@ x-secrets: &secrets
 
 services:
   server:
+    # The main stack's image (docker compose build server); --build rebuilds it from this checkout.
+    image: ovian-server
     build: { context: ., dockerfile: docker/server.Dockerfile, target: runtime }
     hostname: server-${OVIAN_WORLD_ID}
     environment:
       <<: *secrets
+      # How this world differs from its pack: worlds/<id>.yaml, written by the spawner or by hand (docs/worlds.md).
+      OVIAN_OVERRIDES_FILE: ${OVIAN_OVERRIDES_FILE:-}
       OVIAN_DATABASE_URL: postgresql://ovian:ovian@db:5432/${OVIAN_DATABASE_NAME:?}
       OVIAN_CONTENT_DIR: /app/content/${OVIAN_PACK:-classic}
       OVIAN_WORLD_ID: ${OVIAN_WORLD_ID}
@@ -27,10 +32,12 @@ services:
       OVIAN_HUB_SECRET: ${OVIAN_HUB_WORLD_SECRET:-}
       OVIAN_HUB_URL: ${OVIAN_HUB_INTERNAL_URL:-http://hub:8000}
       OVIAN_LOCAL_REGISTRATION: ${OVIAN_LOCAL_REGISTRATION:-false}
+    volumes: ["${OVIAN_REPO_DIR:-.}/worlds:/app/worlds:ro"]
     networks: { main: { aliases: ["server-${OVIAN_WORLD_ID}"] } }
     restart: unless-stopped
 
   broker:
+    image: ovian-broker
     build: { context: broker }
     environment:
       OVIAN_INTERNAL_KEY: ${OVIAN_INTERNAL_KEY}

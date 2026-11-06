@@ -35,6 +35,9 @@ class HubSettings(BaseSettings):
 
     # Worlds declared at startup, created or updated: "id|name|api_url|internal_url;..." (handy with Docker).
     worlds: str = ""
+    # The world spawner (docs/worlds.md): where the hub reaches it, and the key it expects. Empty: no spawning from the hub.
+    spawner_url: str = ""
+    spawner_key: str = ""
 
     @staticmethod
     def split(value: str) -> list[str]:
