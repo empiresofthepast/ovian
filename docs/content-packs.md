@@ -35,6 +35,7 @@ Unknown keys are ignored, so a pack can carry data for plugins anywhere.
 village:
   base_production: { wood: 6, grain: 12 }   # per hour, before any building
   base_storage: 800                         # capacity when no storage building covers a resource
+  storage_speed_exponent: 0.5               # stores, base storage and hiding places x speed^0.5 (0 or absent: fixed)
   field_slots: [woodcutter, woodcutter, farm]   # one entry per resource slot, fixed building type
   center_slots: 20                          # free building sites
   build_queue: 2                            # parallel construction jobs (phases can raise it)
@@ -84,6 +85,7 @@ village:
   max_level: 20
   requires: { town_hall: 1 }
   cost: { base: { wood: 130, clay: 160 }, factor: 1.28 }   # level L costs base * factor^(L-1)
+  # cost.speed_exponent: 0.5 would multiply base by speed^0.5: for world projects like the wonder (see below)
   time: { base: 500, factor: 1.3 }                         # seconds at world speed 1
   population: 1                                            # upkeep consumers per level
   unique: false                                            # may stand on several sites (default: true)

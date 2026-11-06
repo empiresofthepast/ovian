@@ -40,22 +40,33 @@ def level_cost(game: Game, building: str, level: int) -> float:
 
 
 async def status(game: Game, conn: asyncpg.Connection, v: VillageRow) -> list[dict[str, Any]]:
+    """The great buildings of a city and how the next level is coming along. A level that is funded is under
+    construction (``building_level``, ``building_until``); contributions then go to the level after it."""
+    from .villages import BUILD
+
+    ids = great_ids(game)
     out = []
+    jobs = await conn.fetch("SELECT due_at, payload FROM jobs WHERE village_id = $1 AND kind = $2", v.id, BUILD)
     for slot, s in enumerate(v.state["slots"]):
         b = s.get("building")
-        if b not in great_ids(game) or s["level"] < 1:
+        if b not in ids or s["level"] < 1:
             continue
         d = game.content.building(b)
-        nxt = s["level"] + 1
+        pending = [j for j in jobs if j["payload"].get("slot") == slot]
+        top = max([s["level"], *[j["payload"]["level"] for j in pending]])
+        entry: dict[str, Any] = {"building": b, "slot": slot, "level": s["level"], "max_level": d["max_level"]}
+        if pending:
+            entry["building_level"] = top
+            entry["building_until"] = max(j["due_at"] for j in pending)
+        nxt = top + 1
         if nxt > d["max_level"]:
-            out.append({"building": b, "slot": slot, "level": s["level"], "max_level": d["max_level"], "complete": True})
+            out.append(entry | {"complete": True})
             continue
         rows = await conn.fetch(
             """SELECT p.id, p.username, sum(g.points) AS points FROM great_contributions g LEFT JOIN players p ON p.id = g.player_id
                WHERE g.village_id = $1 AND g.building = $2 AND g.level = $3 GROUP BY p.id ORDER BY points DESC""", v.id, b, nxt)
-        out.append({"building": b, "slot": slot, "level": s["level"], "max_level": d["max_level"], "next_level": nxt,
-                    "cost": level_cost(game, b, nxt), "points": float(sum(r["points"] for r in rows)),
-                    "contributors": [{"player_id": r["id"], "name": r["username"], "points": float(r["points"])} for r in rows]})
+        out.append(entry | {"next_level": nxt, "cost": level_cost(game, b, nxt), "points": float(sum(r["points"] for r in rows)),
+                            "contributors": [{"player_id": r["id"], "name": r["username"], "points": float(r["points"])} for r in rows]})
     return out
 
 
@@ -110,12 +121,27 @@ async def contribute(village_id: int, building: str, body: Gift, player_id: Play
         return await push_village(game, tx, await get_village(tx.conn, donor.id))
 
 
+def build_seconds(game: Game, state: dict[str, Any], building: str, level: int) -> int:
+    """Construction time of a level in this city, as the engine computes it for an ordinary build order."""
+    t = game.content.building(building)["time"]
+    raw = float(t["base"]) * float(t["factor"]) ** (level - 1)
+    build_speed = float(game.engine.economy(state, 0.0)["build_speed"])
+    return max(1, round(raw * build_speed / float(game.content.pack["world"]["speed"])))
+
+
 async def _raise(game: Game, tx: Any, owner: VillageRow, building: str, slot: int, level: int) -> None:
+    """The level is funded: construction starts (after whatever is queued on the site) and takes its usual time.
+    Contributors from other players get their reward now; the completion itself is the ordinary build job."""
+    from .villages import BUILD, build_jobs
+
     reward = float(game.content.extensions.get("great_buildings", {}).get("reward", 0.5))
     owner = await get_village(tx.conn, owner.id, lock=True)
     await accrue(game, tx, owner)
-    owner.state = game.engine.complete_build(owner.state, slot, building, level)
-    await save_village(game, tx, owner)
+    now = game.clock.now()
+    start = max([now, *[j["due_at"] for j in await build_jobs(tx.conn, owner.id) if j["payload"].get("slot") == slot]])
+    seconds = build_seconds(game, owner.state, building, level)
+    payload = {"slot": slot, "building": building, "level": level, "cost": {}, "seconds": seconds, "started_at": start, "funded": True}
+    await game.schedule(tx, BUILD, start + seconds * 1000, payload, village_id=owner.id)
     name = game.content.building(building)["name"]
     rows = await tx.conn.fetch(
         """SELECT player_id, sum(points) AS points, (array_agg(created_at ORDER BY id DESC))[1] AS last FROM great_contributions
@@ -134,8 +160,8 @@ async def _raise(game: Game, tx: Any, owner: VillageRow, building: str, slot: in
                 hv.state = game.engine.deposit(hv.state, {k: each for k in resources})
                 await save_village(game, tx, hv)
                 data["reward"] = {k: each for k in resources}
-        await add_report(game, tx, r["player_id"], "great", f"{name} of {owner.name} reached level {level}", data)
-    await game.emit("ovian_build_completed", game=game, tx=tx, village=owner, building=building, level=level)
+        data["due_at"] = start + seconds * 1000
+        await add_report(game, tx, r["player_id"], "great", f"{name} of {owner.name} is being raised to level {level}", data)
 
 
 @router.get("/great-buildings")

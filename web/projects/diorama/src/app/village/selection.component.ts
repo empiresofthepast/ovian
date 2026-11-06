@@ -69,12 +69,15 @@ interface Option {
           }
           @if (great(); as gb) {
             <div class="culture">
+              @if (gb.building_until) {
+                <div class="small muted">Level {{ gb.building_level }} is under construction, done at {{ when(gb.building_until) }}.</div>
+              }
               @if (gb.complete) {
                 <div class="subhead">Great building · complete</div>
               } @else {
                 <div class="subhead">Great building · level {{ gb.next_level }} {{ gb.points | n }} / {{ gb.cost | n }}</div>
                 <div class="bar"><div class="bar__fill" [style.width.%]="((gb.points ?? 0) / (gb.cost ?? 1)) * 100"></div></div>
-                <p class="small muted">Anyone can contribute resources from the map; contributors from other cities get half back when the level is finished.</p>
+                <p class="small muted">Anyone can contribute resources from the map; when the level's cost is met, its construction begins. Contributors from other cities get half back.</p>
                 @for (c of gb.contributors ?? []; track c.player_id) {<div class="small">{{ c.name }}: {{ c.points | n }}</div>}
                 <div class="res-inputs">
                   @for (r of resourceList(); track r.id) {
@@ -400,6 +403,10 @@ export class SelectionComponent {
     this.busy.set(true);
     await this.game.act(() => this.api.cast(v.id, power, target ? this.wrathX : undefined, target ? this.wrathY : undefined), 'The gods have answered');
     this.busy.set(false);
+  }
+
+  protected when(ms: number): string {
+    return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   protected async contribute(building: string): Promise<void> {

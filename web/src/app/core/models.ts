@@ -455,6 +455,9 @@ export interface GreatBuilding {
   level: number;
   max_level: number;
   complete?: boolean;
+  /** A funded level under construction, and when it is done (ms). Contributions then go to the level after it. */
+  building_level?: number;
+  building_until?: number;
   next_level?: number;
   cost?: number;
   points?: number;

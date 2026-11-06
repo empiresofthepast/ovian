@@ -329,6 +329,8 @@ def building_rules(z: ZeroAD, b: dict, civs: list[str]) -> dict:
     s = sum(mix.values())
     base = {r: r5(cost["total"] * mix.get(r, 0) / s) for r in ("food", "wood", "stone", "metal") if mix.get(r, 0) > 0}
     out["cost"] = {"base": base, "factor": cost["factor"]}
+    if "speed_exponent" in cost:
+        out["cost"]["speed_exponent"] = cost["speed_exponent"]
     order = ["id", "name", "description", "slot", "foreign", "max_level", "unique", "requires", "cost", "time", "population", "effects"]
     return {k: out[k] for k in order if k in out}
 

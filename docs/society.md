@@ -90,11 +90,12 @@ camps: { count: 12, min_distance: 4, max_distance: 16, max_level: 5, troops_per_
 ## Great buildings
 
 ```yaml
-great_buildings: { buildings: [great_theatre, great_forge], reward: 0.5 }
+great_buildings: { buildings: [great_theatre, great_forge, wonder], reward: 0.5 }
 ```
 
-- **Building them.** The owner builds them like any building. Anyone can also contribute resources towards the next level, and when contributions reach its cost the level is finished at once.
-- **Rewards.** Contributors from other players get half their contribution back when the level is finished, in their first city.
+- **Building them.** The owner builds them like any building. Anyone can also contribute resources towards the next level; when contributions reach its cost, construction of that level begins (after whatever is queued on the site) and takes the building's usual time. Meanwhile contributions go to the level after it (`building_level`, `building_until` in the status). A funded level cannot be cancelled (`funded_build`).
+- **The wonder** is on the list in the antiquity pack, so a city never needs stores for a whole level of it, and allies can help, as in the great buildings.
+- **Rewards.** Contributors from other players get half their contribution back when the level is funded, in their first city.
 - **Finding them.** `GET /great-buildings?x=&y=` lists those nearby.
 
 ## Vacation, night, ranks and achievements

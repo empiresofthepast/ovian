@@ -69,15 +69,17 @@ roster:
         defense: { infantry: 5, cavalry: 5 }, speed: 4, carry: 0, requires: { civic_centre: 10 } }
 
 # Buildings. `zeroad` names the 0 A.D. structure (per civ) whose cost mix and
-# looks are borrowed; `total` is the level 1 cost before the mix is applied.
+# looks are borrowed; `total` is the level 1 cost before the mix is applied; `mix`
+# replaces the 0 A.D. mix. `speed_exponent` makes the cost grow with the world speed
+# (cost x speed^exponent): for the world projects. See docs/antiquity.md, "Economy".
 buildings:
   - id: woodline
     name: Woodline
     description: Lumberjacks fell the forest at the edge of the village.
     slot: field
     max_level: 10
-    cost: { total: 250, mix: { food: 60, wood: 40, stone: 100, metal: 50 }, factor: 1.67 }
-    time: { base: 260, factor: 1.6 }
+    cost: { total: 250, mix: { food: 60, wood: 40, stone: 100, metal: 50 }, factor: 1.5 }
+    time: { base: 260, factor: 1.5 }
     population: 2
     effects: { production: { resource: wood, curve: { base: 8, factor: 1.35, round: 1 } } }
   - id: quarry
@@ -85,8 +87,8 @@ buildings:
     description: Stone cut from the hillside.
     slot: field
     max_level: 10
-    cost: { total: 250, mix: { food: 50, wood: 80, stone: 40, metal: 80 }, factor: 1.67 }
-    time: { base: 220, factor: 1.6 }
+    cost: { total: 250, mix: { food: 50, wood: 80, stone: 40, metal: 80 }, factor: 1.5 }
+    time: { base: 220, factor: 1.5 }
     population: 2
     effects: { production: { resource: stone, curve: { base: 8, factor: 1.35, round: 1 } } }
   - id: mine
@@ -94,8 +96,8 @@ buildings:
     description: Ore dug from the metal seam.
     slot: field
     max_level: 10
-    cost: { total: 270, mix: { food: 60, wood: 100, stone: 80, metal: 30 }, factor: 1.67 }
-    time: { base: 450, factor: 1.6 }
+    cost: { total: 270, mix: { food: 60, wood: 100, stone: 80, metal: 30 }, factor: 1.5 }
+    time: { base: 450, factor: 1.5 }
     population: 3
     effects: { production: { resource: metal, curve: { base: 8, factor: 1.35, round: 1 } } }
   - id: field
@@ -104,8 +106,8 @@ buildings:
     slot: field
     max_level: 10
     zeroad: field
-    cost: { total: 250, factor: 1.67 }
-    time: { base: 150, factor: 1.6 }
+    cost: { total: 250, mix: { wood: 60, stone: 40 }, factor: 1.5 }   # fences and granary floors: not wood alone
+    time: { base: 150, factor: 1.5 }
     population: 0
     effects: { production: { resource: food, curve: { base: 8, factor: 1.35, round: 1 } } }
 
@@ -116,7 +118,7 @@ buildings:
     max_level: 60
     zeroad: civil_centre
     cost: { total: 190, factor: 1.15 }     # gentle, so level 60 stays within reach
-    time: { base: 600, factor: 1.2 }
+    time: { base: 600, factor: 1.14 }      # level 60 takes about two days at speed 1 with its own bonus
     population: 2
     effects: { build_speed: { base: 1.0, factor: 0.965 } }
   - id: storehouse
@@ -127,9 +129,9 @@ buildings:
     unique: false
     requires: { civic_centre: 1 }
     zeroad: storehouse
-    cost: { total: 420, factor: 1.28 }
+    cost: { total: 500, mix: { wood: 60, stone: 40 }, factor: 1.3 }
     time: { base: 500, factor: 1.3 }
-    effects: { storage: { resources: [wood, stone, metal], curve: { base: 1200, factor: 1.28, round: 100 } } }
+    effects: { storage: { resources: [wood, stone, metal], curve: { base: 1500, factor: 1.3, round: 100 } } }
   - id: farmstead
     name: Farmstead
     description: Stores food.
@@ -138,9 +140,9 @@ buildings:
     unique: false
     requires: { civic_centre: 1 }
     zeroad: farmstead
-    cost: { total: 270, factor: 1.28 }
+    cost: { total: 350, mix: { wood: 70, stone: 30 }, factor: 1.3 }
     time: { base: 450, factor: 1.3 }
-    effects: { storage: { resources: [food], curve: { base: 1200, factor: 1.28, round: 100 } } }
+    effects: { storage: { resources: [food], curve: { base: 1500, factor: 1.3, round: 100 } } }
   - id: house
     name: House
     description: Families hide part of every resource from raiders.
@@ -148,7 +150,7 @@ buildings:
     max_level: 10
     unique: false
     zeroad: house
-    cost: { total: 130, factor: 1.28 }
+    cost: { total: 130, mix: { wood: 60, stone: 30, metal: 10 }, factor: 1.28 }
     time: { base: 260, factor: 1.3 }
     population: 0
     effects: { hide: { base: 200, factor: 1.23, round: 10 } }
@@ -167,7 +169,7 @@ buildings:
     unique: false
     requires: { civic_centre: 3, rally_point: 1 }
     zeroad: barracks
-    cost: { total: 730, factor: 1.28 }
+    cost: { total: 730, mix: { wood: 55, stone: 25, metal: 20 }, factor: 1.28 }
     time: { base: 900, factor: 1.3 }
     population: 4
     effects: { train_speed: { base: 1.0, factor: 0.94 } }
@@ -179,7 +181,7 @@ buildings:
     unique: false
     requires: { barracks: 3, civic_centre: 5 }
     zeroad: stable
-    cost: { total: 720, factor: 1.28 }
+    cost: { total: 720, mix: { wood: 60, stone: 20, metal: 20 }, factor: 1.28 }
     time: { base: 1100, factor: 1.3 }
     population: 5
     effects: { train_speed: { base: 1.0, factor: 0.94 } }
@@ -190,7 +192,7 @@ buildings:
     max_level: 20
     requires: { civic_centre: 10, barracks: 10 }
     zeroad: fortress
-    cost: { total: 2400, factor: 1.28 }
+    cost: { total: 2400, mix: { wood: 30, stone: 55, metal: 15 }, factor: 1.25 }
     time: { base: 3000, factor: 1.3 }
     population: 8
     effects: { train_speed: { base: 1.0, factor: 0.94 } }
@@ -201,7 +203,7 @@ buildings:
     max_level: 20
     requires: { civic_centre: 3 }
     zeroad: temple
-    cost: { total: 900, factor: 1.28 }
+    cost: { total: 900, mix: { wood: 15, stone: 65, metal: 20 }, factor: 1.28 }
     time: { base: 1500, factor: 1.3 }
     population: 2
     effects: { culture: { base: 10, factor: 1.18, round: 1 } }
@@ -324,8 +326,8 @@ buildings:
     max_level: 30
     requires: { civic_centre: 10, temple: 5 }
     zeroad: [theater, royal_stoa, gymnasium, temple]
-    cost: { total: 4000, mix: { food: 400, wood: 1200, stone: 1800, metal: 600 }, factor: 1.22 }
-    time: { base: 3600, factor: 1.25 }
+    cost: { total: 4000, mix: { food: 400, wood: 1200, stone: 1800, metal: 600 }, factor: 1.25, speed_exponent: 0.5 }
+    time: { base: 3600, factor: 1.2 }
     population: 2
     effects: { culture: { base: 30, factor: 1.12, round: 1 } }
   - id: great_forge
@@ -335,8 +337,8 @@ buildings:
     max_level: 30
     requires: { civic_centre: 10, barracks: 5 }
     zeroad: [forge, arsenal, barracks]
-    cost: { total: 4000, mix: { food: 400, wood: 1200, stone: 800, metal: 1600 }, factor: 1.22 }
-    time: { base: 3600, factor: 1.25 }
+    cost: { total: 4000, mix: { food: 400, wood: 1200, stone: 800, metal: 1600 }, factor: 1.25, speed_exponent: 0.5 }
+    time: { base: 3600, factor: 1.2 }
     population: 2
     effects:
       defense: [0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.14, 0.16, 0.18, 0.20,
@@ -349,7 +351,7 @@ buildings:
     max_level: 25
     requires: { civic_centre: 20, temple: 10, university: 10 }
     zeroad: wonder
-    cost: { total: 200000, mix: { food: 3000, wood: 5000, stone: 8000, metal: 4000 }, factor: 1.15 }  # 10x (2026-11-05)
+    cost: { total: 200000, mix: { food: 3000, wood: 5000, stone: 8000, metal: 4000 }, factor: 1.15, speed_exponent: 0.5 }
     time: { base: 72000, factor: 1.12 }
     population: 5
     effects: { culture: { base: 50, factor: 1.1, round: 1 } }
@@ -360,7 +362,7 @@ buildings:
     max_level: 20
     requires: { civic_centre: 2 }
     zeroad: wall_tower
-    cost: { total: 400, factor: 1.28 }
+    cost: { total: 400, mix: { wood: 10, stone: 80, metal: 10 }, factor: 1.28 }
     time: { base: 700, factor: 1.3 }
     population: 0
     effects:
@@ -369,7 +371,10 @@ buildings:
 
 village:
   base_production: { food: 12, wood: 6, stone: 6, metal: 6 }
-  base_storage: 800
+  base_storage: 1000
+  # Stores, and what houses hide, grow with the world speed: capacity x speed^exponent (x7 at speed 50), so a
+  # store takes about as many real hours to fill on a fast world as on a slow one. 0 switches it off.
+  storage_speed_exponent: 0.5
   field_slots: [woodline, woodline, woodline, woodline, quarry, quarry, quarry, quarry,
                 mine, mine, mine, mine, field, field, field, field, field, field]
   center_slots: 47
@@ -885,7 +890,7 @@ extensions:
       fury: { name: Battle fury, cost: 100, attack: 0.2, description: "+20% attack for the next army sent from this city." }
       wrath: { name: Wrath of the gods, cost: 200, destroy: 0.15, target: true, description: "A foreign city within 20 tiles loses 15% of its stores." }
   # Great buildings: anyone may contribute resources; a level is finished when contributions reach its cost.
-  great_buildings: { buildings: [great_theatre, great_forge], reward: 0.5 }
+  great_buildings: { buildings: [great_theatre, great_forge, wonder], reward: 0.5 }
   # Techs that make this city's troops better soldiers (fraction added to attack and defense).
   ranks: { drill: 0.1, veterans: 0.1 }
   # Techs that make a city's citizens fight when it is attacked (soldiers per citizen), as the people's spearmen.

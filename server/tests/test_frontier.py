@@ -238,13 +238,37 @@ def test_overrides_merge_onto_the_pack(tmp_path):
     deep_merge(base, {"world": {"speed": 3}, "extensions": {"horde": None, "camps": {"count": 0}, "pvp": {"enabled": False}}})
     assert base == {"world": {"width": 121, "speed": 3}, "extensions": {"camps": {"count": 0}, "pvp": {"enabled": False}}}, "null removes, dicts merge"
     f = tmp_path / "w9.yaml"
-    f.write_text("extensions:\n  camps: {count: 3}\n")
-    assert load_overrides(str(f)) == {"extensions": {"camps": {"count": 3}}}
-    f.write_text("units: []\n")
+    f.write_text("extensions:\n  camps: {count: 3}\nbuildings:\n  wonder: {cost: {speed_exponent: 1}}\n")
+    assert load_overrides(str(f)) == {"extensions": {"camps": {"count": 3}}, "buildings": {"wonder": {"cost": {"speed_exponent": 1}}}}
     import pytest
 
+    for bad in ("units: []\n", "buildings: [wonder]\n"):
+        f.write_text(bad)
+        with pytest.raises(ValueError):
+            load_overrides(str(f))
+
+
+def test_the_world_speed_scales_stores_and_world_projects(game: Game, tmp_path):
+    import pytest
+
+    from ovian_server.content import load_content
+
+    f = tmp_path / "fast.yaml"
+    f.write_text("village: {storage_speed_exponent: 0.5}\nbuildings:\n  wonder: {cost: {speed_exponent: 0.5}}\n  warehouse: {max_level: 25}\n")
+    slow = load_content(game.settings.content_dir, game.pm, 1, str(f)).pack
+    fast = load_content(game.settings.content_dir, game.pm, 4, str(f)).pack
+
+    def b(pack, bid):
+        return next(x for x in pack["buildings"] if x["id"] == bid)
+
+    assert fast["village"]["base_storage"] == 2 * slow["village"]["base_storage"], "stores grow with speed ** exponent"
+    assert b(fast, "warehouse")["effects"]["storage"]["curve"]["base"] == 2 * b(slow, "warehouse")["effects"]["storage"]["curve"]["base"]
+    assert b(fast, "warehouse")["max_level"] == 25, "buildings are overridden by id"
+    assert b(fast, "wonder")["cost"]["base"] == {r: 2 * v for r, v in b(slow, "wonder")["cost"]["base"].items()}, "a world project"
+    assert b(fast, "woodcutter")["cost"]["base"] == b(slow, "woodcutter")["cost"]["base"], "ordinary costs do not change"
+    f.write_text("buildings:\n  pyramid: {max_level: 3}\n")
     with pytest.raises(ValueError):
-        load_overrides(str(f))
+        load_content(game.settings.content_dir, game.pm, 1, str(f))
 
 
 async def test_settings_schema_and_modes(game: Game, client):

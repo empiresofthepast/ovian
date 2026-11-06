@@ -227,9 +227,16 @@ async def test_great_buildings_take_contributions(game: Game, client, register):
     v = (await alice.post(f"/villages/{bob.village_id}/great/great_theatre/contribute", {"from_village_id": alice.village_id, "resources": gift})).json()
     assert v["id"] == alice.village_id, "the donor sees their own city"
     g = (await bob.village())["great"][0]
-    assert g["level"] == 2 and g["points"] == 0
+    assert g["level"] == 1 and g["building_level"] == 2 and g["building_until"] > game.clock.now(), "funded: under construction"
+    assert g["next_level"] == 3 and g["points"] == 0, "contributions now go to the level after"
     reports = (await alice.get("/reports")).json()
     assert any(r["kind"] == "great" for r in reports)
+    job = (await bob.village())["build_queue"][0]
+    assert (await bob.delete(f"/villages/{bob.village_id}/jobs/{job['id']}")).json()["error"] == "funded_build"
+    game.clock.value = g["building_until"]
+    await game.run_due()
+    g = (await bob.village())["great"][0]
+    assert g["level"] == 2 and "building_until" not in g and g["next_level"] == 3
 
 
 async def test_vacation_achievements_and_wonder(game: Game, client, register):

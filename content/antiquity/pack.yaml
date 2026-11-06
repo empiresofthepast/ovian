@@ -31,7 +31,8 @@ village:
     wood: 6
     stone: 6
     metal: 6
-  base_storage: 800
+  base_storage: 1000
+  storage_speed_exponent: 0.5
   field_slots:
   - woodline
   - woodline
@@ -118,10 +119,10 @@ buildings:
       wood: 40
       stone: 100
       metal: 50
-    factor: 1.67
+    factor: 1.5
   time:
     base: 260
-    factor: 1.6
+    factor: 1.5
   population: 2
   effects:
     production:
@@ -141,10 +142,10 @@ buildings:
       wood: 80
       stone: 40
       metal: 80
-    factor: 1.67
+    factor: 1.5
   time:
     base: 220
-    factor: 1.6
+    factor: 1.5
   population: 2
   effects:
     production:
@@ -164,10 +165,10 @@ buildings:
       wood: 100
       stone: 80
       metal: 30
-    factor: 1.67
+    factor: 1.5
   time:
     base: 450
-    factor: 1.6
+    factor: 1.5
   population: 3
   effects:
     production:
@@ -183,11 +184,12 @@ buildings:
   max_level: 10
   cost:
     base:
-      wood: 250
-    factor: 1.67
+      wood: 150
+      stone: 100
+    factor: 1.5
   time:
     base: 150
-    factor: 1.6
+    factor: 1.5
   population: 0
   effects:
     production:
@@ -210,7 +212,7 @@ buildings:
     factor: 1.15
   time:
     base: 600
-    factor: 1.2
+    factor: 1.14
   population: 2
   effects:
     build_speed:
@@ -226,8 +228,9 @@ buildings:
     civic_centre: 1
   cost:
     base:
-      wood: 420
-    factor: 1.28
+      wood: 300
+      stone: 200
+    factor: 1.3
   time:
     base: 500
     factor: 1.3
@@ -238,8 +241,8 @@ buildings:
       - stone
       - metal
       curve:
-        base: 1200
-        factor: 1.28
+        base: 1500
+        factor: 1.3
         round: 100
 - id: farmstead
   name: Farmstead
@@ -251,8 +254,9 @@ buildings:
     civic_centre: 1
   cost:
     base:
-      wood: 270
-    factor: 1.28
+      wood: 245
+      stone: 105
+    factor: 1.3
   time:
     base: 450
     factor: 1.3
@@ -261,8 +265,8 @@ buildings:
       resources:
       - food
       curve:
-        base: 1200
-        factor: 1.28
+        base: 1500
+        factor: 1.3
         round: 100
 - id: house
   name: House
@@ -272,7 +276,9 @@ buildings:
   unique: false
   cost:
     base:
-      wood: 130
+      wood: 80
+      stone: 40
+      metal: 15
     factor: 1.28
   time:
     base: 260
@@ -309,8 +315,9 @@ buildings:
     rally_point: 1
   cost:
     base:
-      wood: 535
-      stone: 195
+      wood: 400
+      stone: 180
+      metal: 145
     factor: 1.28
   time:
     base: 900
@@ -331,8 +338,9 @@ buildings:
     civic_centre: 5
   cost:
     base:
-      wood: 605
-      stone: 115
+      wood: 430
+      stone: 145
+      metal: 145
     factor: 1.28
   time:
     base: 1100
@@ -352,9 +360,10 @@ buildings:
     barracks: 10
   cost:
     base:
-      wood: 800
-      stone: 1600
-    factor: 1.28
+      wood: 720
+      stone: 1320
+      metal: 360
+    factor: 1.25
   time:
     base: 3000
     factor: 1.3
@@ -372,8 +381,9 @@ buildings:
     civic_centre: 3
   cost:
     base:
-      wood: 150
-      stone: 750
+      wood: 135
+      stone: 585
+      metal: 180
     factor: 1.28
   time:
     base: 1500
@@ -633,10 +643,11 @@ buildings:
       wood: 1200
       stone: 1800
       metal: 600
-    factor: 1.22
+    factor: 1.25
+    speed_exponent: 0.5
   time:
     base: 3600
-    factor: 1.25
+    factor: 1.2
   population: 2
   effects:
     culture:
@@ -657,10 +668,11 @@ buildings:
       wood: 1200
       stone: 800
       metal: 1600
-    factor: 1.22
+    factor: 1.25
+    speed_exponent: 0.5
   time:
     base: 3600
-    factor: 1.25
+    factor: 1.2
   population: 2
   effects:
     defense:
@@ -710,6 +722,7 @@ buildings:
       stone: 80000
       metal: 40000
     factor: 1.15
+    speed_exponent: 0.5
   time:
     base: 72000
     factor: 1.12
@@ -728,8 +741,9 @@ buildings:
     civic_centre: 2
   cost:
     base:
-      wood: 35
-      stone: 365
+      wood: 40
+      stone: 320
+      metal: 40
     factor: 1.28
   time:
     base: 700
@@ -975,6 +989,28 @@ units:
     fortress: 5
   techs:
   - hero_cult
+- id: athen_settler
+  tribe: athen
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: &id001
+    food: 24000
+    wood: 18000
+    stone: 12000
+    metal: 9000
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: &id002
+    infantry: 5
+    cavalry: 5
+  speed: 4
+  carry: 0
+  requires: &id003
+    civic_centre: 10
 - id: spart_infantry_spearman_neodamodes
   name: Neodamodes Hoplite
   description: 'Neodamōdeis. Counters: 2.5× vs Cavalry.'
@@ -1112,6 +1148,21 @@ units:
     fortress: 1
   techs:
   - hero_cult
+- id: spart_settler
+  tribe: spart
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: mace_infantry_slinger
   name: Rhodian Slinger
   description: Sphendonētēs Rhodios.
@@ -1268,6 +1319,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: mace_settler
+  tribe: mace
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: ptol_infantry_spearman_merc
   name: Mercenary Thureos Spearman
   description: 'Thureophoros Misthophoros. Counters: 2.5× vs Cavalry.'
@@ -1465,6 +1531,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: ptol_settler
+  tribe: ptol
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: sele_infantry_swordsman_merc
   name: Thracian Mercenary Swordsman
   description: Rhomphaiaphoros Thrakikos.
@@ -1662,6 +1743,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: sele_settler
+  tribe: sele
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: rome_infantry_spearman
   name: Veteran Spearman
   description: Triārius. Elite rank Spearmen can be promoted to champion Centurions.
@@ -1845,6 +1941,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: rome_settler
+  tribe: rome
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: cart_infantry_spearman
   name: Libyan Spearman
   description: 'Sǝḫīr Ḥanīt. Counters: 2.5× vs Cavalry.'
@@ -1939,6 +2050,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: cart_settler
+  tribe: cart
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: iber_infantry_spearman
   name: Spearman
   description: 'Ezkutari. Counters: 2.5× vs Cavalry.'
@@ -2099,6 +2225,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: iber_settler
+  tribe: iber
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: gaul_infantry_spearman
   name: Spearman
   description: 'Catucos. Counters: 2.5× vs Cavalry.'
@@ -2238,6 +2379,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: gaul_settler
+  tribe: gaul
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: brit_infantry_spearman
   name: Celtic Spearman
   description: 'Catucos. Counters: 2.5× vs Cavalry.'
@@ -2377,6 +2533,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: brit_settler
+  tribe: brit
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: germ_infantry_spearman
   name: Cimbrian Spearman
   description: 'Gaizamann. Counters: 2.5× vs Cavalry.'
@@ -2559,6 +2730,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: germ_settler
+  tribe: germ
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: achae_infantry_spearman
   name: Shield Bearer
   description: 'Sparabara. Counters: 2.5× vs Cavalry.'
@@ -2717,6 +2903,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: achae_settler
+  tribe: achae
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: maur_infantry_spearman
   name: Bamboo Spearman
   description: 'Kauntika. Counters: 2.5× vs Cavalry.'
@@ -2876,6 +3077,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: maur_settler
+  tribe: maur
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: kush_infantry_spearman
   name: Nubian Spearman
   description: 'Iry-rdwy Nhsyw. Counters: 2.5× vs Cavalry.'
@@ -3034,6 +3250,21 @@ units:
     fortress: 5
   techs:
   - strategy
+- id: kush_settler
+  tribe: kush
+  name: Settlers
+  building: civic_centre
+  class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
+  cost: *id001
+  upkeep: 3
+  time: 21600
+  attack: 0
+  defense: *id002
+  speed: 4
+  carry: 0
+  requires: *id003
 - id: han_infantry_spearman
   name: Spearman
   description: 'Máo Bīng. Counters: 2.5× vs Cavalry.'
@@ -3214,230 +3445,13 @@ units:
     fortress: 5
   techs:
   - strategy
-- id: athen_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: athen
-  building: civic_centre
-  class: infantry
-  cost: &id001
-    food: 24000
-    wood: 18000
-    stone: 12000
-    metal: 9000
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: &id002
-    infantry: 5
-    cavalry: 5
-  speed: 4
-  carry: 0
-  requires: &id003
-    civic_centre: 10
-- id: spart_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: spart
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: mace_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: mace
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: ptol_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: ptol
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: sele_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: sele
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: rome_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: rome
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: cart_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: cart
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: iber_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: iber
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: gaul_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: gaul
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: brit_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: brit
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: germ_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: germ
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: achae_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: achae
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: maur_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: maur
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
-- id: kush_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
-  tribe: kush
-  building: civic_centre
-  class: infantry
-  cost: *id001
-  upkeep: 3
-  time: 21600
-  attack: 0
-  defense: *id002
-  speed: 4
-  carry: 0
-  requires: *id003
 - id: han_settler
-  name: Settlers
-  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
-    it becomes your colony, with all its stores. They do not fight.'
   tribe: han
+  name: Settlers
   building: civic_centre
   class: infantry
+  description: 'Families ready to found a city. Send them with an army against a barbarian camp: when the camp falls,
+    it becomes your colony, with all its stores. They do not fight.'
   cost: *id001
   upkeep: 3
   time: 21600
@@ -3653,10 +3667,10 @@ techs:
     people's spearmen; they return to their trades after the battle.
   building: fortress
   level: 10
-  requires:
-    civic_centre: 15
   after:
   - veterans
+  requires:
+    civic_centre: 15
   cost:
     food: 40000
     wood: 30000
@@ -4255,42 +4269,172 @@ extensions:
   terrain:
     radius: 2
     per_tile:
-      mountain: { stone: 0.05 }
-      hills: { stone: 0.02 }
-      forest: { wood: 0.05 }
-    max: { stone: 0.4, wood: 0.4 }
+      mountain:
+        stone: 0.05
+      hills:
+        stone: 0.02
+      forest:
+        wood: 0.05
+    max:
+      stone: 0.4
+      wood: 0.4
   artworks:
     default: greek
-    by_tribe: { athen: greek, spart: greek, mace: greek, ptol: greek, sele: greek, achae: greek, rome: roman, cart: punic, maur: punic, iber: northern, gaul: northern, brit: northern, germ: northern, kush: kushite, han: han }
+    by_tribe:
+      athen: greek
+      spart: greek
+      mace: greek
+      ptol: greek
+      sele: greek
+      achae: greek
+      rome: roman
+      cart: punic
+      maur: punic
+      iber: northern
+      gaul: northern
+      brit: northern
+      germ: northern
+      kush: kushite
+      han: han
     grades:
-      fine: { chance: 0.55, culture: 3 }
-      exceptional: { chance: 0.35, culture: 8 }
-      masterpiece: { chance: 0.1, culture: 15 }
+      fine:
+        chance: 0.55
+        culture: 3
+      exceptional:
+        chance: 0.35
+        culture: 8
+      masterpiece:
+        chance: 0.1
+        culture: 15
     traditions:
       greek:
-        artists: [Phidias, Praxiteles, Polykleitos, Myron, Lysippos, Scopas, Kresilas, Alkamenes, Leochares, Boethus of Chalcedon]
-        subjects: [Athena, Zeus, Apollo, Aphrodite, Hermes, Heracles, Nike, a discus thrower, a spear-bearer, a wounded Amazon, a charioteer, a boxer at rest, a sleeping satyr]
+        artists:
+        - Phidias
+        - Praxiteles
+        - Polykleitos
+        - Myron
+        - Lysippos
+        - Scopas
+        - Kresilas
+        - Alkamenes
+        - Leochares
+        - Boethus of Chalcedon
+        subjects:
+        - Athena
+        - Zeus
+        - Apollo
+        - Aphrodite
+        - Hermes
+        - Heracles
+        - Nike
+        - a discus thrower
+        - a spear-bearer
+        - a wounded Amazon
+        - a charioteer
+        - a boxer at rest
+        - a sleeping satyr
       roman:
-        artists: [Pasiteles, Arcesilaus, Stephanos, Zenodorus, Coponius, Menelaos, Diogenes of Athens, Apollodorus of Damascus]
-        subjects: [Jupiter, Mars, Venus, Roma, the she-wolf and the twins, a general on horseback, a togate senator, a dying Gaul, Fortuna, an orator, the river Tiber]
+        artists:
+        - Pasiteles
+        - Arcesilaus
+        - Stephanos
+        - Zenodorus
+        - Coponius
+        - Menelaos
+        - Diogenes of Athens
+        - Apollodorus of Damascus
+        subjects:
+        - Jupiter
+        - Mars
+        - Venus
+        - Roma
+        - the she-wolf and the twins
+        - a general on horseback
+        - a togate senator
+        - a dying Gaul
+        - Fortuna
+        - an orator
+        - the river Tiber
       punic:
-        artists: [Boethus of Carthage, the mask-maker of Kerkouane, the Tanit carver of Byrsa, the ivory-worker of Motya, the goldsmith of Tharros, the stele-cutter of the tophet]
-        subjects: [Tanit, Baal Hammon, Melqart, a grinning mask, the youth of Motya, a merchant prince, a war elephant, Astarte]
+        artists:
+        - Boethus of Carthage
+        - the mask-maker of Kerkouane
+        - the Tanit carver of Byrsa
+        - the ivory-worker of Motya
+        - the goldsmith of Tharros
+        - the stele-cutter of the tophet
+        subjects:
+        - Tanit
+        - Baal Hammon
+        - Melqart
+        - a grinning mask
+        - the youth of Motya
+        - a merchant prince
+        - a war elephant
+        - Astarte
       northern:
-        artists: [the master of the Gundestrup cauldron, the Hochdorf goldsmith, the Hallstatt sword-smith, the Snettisham torc-maker, the Battersea shield-maker, the Vix bronze-caster, the Glauberg stone-carver, the sculptor of the Lady of Elche, the Osuna carver, the Hirschlanden master]
-        subjects: [a warrior with a torc, the horned god, the Lady of Elche, the horse of the sun, a boar standard, a hero's head, a chieftain on his mound, the three mothers, a wild bull, the Lady of Baza]
+        artists:
+        - the master of the Gundestrup cauldron
+        - the Hochdorf goldsmith
+        - the Hallstatt sword-smith
+        - the Snettisham torc-maker
+        - the Battersea shield-maker
+        - the Vix bronze-caster
+        - the Glauberg stone-carver
+        - the sculptor of the Lady of Elche
+        - the Osuna carver
+        - the Hirschlanden master
+        subjects:
+        - a warrior with a torc
+        - the horned god
+        - the Lady of Elche
+        - the horse of the sun
+        - a boar standard
+        - a hero's head
+        - a chieftain on his mound
+        - the three mothers
+        - a wild bull
+        - the Lady of Baza
       kushite:
-        artists: [the sculptor of Meroë, the goldsmith of Amanishakheto, the Napatan stone-carver, the master of the lion temple]
-        subjects: [Apedemak the lion-god, Amun as a ram, a kandake on her throne, a winged lion, a pharaoh of Napata]
+        artists:
+        - the sculptor of Meroë
+        - the goldsmith of Amanishakheto
+        - the Napatan stone-carver
+        - the master of the lion temple
+        subjects:
+        - Apedemak the lion-god
+        - Amun as a ram
+        - a kandake on her throne
+        - a winged lion
+        - a pharaoh of Napata
       han:
-        artists: [the bronze-caster of the Flying Horse, the terracotta master of Xi'an, Lu Ban, the jade-carver of Mancheng, the lacquerer of Mawangdui]
-        subjects: [the flying horse, a kneeling archer, a bronze dragon, a jade suit, a bell of the ancestors, a scholar official, the Queen Mother of the West]
+        artists:
+        - the bronze-caster of the Flying Horse
+        - the terracotta master of Xi'an
+        - Lu Ban
+        - the jade-carver of Mancheng
+        - the lacquerer of Mawangdui
+        subjects:
+        - the flying horse
+        - a kneeling archer
+        - a bronze dragon
+        - a jade suit
+        - a bell of the ancestors
+        - a scholar official
+        - the Queen Mother of the West
   victory:
     conditions:
-      wonder: { name: Wonder }
-      conquest: { name: Conquest, cities: 20 }
-      battles: { name: Warlord, wins: 1000 }
-      culture: { name: Cultural hegemony, points: 3000 }
+      wonder:
+        name: Wonder
+      conquest:
+        name: Conquest
+        cities: 20
+      battles:
+        name: Warlord
+        wins: 1000
+      culture:
+        name: Cultural hegemony
+        points: 3000
   cities:
     min_distance: 3
   camps:
@@ -4335,6 +4479,7 @@ extensions:
     buildings:
     - great_theatre
     - great_forge
+    - wonder
     reward: 0.5
   ranks:
     drill: 0.1
@@ -4958,6 +5103,11 @@ extensions:
             actor: units/athenians/infantry_spearman_c.xml
             icon: units/athen/champion_infantry.png
             specific_name: Epilektos
+          athen_settler:
+            template: units/athen/support_female_citizen
+            actor: units/athenians/female_citizen.xml
+            icon: units/hele/support_female_citizen.png
+            specific_name: Gynē Athēnaia
         heroes:
         - id: hero_hippocrates
           name: Hippokratēs
@@ -5230,6 +5380,11 @@ extensions:
             actor: units/spartans/infantry_spearman_c.xml
             icon: units/spart/champion_infantry_spear.png
             specific_name: Spartiatēs
+          spart_settler:
+            template: units/spart/support_female_citizen
+            actor: units/spartans/female_citizen.xml
+            icon: units/spart/support_female_citizen.png
+            specific_name: Spartiatis
         heroes:
         - id: hero_agis
           name: Agis
@@ -5502,6 +5657,11 @@ extensions:
             actor: units/macedonians/cavalry_spearman_c_m.xml
             icon: units/mace/champion_cavalry.png
             specific_name: Hetairos
+          mace_settler:
+            template: units/mace/support_female_citizen
+            actor: units/macedonians/female_citizen.xml
+            icon: units/hele/support_female_citizen.png
+            specific_name: Gynē Makedonikē
         heroes:
         - id: hero_alexander_iii
           name: Alexandros ho Megas
@@ -5794,6 +5954,11 @@ extensions:
             actor: units/ptolemies/elephantry_c_m.xml
             icon: units/ptol/champion_elephant.png
             specific_name: Polemou Elephas
+          ptol_settler:
+            template: units/ptol/support_female_citizen
+            actor: units/ptolemies/female_citizen.xml
+            icon: units/ptol/support_female_citizen.png
+            specific_name: Gynē Aigyptia
         heroes:
         - id: hero_cleopatra_vii
           name: Kleopatra H' Philopatōr
@@ -6071,6 +6236,11 @@ extensions:
             actor: units/seleucids/elephantry_c_m.xml
             icon: units/sele/champion_elephant.png
             specific_name: Thorakismenos Elephas
+          sele_settler:
+            template: units/sele/support_female_citizen
+            actor: units/seleucids/female_citizen.xml
+            icon: units/sele/support_female.png
+            specific_name: Gynē Syria
         heroes:
         - id: hero_antiochus_iii
           name: Antiokhos G' Megas
@@ -6343,6 +6513,11 @@ extensions:
             actor: units/romans/cavalry_swordsman_c_m.xml
             icon: units/rome/champion_cavalry.png
             specific_name: Eques Cōnsulāris
+          rome_settler:
+            template: units/rome/support_female_citizen
+            actor: units/romans/female_citizen.xml
+            icon: units/rome/support_female_citizen.png
+            specific_name: Rōmāna
         heroes:
         - id: hero_marcellus
           name: Mārcus Claudius Mārcellus
@@ -6595,6 +6770,11 @@ extensions:
             actor: units/carthaginians/elephantry_c_m.xml
             icon: units/cart/champion_elephant.png
             specific_name: Pil Malḥamit
+          cart_settler:
+            template: units/cart/support_female_citizen
+            actor: units/carthaginians/female_citizen.xml
+            icon: units/cart/support_female_citizen.png
+            specific_name: Aštāh
         heroes:
         - id: hero_hamilcar
           name: Ḥimelqart Baraq
@@ -6862,6 +7042,11 @@ extensions:
             actor: units/iberians/cavalry_javelinist_c_m.xml
             icon: units/iber/champion_cavalry.png
             specific_name: Leial Zalduneria
+          iber_settler:
+            template: units/iber/support_female_citizen
+            actor: units/iberians/female_citizen.xml
+            icon: units/iber/support_female_citizen.png
+            specific_name: Emazteki
         heroes:
         - id: hero_caros
           name: Caros
@@ -7124,6 +7309,11 @@ extensions:
             actor: units/gauls/cavalry_spearman_c_m.xml
             icon: units/gaul/champion_cavalry.png
             specific_name: Uerouicos
+          gaul_settler:
+            template: units/gaul/support_female_citizen
+            actor: units/celts/female_citizen.xml
+            icon: units/celt/support_female_citizen.png
+            specific_name: Bena
         heroes:
         - id: hero_brennus
           name: Brennos
@@ -7386,6 +7576,11 @@ extensions:
             actor: units/britons/chariot_javelinist_c_m.xml
             icon: units/brit/champion_chariot.png
             specific_name: Essedon
+          brit_settler:
+            template: units/brit/support_female_citizen
+            actor: units/celts/female_citizen.xml
+            icon: units/celt/support_female_citizen.png
+            specific_name: Bena
         heroes:
         - id: hero_boudicca
           name: Boudica
@@ -7935,6 +8130,11 @@ extensions:
             actor: units/achaemenids/elephantry_c_m.xml
             icon: units/achae/champion_elephant.png
             specific_name: Pila Hinduya
+          achae_settler:
+            template: units/achae/support_female_citizen
+            actor: units/achaemenids/female_citizen.xml
+            icon: units/achae/support_female_citizen.png
+            specific_name: Banu Miyanrudani
         heroes:
         - id: hero_cyrus_ii
           name: Kuruš
@@ -8202,6 +8402,11 @@ extensions:
             actor: units/mauryas/elephantry_c_m.xml
             icon: units/maur/champion_elephant.png
             specific_name: Gajendra
+          maur_settler:
+            template: units/maur/support_female_citizen
+            actor: units/mauryas/female_citizen.xml
+            icon: units/maur/support_female_citizen.png
+            specific_name: Naari
         heroes:
         - id: hero_ashoka
           name: Aśoka Devānāmpriya
@@ -8469,6 +8674,11 @@ extensions:
             actor: units/kushites/elephantry_c_m.xml
             icon: units/kush/champion_elephant.png
             specific_name: Abore ʿhȝ
+          kush_settler:
+            template: units/kush/support_female_citizen
+            actor: units/kushites/female_citizen.xml
+            icon: units/kush/support_female_citizen.png
+            specific_name: Shmt
         heroes:
         - id: hero_amanirenas
           name: Amnirense qore li kdwe li
@@ -8746,6 +8956,11 @@ extensions:
             actor: units/han/cavalry_spearman_c_m.xml
             icon: units/han/champion_cavalry_spearman.png
             specific_name: Yōuzhōu Tūqí
+          han_settler:
+            template: units/han/support_female_citizen
+            actor: units/han/female_citizen.xml
+            icon: units/han/support_female_citizen.png
+            specific_name: Fù Nǚ
         heroes:
         - id: hero_han_xin
           name: Hán Xìn

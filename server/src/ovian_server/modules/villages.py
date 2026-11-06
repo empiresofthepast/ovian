@@ -424,6 +424,8 @@ async def cancel(village_id: int, job_id: int, player_id: PlayerId, game: GameDe
         p = job["payload"]
         if p.get("paid_by") and p["paid_by"] != player_id:
             raise rule("paid_by_overlord", "your overlord pays for this construction; only it can stop it")
+        if p.get("funded"):
+            raise rule("funded_build", "this level was paid for by contributions and cannot be cancelled")
         await accrue(game, tx, v)
         if job["kind"] == BUILD:
             later = await tx.conn.fetchval(

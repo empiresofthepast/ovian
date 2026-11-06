@@ -95,6 +95,31 @@ The tech icons are 0 A.D. technology portraits.
 
 **Submission.** Win five battles in a row against a city and it becomes your vassal. It pays you 10% of its production, its culture radiates for you, and its buildings take on your civilization's architecture. In return it is under your protection: +5% production, +15% defense against anyone but you, +5 contentment, and merchants and reinforcements between it and your cities travel 50% faster. A single win against its overlord sets it free. See [content-packs.md](content-packs.md#submission).
 
+## Economy
+
+The numbers are written for speed 1; the server scales what must grow with the speed when it loads the pack (see below). The rebalance of 2026-11-06 follows these rules:
+
+- **A field pays for itself in weeks, at every level.** Output grows ×1.35 per level and cost ×1.5 (was ×1.67), so a level pays back in about 6 days at level 2 and 13 at level 10 (was 34). All ten levels of one field cost 28k (was 63k).
+- **A store fits the costs around it.** A storehouse level holds 1,500 × 1.3^(L−1): 15,900 at level 10, 219,300 at level 20, for about a third of that in cost. No ordinary building wants more than one store a couple of levels ahead of it; the fortress, the dearest, needs a store two levels above its own. The base store is 1,000, enough for any first level a new city can build. Stores are repeatable.
+- **Stores grow with the speed.** Capacity, base storage and what houses hide are multiplied by speed^0.5 (`village.storage_speed_exponent`): ×7 at speed 50, where a full set of fields would otherwise fill a speed-1 store in half an hour.
+- **Every resource is wanted.** The 0 A.D. cost mixes made wood half of everything a city spends. Fields, stores, houses, barracks, stables, the temple and the wall now take stone and metal too: a whole city to level 10 costs about 38% wood, 38% stone, 13% metal and 11% food, and metal goes mostly to armies and research.
+- **World projects scale with the speed.** The great buildings and the wonder are funded by contributions (see [society.md](society.md#great-buildings)); their cost grows ×1.25 (great buildings) and ×1.15 (wonder) per level and is multiplied by speed^0.5 (`cost.speed_exponent`), ×7 at speed 50. In round 1 of the live world the wonder went up 24 levels in one afternoon at speed 50; at that speed its 25 levels now cost about 300M, a week of a six-city empire at full stretch, and a funded level still takes its construction time.
+- **Time curves stay playable at speed 1.** The Civic Centre's build time grows ×1.14 per level (was ×1.2), so level 60 takes about two days with its own bonus instead of a month; fields ×1.5 (was ×1.6).
+
+| Building | Levels | Level 1 | Level 10 | Top level | Per level |
+|---|---|---|---|---|---|
+| Woodline, Quarry, Mine, Field | 10 | 250–270 | 9,600–10,400 | 9,600–10,400 | ×1.5 |
+| Storehouse (holds 1,500 → 15,900 → 219,300) | 20 | 500 | 5,300 | 73,100 | ×1.3 |
+| Farmstead (same capacity) | 20 | 350 | 3,700 | 51,200 | ×1.3 |
+| Civic Centre | 60 | 185 | 650 | 705,000 | ×1.15 |
+| Barracks, Stable | 20 | 720–725 | 6,700 | 78,000–79,000 | ×1.28 |
+| Fortress | 20 | 2,400 | 17,900 | 166,500 | ×1.25 |
+| Temple, University | 20 | 900–1,100 | 8,300–10,100 | 98,000–120,000 | ×1.28 |
+| Great Theatre, Great Forge | 30 | 4,000 | 29,800 | 2.58M | ×1.25, × speed^0.5 |
+| Wonder | 25 | 200,000 | 704,000 | 5.73M | ×1.15, × speed^0.5 |
+
+Totals are the sum over the four resources at speed 1. Run `tools/zeroad/convert.sh` after changing `tools/zeroad/antiquity.yaml`; a spawned world can change any of these without a new pack through its overrides (`buildings`, `village`, see [worlds.md](worlds.md)).
+
 ## Art mapping
 
 The pack's `extensions.zeroad` block records, for every civ, the 0 A.D. template, actor, icon and local name behind each building and unit. For example, Roman barracks are `structures/romans/barracks.xml` and are called *Castrum*. The [diorama front end](diorama.md) uses it to dress each player's city in their civilization's architecture.

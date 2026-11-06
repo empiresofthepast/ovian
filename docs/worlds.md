@@ -156,9 +156,12 @@ Modes are presets of overrides (`GET /api/v1/settings/modes` on any world):
 | `pve` | no war between players (`pvp.enabled: false`); more camps, a stronger horde, a week of protection; no battle victory |
 | `pvp` | no camps or horde; a day of protection; abandoned cities fall in three days; battles and conquest count |
 
-**Overrides** are a `{world: {...}, extensions: {...}}` document merged onto the pack when the world's server starts
-(`OVIAN_OVERRIDES_FILE`): nested keys merge, `null` removes a group, which switches features that need their group
-off (`GET /api/v1/settings/schema` lists every group, its code defaults and whether leaving it out turns it off).
+**Overrides** are a `{world: {...}, village: {...}, buildings: {...}, extensions: {...}}` document merged onto the
+pack when the world's server starts (`OVIAN_OVERRIDES_FILE`): nested keys merge, `null` removes a group, which
+switches features that need their group off (`GET /api/v1/settings/schema` lists every group, its code defaults and
+whether leaving it out turns it off). `buildings` maps a building id to the keys to change, for example
+`buildings: {wonder: {cost: {factor: 1.2}}, storehouse: {max_level: 25}}`; `village` reaches `base_storage`,
+`storage_speed_exponent`, the start resources and the growth phases.
 A world made by hand uses the same file: point `OVIAN_OVERRIDES_FILE` at it.
 
 Settings: `OVIAN_SPAWNER_KEY` (shared by the hub and the spawner), `OVIAN_REPO_DIR` (this checkout's path on the
