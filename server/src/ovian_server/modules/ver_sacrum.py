@@ -110,6 +110,10 @@ async def send_migrants(village_id: int, order: Migration, player_id: PlayerId, 
             raise rule("not_settleable", "nobody can live there")
         if await village_at(tx.conn, order.x, order.y):
             raise rule("tile_taken", "a city already stands there")
+        from .auth import crowded, spacing
+
+        if await crowded(game, tx.conn, order.x, order.y):
+            raise rule("too_close", f"cities must stand at least {spacing(game):g} tiles apart")
         if await tx.conn.fetchval(
             "SELECT 1 FROM jobs WHERE kind = $1 AND (payload->>'x')::int = $2 AND (payload->>'y')::int = $3", ARRIVE, order.x, order.y
         ):

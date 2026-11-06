@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import random
 import re
 from typing import TYPE_CHECKING, Any
@@ -25,30 +26,44 @@ router = APIRouter(tags=["auth"])
 USERNAME = re.compile(r"^[A-Za-z0-9_\-]{3,24}$")
 
 
+def spacing(game: Game) -> float:
+    """Least distance in tiles between two cities (pack extension ``cities.min_distance``), so names stay readable."""
+    return float(game.content.extensions.get("cities", {}).get("min_distance", 3))
+
+
+async def crowded(game: Game, conn: Any, x: int, y: int) -> bool:
+    """True when a city stands closer than the spacing to (x, y), or on it."""
+    d = spacing(game)
+    r = math.ceil(d) - 1
+    return bool(await conn.fetchval(
+        """SELECT 1 FROM villages WHERE x BETWEEN $1::int - $3::int AND $1::int + $3::int
+           AND y BETWEEN $2::int - $3::int AND $2::int + $3::int
+           AND sqrt(((x - $1::int) ^ 2 + (y - $2::int) ^ 2)::float8) < $4::float8 LIMIT 1""",
+        x, y, max(r, 0), d,
+    ))
+
+
 async def found_village(game: Game, tx: Tx, player_id: int, name: str) -> VillageRow:
-    """Create a village on a free settleable tile near the centre of the map."""
+    """Create a village on a free settleable tile near the centre of the map, away from other cities."""
     rng = random.Random()
-    for _ in range(20):
-        candidates = game.engine.spawn_candidates(rng.getrandbits(63), 64)
-        taken = {
-            (r["x"], r["y"])
-            for r in await tx.conn.fetch(
-                "SELECT x, y FROM villages WHERE (x, y) IN (SELECT * FROM unnest($1::int[], $2::int[]))",
-                [c[0] for c in candidates], [c[1] for c in candidates],
-            )
-        }
-        free = [c for c in candidates if c not in taken]
+    d = spacing(game)
+    taken = [(r["x"], r["y"]) for r in await tx.conn.fetch("SELECT x, y FROM villages")]
+    for attempt in range(8):
+        candidates = game.engine.spawn_candidates(rng.getrandbits(63), 64 * 4 ** attempt)
+        free = [c for c in candidates if all(math.hypot(c[0] - t[0], c[1] - t[1]) >= d for t in taken)]
         if not free:
             continue
-        x, y = rng.choice(free[:16])
-        v = await found_village_at(game, tx, player_id, name, x, y)
-        if v is not None:
-            return v
+        for x, y in rng.sample(free[:16], min(16, len(free))):
+            v = await found_village_at(game, tx, player_id, name, x, y)
+            if v is not None:
+                return v
     raise GameError(503, "world_full", "no free land left")
 
 
 async def found_village_at(game: Game, tx: Tx, player_id: int, name: str, x: int, y: int) -> VillageRow | None:
-    """Create a village on a given tile; None if the tile is already taken."""
+    """Create a village on a given tile; None if the tile is taken or too close to another city."""
+    if await crowded(game, tx.conn, x, y):
+        return None
     now = game.clock.now()
     state = game.engine.create_village(now)
     r = await tx.conn.fetchrow(

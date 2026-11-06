@@ -243,6 +243,10 @@ auxiliaries: { cost: 1.25, mood_per_100: -3, mood_max: -15, mood_hours: 24 }
 
 ## Frontier
 
+### City spacing
+
+`cities.min_distance` (default 3): no new city (a new player, a ver sacrum colony, a barbarian camp) may be founded closer than this many tiles to another, so the map stays readable.
+
 ### Abandoned cities
 
 A player not seen for `abandon.days` real days (not on vacation, not a bot) loses every city to the barbarians: each becomes a camp, "Ruins of <name>", keeping its troops and stores (or a camp garrison when it had none), one camp level per `per_level` population. Vassals go free, foreign garrisons march home, trade routes and offers end. Settlers can found a colony in the ruins. A player who comes back with no city starts afresh with a new one. Without `abandon`, cities are never abandoned.

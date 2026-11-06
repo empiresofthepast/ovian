@@ -125,3 +125,15 @@ async def test_mark_all_reports_read(game: Game, register):
     assert (await alice.get("/me")).json()["unread_reports"] == 0
     assert all(r["read"] for r in (await alice.get("/reports")).json())
     assert (await bob.get("/me")).json()["unread_reports"] == 1, "only your own reports"
+
+
+async def test_cities_keep_their_distance(game: Game, register):
+    from ovian_server.modules.auth import found_village_at
+
+    players = [await register(f"player{i}") for i in range(12)]
+    rows = await game.pool.fetch("SELECT x, y FROM villages")
+    assert len(rows) == 12
+    assert all(a == b or ((a["x"] - b["x"]) ** 2 + (a["y"] - b["y"]) ** 2) >= 9 for a in rows for b in rows), "three tiles apart"
+    home = await players[0].village()
+    async with game.tx() as tx:
+        assert await found_village_at(game, tx, players[0].id, "Too close", home["x"] + 2, home["y"]) is None

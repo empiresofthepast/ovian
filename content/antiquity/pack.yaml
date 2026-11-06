@@ -4252,6 +4252,8 @@ extensions:
     production_per_point: 0.02
     revive: 14400
     speed: 10
+  cities:
+    min_distance: 3
   camps:
     count: 12
     min_distance: 4
