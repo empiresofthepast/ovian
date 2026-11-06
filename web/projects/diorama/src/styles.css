@@ -192,6 +192,7 @@ input {
 .reports { position: absolute; top: 72px; left: 50%; transform: translateX(-50%); width: min(900px, calc(100% - 24px)); max-height: calc(100% - 100px); padding: 14px 16px; display: flex; flex-direction: column; }
 .reports__cols { display: grid; grid-template-columns: 300px 1fr; gap: 16px; min-height: 0; overflow: hidden; margin-top: 10px; }
 .reports__list { list-style: none; margin: 0; padding: 0; overflow: auto; max-height: 60vh; }
+.reports__all { align-self: flex-start; margin: 0 0 8px; }
 .reports__item { width: 100%; text-align: left; display: flex; flex-direction: column; background: none; border: 0; border-bottom: 1px solid rgba(233, 196, 106, .12); color: var(--muted); padding: 6px 4px; cursor: pointer; font: inherit; }
 .reports__item--unread { color: var(--ink); font-weight: 700; }
 .reports__item--on, .reports__item:hover { background: rgba(233, 196, 106, .08); color: var(--ink); }

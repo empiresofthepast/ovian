@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Api } from '../../core/api.service';
 import { GameStore } from '../../core/game.store';
@@ -10,7 +10,10 @@ import { UI } from '../../shared/ui';
   selector: 'ov-reports',
   imports: [RouterLink, DatePipe, DecimalPipe, ...UI],
   template: `
-    <div class="page-head"><h1 class="page-title">{{ 'nav.reports' | label }}</h1></div>
+    <div class="page-head">
+      <h1 class="page-title">{{ 'nav.reports' | label }}</h1>
+      @if (hasUnread()) {<button class="btn btn--ghost btn--small" (click)="markAllRead()">{{ 'report.mark_all_read' | label: 'Mark all as read' }}</button>}
+    </div>
     <div class="reports">
       <section class="panel reports__list">
         @for (r of list(); track r.id) {
@@ -122,6 +125,7 @@ export class ReportsComponent {
   protected readonly list = signal<ReportSummary[]>([]);
   protected readonly report = signal<Report | null>(null);
   protected readonly more = signal(false);
+  protected readonly hasUnread = computed(() => (this.game.me()?.unread_reports ?? 0) > 0 || this.list().some((r) => !r.read));
 
   constructor() {
     void this.load();
@@ -151,6 +155,16 @@ export class ReportsComponent {
       this.report.set(r);
       this.list.update((l) => l.map((x) => (x.id === id ? { ...x, read: true } : x)));
       void this.game.refreshMe();
+    } catch (e) {
+      this.game.toast(this.game.errorText(e), 'bad');
+    }
+  }
+
+  protected async markAllRead(): Promise<void> {
+    try {
+      await this.api.markAllReportsRead();
+      this.list.update((l) => l.map((x) => ({ ...x, read: true })));
+      this.game.me.update((m) => m && { ...m, unread_reports: 0 });
     } catch (e) {
       this.game.toast(this.game.errorText(e), 'bad');
     }

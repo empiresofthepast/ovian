@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Api } from '@core/api.service';
 import { EngineService } from '@core/engine.service';
@@ -16,6 +16,7 @@ import { UI } from '../ui';
     <section class="hud-panel reports" role="dialog" aria-label="Reports">
       <button class="close" (click)="close()" aria-label="Close" title="Close (Esc)">✕</button>
       <h2 class="selection__title">Reports</h2>
+      @if (hasUnread()) {<button class="btn btn--small reports__all" (click)="markAllRead()">Mark all as read</button>}
       <div class="reports__cols">
         <ul class="reports__list">
           @for (r of list(); track r.id) {
@@ -117,6 +118,7 @@ export class ReportsComponent {
   private readonly art = inject(ArtService);
   protected readonly list = signal<ReportSummary[]>([]);
   protected readonly open = signal<Report | null>(null);
+  protected readonly hasUnread = computed(() => (this.game.me()?.unread_reports ?? 0) > 0 || this.list().some((r) => !r.read));
 
   constructor() {
     void this.api.reports().then((l) => this.list.set(l));
@@ -126,6 +128,12 @@ export class ReportsComponent {
     this.open.set(await this.api.report(id));
     this.list.update((l) => l.map((r) => (r.id === id ? { ...r, read: true } : r)));
     void this.game.refreshMe();
+  }
+
+  async markAllRead(): Promise<void> {
+    await this.api.markAllReportsRead();
+    this.list.update((l) => l.map((r) => ({ ...r, read: true })));
+    this.game.me.update((m) => m && { ...m, unread_reports: 0 });
   }
 
   when(ms: number): string {

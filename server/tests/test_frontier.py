@@ -112,3 +112,16 @@ async def test_pacts_tribute_and_treachery(game: Game, client, register):
     tiles = (await alice.get("/map", params={"x": target["x"] - 1, "y": target["y"] - 1, "w": 5, "h": 3})).json()["villages"]
     assert next(x for x in tiles if x["id"] == alice.village_id)["treacherous"]
     assert any("broke your pact" in r["title"] for r in (await bob.get("/reports")).json())
+
+
+async def test_mark_all_reports_read(game: Game, register):
+    alice = await register("alice")
+    bob = await register("bob")
+    for t in ("one", "two", "three"):
+        await game.pool.execute("INSERT INTO reports (player_id, kind, title, data, created_at) VALUES ($1, 'test', $2, '{}', 0)", alice.id, t)
+    await game.pool.execute("INSERT INTO reports (player_id, kind, title, data, created_at) VALUES ($1, 'test', 'theirs', '{}', 0)", bob.id)
+    assert (await alice.get("/me")).json()["unread_reports"] == 3
+    assert (await alice.post("/reports/read")).json() == {"marked": 3}
+    assert (await alice.get("/me")).json()["unread_reports"] == 0
+    assert all(r["read"] for r in (await alice.get("/reports")).json())
+    assert (await bob.get("/me")).json()["unread_reports"] == 1, "only your own reports"

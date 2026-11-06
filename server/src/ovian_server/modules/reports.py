@@ -26,6 +26,14 @@ async def list_reports(
     return [dict(r) for r in rows]
 
 
+@router.post("/reports/read")
+async def mark_all_read(player_id: PlayerId, game: GameDep) -> dict[str, int]:
+    """Marks every report of the player read; returns how many were unread."""
+    assert game.pool is not None
+    status = await game.pool.execute("UPDATE reports SET read = true WHERE player_id = $1 AND NOT read", player_id)
+    return {"marked": int(status.split()[-1])}
+
+
 @router.get("/reports/{report_id}")
 async def get_report(report_id: int, player_id: PlayerId, game: GameDep) -> dict[str, Any]:
     """Returns the full report and marks it read."""

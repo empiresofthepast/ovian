@@ -226,6 +226,7 @@ export class Api {
   // reports and chat
   reports(before?: number) { return this.request<ReportSummary[]>('GET', `/reports${before ? `?before=${before}` : ''}`); }
   report(id: number) { return this.request<Report>('GET', `/reports/${id}`); }
+  markAllReportsRead() { return this.request<{ marked: number }>('POST', '/reports/read'); }
   deleteReport(id: number) { return this.request<void>('DELETE', `/reports/${id}`); }
   chatHistory(channel: string) { return this.request<ChatMessage[]>('GET', `/chat/${channel}`); }
   chatPost(channel: string, text: string) { return this.request<ChatMessage>('POST', `/chat/${channel}`, { text }); }
