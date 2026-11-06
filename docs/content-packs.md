@@ -243,6 +243,10 @@ auxiliaries: { cost: 1.25, mood_per_100: -3, mood_max: -15, mood_hours: 24 }
 
 ## Frontier
 
+### The lie of the land
+
+`terrain`: a city quarries more stone next to mountains (and hills) and cuts more wood next to forests. Every tile within `radius` (default 2, a square around the city) adds its `per_tile` bonus: mountain +5% stone, hills +2% stone, forest +5% wood by default, capped by `max` (+40% each). The village view shows it as `terrain {radius, around, bonus}`.
+
 ### City spacing
 
 `cities.min_distance` (default 3): no new city (a new player, a ver sacrum colony, a barbarian camp) may be founded closer than this many tiles to another, so the map stays readable.

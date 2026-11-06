@@ -1,3 +1,4 @@
+import { landChip } from '@core/wiki';
 import { Auxiliaries, EmbassyInfo, ResourceMap, vassalBenefits } from '@core/models';
 import { embassyRules, foreignRole } from '@core/embassy';
 import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
@@ -48,6 +49,7 @@ interface LevyDraft { unit: string; count: number; from: number }
           }
           <div class="topbar__civ">{{ civName() }} · {{ phaseName() }}@if (village()?.submission; as s) { · <span [class.bad]="s.village.player_id !== village()!.player_id" title="Pays tribute; its culture follows the overlord">{{ s.village.player_id === village()!.player_id ? 'colony' : 'vassal' }} of @if (s.village.player_id === village()!.player_id && !game.inspecting()) {<button type="button" class="linkbtn" (click)="goTo(s.village.id)" [title]="'Go to ' + s.village.name">{{ s.village.name }}</button>} @else {{{ s.village.name }}}</span>}
             @if (village()?.season; as se) {&nbsp;· <a class="season-chip" routerLink="/year" [title]="se.name + ', year ' + se.year + (se.festival ? '. ' + se.festival.name + ' open!' : '')">{{ seasonIcon(se.id) }} {{ se.name }}@if (se.festival) { 🏛}</a>}
+            @if (landChip(village()?.terrain); as land) {&nbsp;· <span class="season-chip" [title]="land.title">{{ land.text }}</span>}
             @if (mood(); as m) {&nbsp;· <a class="mood-chip" routerLink="/realm" [class.bad]="m.score < 0" [class.good]="m.score >= 10" [title]="'Contentment ' + m.score + (m.unrest ? ', unrest ' + m.unrest : '')">{{ m.face }} {{ m.score }}</a>}</div>
         </div>
       </div>
@@ -473,6 +475,8 @@ export class VillageComponent implements OnDestroy {
     const s = c.score;
     return { score: s, unrest: c.can_rebel ? Math.round(c.unrest ?? 0) : 0, face: s >= 20 ? '😄' : s >= 5 ? '🙂' : s >= -5 ? '😐' : s >= -20 ? '😠' : '🔥' };
   });
+
+  protected readonly landChip = landChip;
 
   protected seasonIcon(id: string): string {
     return ({ spring: '🌱', summer: '☀', autumn: '🍂', winter: '❄' } as Record<string, string>)[id] ?? '◷';

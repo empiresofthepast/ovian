@@ -137,3 +137,22 @@ async def test_cities_keep_their_distance(game: Game, register):
     home = await players[0].village()
     async with game.tx() as tx:
         assert await found_village_at(game, tx, players[0].id, "Too close", home["x"] + 2, home["y"]) is None
+
+
+async def test_mountains_and_forests_around_a_city(game: Game, register):
+    from ovian_server.modules import terrain
+
+    alice = await register("alice")
+    tiles = {(t["x"], t["y"]): t["terrain"] for t in game.engine.tiles(0, 0, 60, 60)}
+    near = lambda x, y, kind: sum(1 for dx in range(-2, 3) for dy in range(-2, 3) if (dx, dy) != (0, 0) and tiles.get((x + dx, y + dy)) == kind)
+    spot = next((x, y) for (x, y), t in tiles.items() if 2 < x < 57 and 2 < y < 57 and t == "plain"
+                and near(x, y, "forest") >= 2 and not near(x, y, "mountain") and not near(x, y, "hills"))
+    await game.pool.execute("UPDATE villages SET x = $2, y = $3 WHERE id = $1", alice.village_id, *spot)
+    from ovian_server.repo import refresh_all
+
+    await refresh_all(game)
+    v = await alice.village()
+    assert v["state"]["boost_by"].get("wood") == round(0.05 * near(*spot, "forest"), 4), v["state"].get("boost_by")
+    assert v["terrain"]["around"]["forest"] == near(*spot, "forest")
+    assert v["terrain"]["bonus"] == {"wood": round(0.05 * near(*spot, "forest"), 4)}
+    assert terrain.bonus(game, *spot) == v["terrain"]["bonus"]

@@ -4252,6 +4252,13 @@ extensions:
     production_per_point: 0.02
     revive: 14400
     speed: 10
+  terrain:
+    radius: 2
+    per_tile:
+      mountain: { stone: 0.05 }
+      hills: { stone: 0.02 }
+      forest: { wood: 0.05 }
+    max: { stone: 0.4, wood: 0.4 }
   cities:
     min_distance: 3
   camps:

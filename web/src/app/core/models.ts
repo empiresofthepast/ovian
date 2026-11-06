@@ -149,6 +149,8 @@ export interface VillageView extends VillageRef {
   settler_price?: number;
   government?: { id: string; label: string; anarchy_until: number };
   season?: SeasonNow;
+  /** The land around the city: terrain tiles within the radius, and the production bonus they give (fractions). */
+  terrain?: { radius: number; around: Record<string, number>; bonus: Record<string, number> };
   omen?: Omen;
   roads?: RoadsView;
   routes?: TradeRoute[];

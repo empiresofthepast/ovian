@@ -41,3 +41,13 @@ export function scaleCost(cost: Record<string, number>, factor: number): Record<
   if (factor === 1) return cost;
   return Object.fromEntries(Object.entries(cost).map(([r, c]) => [r, Math.ceil(c * factor)]));
 }
+
+/** A short label for the land around a city ("⛰ +20% stone · 🌲 +15% wood") and its explanation, or null when it gives nothing. */
+export function landChip(t: { radius: number; around: Record<string, number>; bonus: Record<string, number> } | undefined | null): { text: string; title: string } | null {
+  const b = Object.entries(t?.bonus ?? {}).filter(([, v]) => v > 0);
+  if (!t || !b.length) return null;
+  const icon: Record<string, string> = { stone: '⛰', wood: '🌲' };
+  const text = b.map(([r, v]) => `${icon[r] ?? '✦'} +${Math.round(v * 100)}% ${r}`).join(' · ');
+  const around = Object.entries(t.around).map(([k, n]) => `${n} ${k}`).join(', ');
+  return { text, title: `Within ${t.radius} tiles: ${around}. Quarries by the mountains, sawmills by the forests.` };
+}

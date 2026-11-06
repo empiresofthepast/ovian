@@ -1,3 +1,4 @@
+import { landChip } from '../../core/wiki';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -47,6 +48,7 @@ import { embassyRules } from '../../core/embassy';
               }
             }
           }
+          @if (landChip(v.terrain); as land) {<span class="chip" [title]="land.title">{{ land.text }}</span>}
           @if (v.government; as g) {
             <a class="chip" routerLink="/realm" [class.chip--bad]="g.anarchy_until > game.now()">♜ {{ g.label }}@if (g.anarchy_until > game.now()) { · {{ 'anarchy' | label: 'anarchy' }} {{ g.anarchy_until - game.now() | duration }}}</a>
           }
@@ -364,6 +366,8 @@ export class VillageComponent {
     this.selected.set(i);
     document.getElementById('slot-' + i)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+
+  protected readonly landChip = landChip;
 
   protected seasonIcon(id: string): string {
     return ({ spring: '🌱', summer: '☀', autumn: '🍂', winter: '❄' } as Record<string, string>)[id] ?? '◷';
